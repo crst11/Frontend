@@ -1,0 +1,17 @@
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# IDE y sistema
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# Construcción
+target/
+dist/
+node_modules/
+coverage/
+.angular/
