@@ -108,13 +108,13 @@ Hay dos repositorios, `Backend` y `Frontend`, porque se despliegan por separado.
 | `fix/SCRUM-XX-descripcion` | Corrección de un error | Se crea desde `desarrollo` | Local (DEV) |
 | `desarrollo` | Integración del sprint en curso | Pull request revisado y CI en verde | Desarrollo |
 | `preproduccion` | Lo que se demuestra ante el Comité de Arquitectura | Merge desde `desarrollo` al cerrar el sprint | Preproducción (PRE) |
-| `main` | Producción: lo que el Comité aceptó | Merge desde `preproduccion` después del comité | Producción (PROD) |
+| `produccion` | Producción: lo que el Comité aceptó | Merge desde `preproduccion` después del comité | Producción (PROD) |
 
-`desarrollo` es la rama por defecto. El código fluye siempre `feature` → `desarrollo` → `preproduccion` → `main`, siempre por merge. Ninguna rama de historia salta a `preproduccion` ni a `main`. Los ajustes que salgan de la demostración en `preproduccion` se hacen como pull requests pequeños hacia `desarrollo` y se vuelven a promover. Una corrección urgente en producción sale de `main`, se fusiona a `main` y se devuelve a `desarrollo`.
+`desarrollo` es la rama por defecto. El código fluye siempre `feature` → `desarrollo` → `preproduccion` → `produccion`, siempre por merge. Ninguna rama de historia salta a `preproduccion` ni a `produccion`. Los ajustes que salgan de la demostración en `preproduccion` se hacen como pull requests pequeños hacia `desarrollo` y se vuelven a promover. Una corrección urgente en producción sale de `produccion`, se fusiona a `produccion` y se devuelve a `desarrollo`.
 
 ### Protección de ramas
 
-`desarrollo`, `preproduccion` y `main` requieren pull request con 1 aprobación, checks de CI en verde, y bloquean push directo, force push y borrado.
+`desarrollo`, `preproduccion` y `produccion` requieren pull request con 1 aprobación, checks de CI en verde, y bloquean push directo, force push y borrado.
 
 ### Commits
 
@@ -140,7 +140,7 @@ Tipos: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`, `perf`. Commits
 
 ### Versiones
 
-Etiquetas de versionado semántico al promover a `main`: `v0.1.0` (sprint 1), `v0.2.0`, y así hasta `v1.0.0` (cierre del semestre). Los cambios se registran en `CHANGELOG.md`.
+Etiquetas de versionado semántico al promover a `produccion`: `v0.1.0` (sprint 1), `v0.2.0`, y así hasta `v1.0.0` (cierre del semestre). Los cambios se registran en `CHANGELOG.md`.
 
 ## 6. Jira y ciclo de trabajo
 
@@ -197,7 +197,7 @@ Una historia entra al sprint solo si tiene criterios de aceptación claros, esti
 |---|---|---|---|
 | DEV | `feature/*` y `desarrollo` | `http://localhost:4200` | `http://localhost:8080/api` |
 | PRE | `preproduccion` | URL de hosting PRE | URL de API PRE |
-| PROD | `main` | URL de hosting PROD | URL de API PROD |
+| PROD | `produccion` | URL de hosting PROD | URL de API PROD |
 
 Las URLs de PRE y PROD se definen cuando se decida el hosting.
 
