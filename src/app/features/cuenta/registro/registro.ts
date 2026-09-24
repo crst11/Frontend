@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 
 @Component({
@@ -12,6 +13,7 @@ import { EstudianteRepository } from '../../../data-access/estudiante.repository
 export class Registro {
   private readonly repositorio = inject(EstudianteRepository);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   protected readonly formulario = this.fb.nonNullable.group({
     nombres: ['', Validators.required],
@@ -23,7 +25,6 @@ export class Registro {
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly registrado = signal(false);
 
   enviar(): void {
     if (this.formulario.invalid) {
@@ -34,9 +35,9 @@ export class Registro {
     this.enviando.set(true);
     this.error.set(null);
     this.repositorio.registrar(this.formulario.getRawValue()).subscribe({
-      next: () => {
+      next: (cuenta) => {
         this.enviando.set(false);
-        this.registrado.set(true);
+        void this.router.navigate(['/cuenta/verificacion'], { queryParams: { correo: cuenta.correo } });
       },
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);

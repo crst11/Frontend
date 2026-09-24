@@ -9,5 +9,9 @@ export const routes: Routes = [
     path: 'cuenta/registro',
     loadComponent: () => import('./features/cuenta/registro/registro').then((m) => m.Registro),
   },
+  {
+    path: 'cuenta/verificacion',
+    loadComponent: () => import('./features/cuenta/verificacion/verificacion').then((m) => m.Verificacion),
+  },
   { path: '', redirectTo: 'guia', pathMatch: 'full' },
 ];

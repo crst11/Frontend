@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
@@ -9,7 +10,7 @@ describe('Registro', () => {
   function crear(repositorio: Partial<EstudianteRepository>) {
     TestBed.configureTestingModule({
       imports: [Registro, ReactiveFormsModule],
-      providers: [{ provide: EstudianteRepository, useValue: repositorio }],
+      providers: [provideRouter([]), { provide: EstudianteRepository, useValue: repositorio }],
     });
     const fixture = TestBed.createComponent(Registro);
     fixture.detectChanges();
@@ -32,11 +33,12 @@ describe('Registro', () => {
     consentimiento.dispatchEvent(new Event('change'));
   }
 
-  it('registra la cuenta y muestra la confirmación', () => {
+  it('registra la cuenta y lleva a verificar el correo', () => {
     const registrar = vi
       .fn()
       .mockReturnValue(of({ id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', estado: 'pendiente' }));
     const fixture = crear({ registrar });
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const html = fixture.nativeElement as HTMLElement;
 
     llenarFormularioValido(html);
@@ -45,7 +47,9 @@ describe('Registro', () => {
 
     expect(registrar).toHaveBeenCalledWith(
         expect.objectContaining({ correo: 'ana.diaz@ucundinamarca.edu.co', aceptaTratamientoDatos: true }));
-    expect(html.querySelector('[role="status"]')?.textContent).toContain('quedó creada');
+    expect(navegar).toHaveBeenCalledWith(['/cuenta/verificacion'], {
+      queryParams: { correo: 'ana.diaz@ucundinamarca.edu.co' },
+    });
   });
 
   it('muestra el mensaje del backend si el correo ya está registrado', () => {
