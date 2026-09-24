@@ -1,0 +1,37 @@
+.verificacion {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.verificacion form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.verificacion label {
+  font-weight: 600;
+}
+
+.verificacion input[type='text'],
+.verificacion input[type='email'] {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.verificacion #codigo {
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+
+.verificacion button {
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+.verificacion [role='alert'] {
+  color: #b00020;
+}
