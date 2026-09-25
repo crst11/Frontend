@@ -24,5 +24,10 @@ export const routes: Routes = [
     canActivate: [sessionGuard],
     loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   },
-  { path: '', redirectTo: 'guia', pathMatch: 'full' },
+  {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./features/entry/welcome/welcome').then((m) => m.Welcome),
+  },
+  { path: '**', redirectTo: '' },
 ];
