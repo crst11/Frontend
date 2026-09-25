@@ -84,7 +84,7 @@ La evaluación nunca se modela como "tres cortes fijos" ni como tres columnas.
 12. **Monolito modular, no microservicios.** Un solo backend desplegable, bien delimitado por dentro.
 13. **Menos carpetas y más claridad.** No se crean paquetes vacíos "por si acaso" ni abstracciones sin un motivo concreto. Pregunta de control: "¿el equipo sabría en 5 segundos dónde va el próximo archivo?".
 
-Idioma: código, nombres de dominio, mensajes de commit y documentación en español, salvo palabras técnicas estándar (`controller`, `repository`, `DTO`) o las que imponga el framework.
+Idioma: carpetas, archivos y nombres técnicos en inglés. Vocabulario del negocio, textos de la interfaz, mensajes de commit y documentación en español (sección 8).
 
 ## 4. Stack y versiones
 
@@ -238,27 +238,30 @@ ng generate environments
 
 ```
 src/app/
-  core/          sesión y autenticación (servicio de sesión, interceptor JWT, guard de rutas),
-                 manejo global de errores, modelos compartidos
-  data-access/   "puertos" del frontend: clases abstractas (HorarioRepository, PendientesRepository...)
-                 y sus implementaciones: http/ (HttpClient) e indexeddb/ (sin conexión, sprint 6)
-  features/      una carpeta por pantalla, cargada de forma diferida:
-    entrada/       pantalla con los dos caminos (consulta pública o iniciar sesión)
-    guia/          RF11
-    cuenta/        RF01, RF02
-    importacion/   RF03
-    horario/       RF04
-    dia/           RF07 Pantalla del día
-    evaluacion/    RF05
-    pendientes/    RF06
-    simulador/     RF08
-    brujula/       RF09
+  core/          transversal a toda la app
+    session/       session.service (sesión en memoria), session.interceptor (Bearer y refresco),
+                   session.guard (rutas protegidas)
+  data-access/   "puertos" del frontend: clases abstractas (EstudianteRepository, CategoriaDeRecursoRepository...)
+    http/          sus implementaciones con HttpClient; indexeddb/ llega con RF12 (sprint 6)
+  features/      una carpeta por área funcional, cada pantalla cargada de forma diferida:
+    guide/         RF11 (categories)
+    account/       RF01, RF02 (register, verification, login, my-account)
+    entry/         pantalla con los dos caminos (consulta pública o iniciar sesión)
+    importing/     RF03
+    schedule/      RF04
+    today/         RF07 Pantalla del día
+    grading/       RF05
+    tasks/         RF06 Mis Pendientes
+    simulator/     RF08
+    compass/       RF09 Brújula Académica
   shared/        componentes de interfaz reutilizables, pipes, utilidades
   app.config.ts
   app.routes.ts
 ```
 
-Cada carpeta de `features/` se crea cuando llega su sprint, no antes.
+Cada carpeta de `features/` se crea cuando llega su sprint, no antes. Dentro de una carpeta, el archivo, la clase y el selector del componente llevan el mismo nombre (`account/login/login.ts` → clase `Login`, selector `app-login`), como indica la convención de Angular.
+
+**Convención de nombres.** Carpetas, archivos y nombres técnicos en inglés, como en un equipo de desarrollo real. El vocabulario del negocio que viene del backend (Estudiante, CategoriaDeRecurso, correo...) se mantiene en español para que ambos lados hablen el mismo idioma. Las URLs y los textos que ve el estudiante siguen en español (`/cuenta/entrar`, "Iniciar sesión").
 
 ### Reglas del frontend
 

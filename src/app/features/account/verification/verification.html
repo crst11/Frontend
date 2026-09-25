@@ -1,0 +1,37 @@
+<section class="verification">
+  <h1>Verifica tu correo</h1>
+
+  @if (verificada()) {
+    <p role="status">Tu correo quedó verificado y tu cuenta está activa.</p>
+    <p><a routerLink="/cuenta/entrar">Iniciar sesión</a></p>
+  } @else {
+    <p>Escribe el código de 6 dígitos que enviamos a tu correo institucional. Vence a los 15 minutos.</p>
+
+    <form [formGroup]="formulario" (ngSubmit)="verificar()">
+      <label for="correo">Correo institucional</label>
+      <input id="correo" type="email" formControlName="correo" autocomplete="email" />
+
+      <label for="codigo">Código de verificación</label>
+      <input
+        id="codigo"
+        type="text"
+        formControlName="codigo"
+        inputmode="numeric"
+        maxlength="6"
+        autocomplete="one-time-code"
+      />
+
+      @if (error()) {
+        <p role="alert">{{ error() }}</p>
+      }
+      @if (aviso()) {
+        <p role="status">{{ aviso() }}</p>
+      }
+
+      <button type="submit" [disabled]="enviando()">
+        {{ enviando() ? 'Verificando…' : 'Verificar' }}
+      </button>
+      <button type="button" class="secundario" (click)="reenviar()">Enviar un código nuevo</button>
+    </form>
+  }
+</section>

@@ -1,0 +1,36 @@
+<section class="register">
+  <h1>Crear cuenta</h1>
+
+  <form [formGroup]="formulario" (ngSubmit)="enviar()">
+    <label for="nombres">Nombres</label>
+    <input id="nombres" type="text" formControlName="nombres" autocomplete="given-name" />
+
+    <label for="apellidos">Apellidos</label>
+    <input id="apellidos" type="text" formControlName="apellidos" autocomplete="family-name" />
+
+    <label for="correo">Correo institucional</label>
+    <input
+      id="correo"
+      type="email"
+      formControlName="correo"
+      placeholder="usuario@ucundinamarca.edu.co"
+      autocomplete="email"
+    />
+
+    <label for="contrasena">Contraseña</label>
+    <input id="contrasena" type="password" formControlName="contrasena" autocomplete="new-password" />
+
+    <label class="consentimiento">
+      <input type="checkbox" formControlName="aceptaTratamientoDatos" />
+      Acepto el tratamiento de mis datos personales (Ley 1581 de 2012)
+    </label>
+
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+
+    <button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Creando cuenta…' : 'Crear cuenta' }}
+    </button>
+  </form>
+</section>

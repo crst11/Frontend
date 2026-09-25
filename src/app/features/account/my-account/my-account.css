@@ -1,0 +1,25 @@
+.my-account {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.my-account dt {
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+.my-account dd {
+  margin: 0.25rem 0 0;
+}
+
+.my-account button {
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.my-account [role='alert'] {
+  color: #b00020;
+}
