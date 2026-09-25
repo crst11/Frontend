@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { NotifierService } from '../../../core/feedback/notifier.service';
 import { SessionService } from '../../../core/session/session.service';
 import { Cuenta, EstudianteRepository } from '../../../data-access/estudiante.repository';
 
@@ -14,6 +15,7 @@ export class MyAccount {
   private readonly repositorio = inject(EstudianteRepository);
   private readonly sesion = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly notificador = inject(NotifierService);
 
   protected readonly cuenta = signal<Cuenta | null>(null);
   protected readonly cargando = signal(true);
@@ -49,7 +51,16 @@ export class MyAccount {
     return ((nombres.trim()[0] ?? '') + (apellidos.trim()[0] ?? '')).toUpperCase();
   }
 
-  protected cerrarSesion(): void {
+  protected async cerrarSesion(): Promise<void> {
+    const confirmado = await this.notificador.confirmar(
+      '¿Cerrar sesión?',
+      'Tendrás que iniciar sesión de nuevo para ver tu cuenta.',
+      'Cerrar sesión',
+    );
+    if (!confirmado) {
+      return;
+    }
+
     const irAEntrar = () => void this.router.navigate(['/cuenta/entrar']);
     this.sesion.cerrar().subscribe({ next: irAEntrar, error: irAEntrar });
   }

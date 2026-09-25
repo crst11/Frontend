@@ -3,14 +3,26 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { NotifierService } from '../../../core/feedback/notifier.service';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 import { Register } from './register';
 
 describe('Register', () => {
+  const notificador = { aviso: vi.fn(), problema: vi.fn() };
+
+  beforeEach(() => {
+    notificador.aviso.mockReset().mockResolvedValue(undefined);
+    notificador.problema.mockReset().mockResolvedValue(undefined);
+  });
+
   function crear(repositorio: Partial<EstudianteRepository>) {
     TestBed.configureTestingModule({
       imports: [Register, ReactiveFormsModule],
-      providers: [provideRouter([]), { provide: EstudianteRepository, useValue: repositorio }],
+      providers: [
+        provideRouter([]),
+        { provide: EstudianteRepository, useValue: repositorio },
+        { provide: NotifierService, useValue: notificador },
+      ],
     });
     const fixture = TestBed.createComponent(Register);
     fixture.detectChanges();
@@ -77,6 +89,34 @@ describe('Register', () => {
     expect(navegar).toHaveBeenCalledWith(['/cuenta/verificacion'], {
       queryParams: { correo: 'ana.diaz@ucundinamarca.edu.co' },
     });
+    expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Cuenta creada'));
+  });
+
+  it('si no hay conexión con el servidor lo avisa en una ventana y no en el formulario', () => {
+    const registrar = vi.fn().mockReturnValue(throwError(() => ({ status: 0, error: null })));
+    const fixture = crear({ registrar });
+    const html = fixture.nativeElement as HTMLElement;
+
+    llenarFormularioValido(html);
+    html.querySelector('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(notificador.problema).toHaveBeenCalledWith('No pudimos crear tu cuenta', expect.any(String));
+    expect(html.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('las dos contraseñas traen el ojo y cada uno muestra solo su campo', () => {
+    const fixture = crear({});
+    const html = fixture.nativeElement as HTMLElement;
+    const ojos = html.querySelectorAll<HTMLButtonElement>('.password__toggle');
+    const tipo = (id: string) => html.querySelector<HTMLInputElement>(`#${id}`)!.type;
+
+    expect(ojos.length).toBe(2);
+    ojos[0].click();
+    fixture.detectChanges();
+
+    expect(tipo('contrasena')).toBe('text');
+    expect(tipo('confirmacion')).toBe('password');
   });
 
   it('muestra el mensaje del backend si el correo ya está registrado', () => {

@@ -271,3 +271,82 @@ a {
   border-radius: var(--radius-card);
   padding: 20px;
 }
+
+/* Avisos emergentes (SweetAlert2, ver core/feedback/notifier.service.ts): mismos colores y tipografías que la app.
+   Se usan dos clases en el selector para ganarle a los estilos que la librería agrega al abrir el primer aviso. */
+.swal2-popup.app-popup {
+  padding: 24px 20px;
+  border-radius: var(--radius-card);
+  font-family: var(--font-body);
+  color: var(--color-text);
+}
+
+.swal2-popup.app-popup .swal2-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.swal2-popup.app-popup .swal2-html-container {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.swal2-popup.app-popup .swal2-styled {
+  min-width: 120px;
+  height: 46px;
+  margin: 8px 6px 0;
+  border-radius: var(--radius-field);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.swal2-popup.app-popup .swal2-styled.swal2-confirm {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+
+.swal2-popup.app-popup .swal2-styled.swal2-confirm:hover {
+  background: var(--color-primary-strong);
+}
+
+.swal2-popup.app-popup .swal2-styled.swal2-cancel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+}
+
+.swal2-popup.app-popup .swal2-styled:focus {
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.swal2-popup.app-popup .swal2-icon.swal2-success,
+.swal2-popup.app-popup .swal2-icon.swal2-question {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.swal2-popup.app-popup .swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: var(--color-primary);
+}
+
+.swal2-popup.app-popup .swal2-icon.swal2-success .swal2-success-ring {
+  border-color: var(--color-primary-soft);
+}
+
+.swal2-popup.app-popup .swal2-timer-progress-bar {
+  background: var(--color-primary);
+}
+
+/* El aviso breve (toast) es más compacto que el modal. */
+.swal2-popup.app-popup.swal2-toast {
+  padding: 12px 16px;
+}
+
+.swal2-popup.app-popup.swal2-toast .swal2-title {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+}
