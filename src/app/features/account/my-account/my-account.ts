@@ -32,6 +32,23 @@ export class MyAccount {
     });
   }
 
+  protected primerNombre(nombres: string): string {
+    return nombres.trim().split(/\s+/)[0] ?? '';
+  }
+
+  /** El correo se muestra en dos partes para que, si no cabe, se parta en la @ y no a mitad de palabra. */
+  protected usuarioDelCorreo(correo: string): string {
+    return correo.slice(0, correo.indexOf('@'));
+  }
+
+  protected dominioDelCorreo(correo: string): string {
+    return correo.slice(correo.indexOf('@'));
+  }
+
+  protected iniciales(nombres: string, apellidos: string): string {
+    return ((nombres.trim()[0] ?? '') + (apellidos.trim()[0] ?? '')).toUpperCase();
+  }
+
   protected cerrarSesion(): void {
     const irAEntrar = () => void this.router.navigate(['/cuenta/entrar']);
     this.sesion.cerrar().subscribe({ next: irAEntrar, error: irAEntrar });

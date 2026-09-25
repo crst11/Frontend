@@ -1,12 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
+
+/** Confirmar la contraseña es solo una ayuda de la interfaz: el backend nunca la recibe. */
+function contrasenasIguales(grupo: AbstractControl): ValidationErrors | null {
+  const contrasena = grupo.get('contrasena')?.value;
+  const confirmacion = grupo.get('confirmacion')?.value;
+  return confirmacion && contrasena !== confirmacion ? { contrasenasDistintas: true } : null;
+}
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
@@ -15,16 +22,29 @@ export class Register {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
 
-  protected readonly formulario = this.fb.nonNullable.group({
-    nombres: ['', Validators.required],
-    apellidos: ['', Validators.required],
-    correo: ['', [Validators.required, Validators.email]],
-    contrasena: ['', [Validators.required, Validators.minLength(8)]],
-    aceptaTratamientoDatos: [false, Validators.requiredTrue],
-  });
+  protected readonly formulario = this.fb.nonNullable.group(
+    {
+      nombres: ['', Validators.required],
+      apellidos: ['', Validators.required],
+      correo: ['', [Validators.required, Validators.email]],
+      contrasena: ['', [Validators.required, Validators.minLength(8)]],
+      confirmacion: ['', Validators.required],
+      aceptaTratamientoDatos: [false, Validators.requiredTrue],
+    },
+    { validators: contrasenasIguales },
+  );
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  protected invalido(campo: keyof typeof this.formulario.controls): boolean {
+    const control = this.formulario.controls[campo];
+    return control.invalid && control.touched;
+  }
+
+  protected confirmacionDistinta(): boolean {
+    return this.formulario.hasError('contrasenasDistintas') && this.formulario.controls.confirmacion.touched;
+  }
 
   enviar(): void {
     if (this.formulario.invalid) {
@@ -32,9 +52,10 @@ export class Register {
       return;
     }
 
+    const { nombres, apellidos, correo, contrasena, aceptaTratamientoDatos } = this.formulario.getRawValue();
     this.enviando.set(true);
     this.error.set(null);
-    this.repositorio.registrar(this.formulario.getRawValue()).subscribe({
+    this.repositorio.registrar({ nombres, apellidos, correo, contrasena, aceptaTratamientoDatos }).subscribe({
       next: (cuenta) => {
         this.enviando.set(false);
         void this.router.navigate(['/cuenta/verificacion'], { queryParams: { correo: cuenta.correo } });
