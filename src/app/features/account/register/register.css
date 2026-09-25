@@ -1,0 +1,40 @@
+.register {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.register form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.register label {
+  font-weight: 600;
+}
+
+.register input[type='text'],
+.register input[type='email'],
+.register input[type='password'] {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.register .consentimiento {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: normal;
+}
+
+.register button {
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+.register [role='alert'] {
+  color: #b00020;
+}
