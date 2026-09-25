@@ -99,4 +99,16 @@ describe('SessionService', () => {
 
     expect(servicio.estaAutenticada()).toBe(false);
   });
+
+  it('si la sesión anterior ya no sirve, no la vuelve a intentar en la siguiente carga', async () => {
+    document.cookie = 'XSRF-TOKEN=abc; path=/';
+    const renovarSesion = vi.fn().mockReturnValue(throwError(() => new Error('401')));
+    const servicio = crear({ renovarSesion });
+
+    await servicio.restaurar();
+    await servicio.restaurar();
+
+    expect(document.cookie).not.toContain('XSRF-TOKEN=abc');
+    expect(renovarSesion).toHaveBeenCalledTimes(1);
+  });
 });
