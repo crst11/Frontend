@@ -1,0 +1,86 @@
+<main class="screen register">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/" aria-label="Volver">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Registro</span>
+  </header>
+
+  <form class="screen__body" [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+    <div class="register__intro">
+      <h1 class="title">Crea tu cuenta</h1>
+      <p class="subtitle">Regístrate con tu correo de la UdeC para centralizar tus notas.</p>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field__label" for="nombres">Nombres</label>
+        <input id="nombres" class="field__input" type="text" formControlName="nombres" placeholder="Cristian"
+          autocomplete="given-name" [attr.aria-invalid]="invalido('nombres')" />
+        @if (invalido('nombres')) {
+          <p class="field__error">Escribe tus nombres.</p>
+        }
+      </div>
+      <div class="field">
+        <label class="field__label" for="apellidos">Apellidos</label>
+        <input id="apellidos" class="field__input" type="text" formControlName="apellidos" placeholder="Pérez"
+          autocomplete="family-name" [attr.aria-invalid]="invalido('apellidos')" />
+        @if (invalido('apellidos')) {
+          <p class="field__error">Escribe tus apellidos.</p>
+        }
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="correo">Correo institucional</label>
+      <input id="correo" class="field__input" type="email" formControlName="correo"
+        placeholder="estudiante@ucundinamarca.edu.co" autocomplete="email"
+        aria-describedby="correo-ayuda" [attr.aria-invalid]="invalido('correo')" />
+      @if (invalido('correo')) {
+        <p class="field__error">Escribe un correo válido.</p>
+      } @else {
+        <p id="correo-ayuda" class="field__hint">Debe terminar en &#64;ucundinamarca.edu.co</p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="contrasena">Contraseña</label>
+      <input id="contrasena" class="field__input" type="password" formControlName="contrasena"
+        placeholder="Mínimo 8 caracteres" autocomplete="new-password" [attr.aria-invalid]="invalido('contrasena')" />
+      @if (invalido('contrasena')) {
+        <p class="field__error">La contraseña debe tener al menos 8 caracteres.</p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="confirmacion">Confirmar contraseña</label>
+      <input id="confirmacion" class="field__input" type="password" formControlName="confirmacion"
+        placeholder="Repite tu contraseña" autocomplete="new-password"
+        [attr.aria-invalid]="invalido('confirmacion') || confirmacionDistinta()" />
+      @if (confirmacionDistinta()) {
+        <p class="field__error">Las contraseñas no coinciden.</p>
+      } @else if (invalido('confirmacion')) {
+        <p class="field__error">Repite tu contraseña.</p>
+      }
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="aceptaTratamientoDatos" />
+      <span>Acepto el tratamiento de mis datos personales según la <b>Ley 1581 de 2012</b></span>
+    </label>
+    @if (invalido('aceptaTratamientoDatos')) {
+      <p class="field__error">Debes aceptar el tratamiento de datos para registrarte.</p>
+    }
+
+    @if (error()) {
+      <p class="alert" role="alert">{{ error() }}</p>
+    }
+
+    <div class="screen__footer">
+      <button class="button button--primary" type="submit" [disabled]="enviando()">
+        {{ enviando() ? 'Creando cuenta…' : 'Crear cuenta' }}
+      </button>
+      <p class="link-row">¿Ya tienes cuenta? <a routerLink="/cuenta/entrar">Inicia sesión</a></p>
+    </div>
+  </form>
+</main>

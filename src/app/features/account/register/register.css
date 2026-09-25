@@ -1,0 +1,10 @@
+.register form {
+  flex: 1;
+}
+
+.register__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
