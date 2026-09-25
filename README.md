@@ -12,6 +12,7 @@ Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, 
 
 | Pantalla | Ruta | Estado |
 |---|---|---|
+| Entrada (iniciar sesión, crear cuenta o consultar la guía) | `/` | Hecho |
 | Guía institucional (categorías) | `/guia` | Hecho, pública |
 | Crear cuenta | `/cuenta/registro` | Hecho |
 | Verificar el correo | `/cuenta/verificacion` | Hecho |
@@ -33,9 +34,13 @@ src/app/
   core/session/     sesión en memoria, interceptor (Bearer y renovación) y guardia de rutas
   data-access/      servicios de consumo de la API detrás de clases abstractas (http/ los implementa)
   features/
+    entry/          welcome
     guide/          categories
     account/        register, verification, login, my-account
+src/styles.css      sistema visual compartido (colores, tipografías, campos, botones)
 ```
+
+Las pantallas siguen el diseño móvil del equipo; las piezas visuales y sus reglas están en la sección "Diseño visual" de la [guía del proyecto](docs/guia-proyecto.md).
 
 Los componentes nunca usan `HttpClient` directamente: piden los datos a un servicio de `data-access`, que es el único que conoce las URLs (salen de `src/environments/`).
 
