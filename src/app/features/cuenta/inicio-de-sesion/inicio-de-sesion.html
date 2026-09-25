@@ -1,0 +1,32 @@
+<section class="inicio-de-sesion">
+  <h1>Iniciar sesión</h1>
+
+  <form [formGroup]="formulario" (ngSubmit)="entrar()">
+    <label for="correo">Correo institucional</label>
+    <input
+      id="correo"
+      type="email"
+      formControlName="correo"
+      placeholder="usuario@ucundinamarca.edu.co"
+      autocomplete="username"
+    />
+
+    <label for="contrasena">Contraseña</label>
+    <input id="contrasena" type="password" formControlName="contrasena" autocomplete="current-password" />
+
+    @if (error()) {
+      <p role="alert">{{ error() }}</p>
+    }
+    @if (cuentaPendiente()) {
+      <p>
+        <a routerLink="/cuenta/verificacion" [queryParams]="{ correo: correoEscrito() }">Verificar mi correo ahora</a>
+      </p>
+    }
+
+    <button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Entrando…' : 'Entrar' }}
+    </button>
+  </form>
+
+  <p class="alternativa">¿Aún no tienes cuenta? <a routerLink="/cuenta/registro">Crear cuenta</a></p>
+</section>

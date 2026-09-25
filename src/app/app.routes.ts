@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { guardiaDeSesion } from './core/sesion/guardia-de-sesion';
 
 export const routes: Routes = [
   {
@@ -12,6 +13,16 @@ export const routes: Routes = [
   {
     path: 'cuenta/verificacion',
     loadComponent: () => import('./features/cuenta/verificacion/verificacion').then((m) => m.Verificacion),
+  },
+  {
+    path: 'cuenta/entrar',
+    loadComponent: () =>
+      import('./features/cuenta/inicio-de-sesion/inicio-de-sesion').then((m) => m.InicioDeSesion),
+  },
+  {
+    path: 'cuenta/mi-cuenta',
+    canActivate: [guardiaDeSesion],
+    loadComponent: () => import('./features/cuenta/mi-cuenta/mi-cuenta').then((m) => m.MiCuenta),
   },
   { path: '', redirectTo: 'guia', pathMatch: 'full' },
 ];
