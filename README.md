@@ -8,33 +8,58 @@ Proyecto integrador de Ingeniería de Software I (2026-2).
 
 Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, sus pendientes y la interpretación de su situación académica en un solo lugar: qué tiene hoy, qué nota necesita, en qué asignatura está en riesgo y qué se le vence. La aplicación consume la API REST del repositorio Backend y nunca habla con la base de datos.
 
-## Estado del proyecto
+## Estado del proyecto (Review 1)
 
-Repositorio base. Contiene las reglas del equipo, la guía del proyecto y las plantillas de trabajo. El proyecto Angular se agrega en la tarea SCRUM-43 del tablero de Jira; este README se completa con ella.
+| Pantalla | Ruta | Estado |
+|---|---|---|
+| Guía institucional (categorías) | `/guia` | Hecho, pública |
+| Crear cuenta | `/cuenta/registro` | Hecho |
+| Verificar el correo | `/cuenta/verificacion` | Hecho |
+| Iniciar sesión | `/cuenta/entrar` | Hecho |
+| Mi cuenta (protegida) | `/cuenta/mi-cuenta` | Hecho |
+
+La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence, se renueva con la cookie de refresco que maneja el navegador.
 
 ## Tecnologías
 
-- Angular con componentes standalone y señales, en TypeScript estricto
-- PWA con service worker (instalable y con consulta sin conexión)
-- Consumo de la API REST del repositorio Backend
-- Pruebas con el runner del CLI de Angular y Playwright para los flujos clave
+- Angular 22 con componentes standalone y señales, en TypeScript estricto
+- PWA con service worker
+- Pruebas con Vitest (runner del CLI de Angular) y ESLint
+
+## Estructura
+
+```
+src/app/
+  core/session/     sesión en memoria, interceptor (Bearer y renovación) y guardia de rutas
+  data-access/      servicios de consumo de la API detrás de clases abstractas (http/ los implementa)
+  features/
+    guide/          categories
+    account/        register, verification, login, my-account
+```
+
+Los componentes nunca usan `HttpClient` directamente: piden los datos a un servicio de `data-access`, que es el único que conoce las URLs (salen de `src/environments/`).
 
 ## Requisitos previos
 
 - Node.js (versión LTS) y npm
-- Git
+- El backend corriendo en `http://localhost:8080` (repositorio Backend)
 
-## Instalación y ejecución
+## Levantar en local
 
-Se documenta aquí, paso a paso y para levantar el proyecto en menos de diez minutos, cuando exista el proyecto (SCRUM-43). Las URLs de la API salen siempre de los archivos de `src/environments/`; nada secreto va en ellos, porque todo lo que llega al navegador se puede inspeccionar.
-
-## Uso
-
-La aplicación se diseña primero para el celular y funciona desde 360 px de ancho. El visitante sin cuenta solo puede consultar la Guía institucional; el resto exige iniciar sesión.
+```powershell
+npm install        # la primera vez
+npm start          # http://localhost:4200
+```
 
 ## Pruebas
 
-El estándar del proyecto es que `npm run lint`, `npm test` y `npm run build` terminen en verde antes de abrir un pull request.
+```powershell
+npm run lint
+npm test -- --watch=false
+npm run build
+```
+
+Los tres deben terminar en verde antes de abrir un pull request; la integración continua los ejecuta en cada uno.
 
 ## Ramas y flujo de trabajo
 
@@ -43,13 +68,14 @@ El estándar del proyecto es que `npm run lint`, `npm test` y `npm run build` te
 | `feature/SCRUM-XX-descripcion` | Trabajo de una incidencia de Jira |
 | `desarrollo` | Integración del sprint en curso (rama por defecto) |
 | `preproduccion` | Demostración ante el Comité de Arquitectura |
-| `produccion` | Producción |
+| `produccion` | Versión presentada y aceptada |
 
-El código fluye siempre de la rama de la incidencia a `desarrollo`, luego a `preproduccion` y por último a `produccion`, mediante pull request o merge. Ninguna rama de ambiente admite push directo. Los commits siguen el formato `tipo(módulo): descripción SCRUM-XX`.
+El código fluye de la rama de la incidencia a `desarrollo`, luego a `preproduccion` y por último a `produccion`. Los commits siguen el formato `tipo(módulo): descripción SCRUM-XX`. Los cambios de cada versión están en [CHANGELOG.md](CHANGELOG.md).
 
 ## Documentación
 
 - [Guía del proyecto](docs/guia-proyecto.md): contexto, reglas, estructura de Angular, ambientes, pruebas y flujo de trabajo.
+- La arquitectura completa, los casos de uso y el guion de la demo de la Review 1 están en el repositorio Backend (`docs/review-1/`).
 
 ## Autores
 
