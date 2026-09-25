@@ -28,10 +28,37 @@ describe('Register', () => {
     escribir(html, 'apellidos', 'Díaz');
     escribir(html, 'correo', 'ana.diaz@ucundinamarca.edu.co');
     escribir(html, 'contrasena', 'unaClaveSegura');
+    escribir(html, 'confirmacion', 'unaClaveSegura');
     const consentimiento = html.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
     consentimiento.checked = true;
     consentimiento.dispatchEvent(new Event('change'));
   }
+
+  it('no envía si la confirmación no coincide y lo avisa en el campo', () => {
+    const registrar = vi.fn();
+    const fixture = crear({ registrar });
+    const html = fixture.nativeElement as HTMLElement;
+
+    llenarFormularioValido(html);
+    escribir(html, 'confirmacion', 'otraClaveDistinta');
+    html.querySelector('form')!.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    expect(registrar).not.toHaveBeenCalled();
+    expect(html.textContent).toContain('Las contraseñas no coinciden');
+  });
+
+  it('no manda la confirmación de la contraseña al backend', () => {
+    const registrar = vi.fn().mockReturnValue(of({ id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', estado: 'pendiente' }));
+    const fixture = crear({ registrar });
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const html = fixture.nativeElement as HTMLElement;
+
+    llenarFormularioValido(html);
+    html.querySelector('form')!.dispatchEvent(new Event('submit'));
+
+    expect(registrar.mock.calls[0][0]).not.toHaveProperty('confirmacion');
+  });
 
   it('registra la cuenta y lleva a verificar el correo', () => {
     const registrar = vi

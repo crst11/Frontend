@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CategoriaDeRecursoRepository } from '../../../data-access/categoria-de-recurso.repository';
 import { Categories } from './categories';
@@ -7,7 +8,7 @@ describe('Categories', () => {
   function crear(repositorio: Partial<CategoriaDeRecursoRepository>) {
     TestBed.configureTestingModule({
       imports: [Categories],
-      providers: [{ provide: CategoriaDeRecursoRepository, useValue: repositorio }],
+      providers: [provideRouter([]), { provide: CategoriaDeRecursoRepository, useValue: repositorio }],
     });
     const fixture = TestBed.createComponent(Categories);
     fixture.detectChanges();

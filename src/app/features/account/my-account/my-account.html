@@ -1,20 +1,36 @@
-<section class="my-account">
-  <h1>Mi cuenta</h1>
-
+<main class="screen my-account">
   @if (cargando()) {
-    <p>Cargando tu cuenta…</p>
+    <p class="subtitle">Cargando tu cuenta…</p>
   } @else if (error()) {
-    <p role="alert">No se pudo cargar tu cuenta. Intenta de nuevo más tarde.</p>
+    <p class="alert" role="alert">No se pudo cargar tu cuenta. Intenta de nuevo más tarde.</p>
   } @else if (cuenta(); as datos) {
-    <dl>
-      <dt>Nombre</dt>
-      <dd>{{ datos.nombres }} {{ datos.apellidos }}</dd>
-      <dt>Correo institucional</dt>
-      <dd>{{ datos.correo }}</dd>
-      <dt>Estado de la cuenta</dt>
-      <dd>{{ datos.estado }}</dd>
-    </dl>
+    <header class="my-account__header">
+      <div>
+        <h1 class="my-account__greeting">Hola, {{ primerNombre(datos.nombres) }}</h1>
+        <p class="subtitle">Mi cuenta</p>
+      </div>
+      <span class="my-account__avatar" aria-hidden="true">{{ iniciales(datos.nombres, datos.apellidos) }}</span>
+    </header>
+
+    <section class="card my-account__card" aria-label="Datos de la cuenta">
+      <div class="my-account__row">
+        <span class="field__label">Nombre</span>
+        <span>{{ datos.nombres }} {{ datos.apellidos }}</span>
+      </div>
+      <div class="my-account__row">
+        <span class="field__label">Correo institucional</span>
+        <span>{{ usuarioDelCorreo(datos.correo) }}<wbr />{{ dominioDelCorreo(datos.correo) }}</span>
+      </div>
+      <div class="my-account__row">
+        <span class="field__label">Estado</span>
+        <span class="my-account__status">Cuenta {{ datos.estado }}</span>
+      </div>
+    </section>
+
+    <p class="notice">Pronto verás aquí tus clases de hoy, tus próximas entregas y la Brújula Académica.</p>
   }
 
-  <button type="button" (click)="cerrarSesion()">Cerrar sesión</button>
-</section>
+  <div class="screen__footer">
+    <button class="button button--outline" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+  </div>
+</main>

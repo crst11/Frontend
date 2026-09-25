@@ -263,6 +263,23 @@ Cada carpeta de `features/` se crea cuando llega su sprint, no antes. Dentro de 
 
 **Convención de nombres.** Carpetas, archivos y nombres técnicos en inglés, como en un equipo de desarrollo real. El vocabulario del negocio que viene del backend (Estudiante, CategoriaDeRecurso, correo...) se mantiene en español para que ambos lados hablen el mismo idioma. Las URLs y los textos que ve el estudiante siguen en español (`/cuenta/entrar`, "Iniciar sesión").
 
+### Diseño visual
+
+Las pantallas siguen el diseño móvil acordado por el equipo (entrada, registro, verificación, inicio de sesión, inicio del día con la Brújula y carga del reporte PDF). Todo lo compartido vive en `src/styles.css`, así que una pantalla nueva no inventa colores ni botones: los reutiliza.
+
+| Pieza | Clase o token |
+|---|---|
+| Colores | `--color-primary` (#0a7a55), `--color-primary-soft`, `--color-ink`, `--color-text`, `--color-muted`, `--color-border`, `--color-background`, `--color-danger` |
+| Tipografías | `Outfit` para títulos y botones, `DM Sans` para el texto (Google Fonts, en `index.html`) |
+| Pantalla | `.screen` (columna de 440 px máximo, alto completo), `.screen__body`, `.screen__footer` (acciones abajo, como en el diseño) |
+| Cabecera | `.top-bar` con `.icon-button` (flecha de volver) y `.top-bar__title` |
+| Textos | `.title`, `.subtitle` |
+| Formularios | `.field`, `.field-row` (dos campos lado a lado), `.field__label`, `.field__input`, `.field__hint`, `.field__error`, `.checkbox` |
+| Botones | `.button` con `--primary` (acción principal), `--soft` (secundaria verde) o `--outline` |
+| Mensajes y bloques | `.alert` (error), `.notice` (aviso), `.card` |
+
+Reglas: errores junto al campo que los causa, además del mensaje del backend en `.alert`; nada de botones de funciones que aún no existen (Google llega con SCRUM-48 y "¿Olvidaste tu contraseña?" cuando exista su historia); la barra de navegación inferior del diseño (Inicio, Horario, Calificaciones, Pendientes, Más) llega con la pantalla del día (RF07), cuando haya secciones a las que ir.
+
 ### Reglas del frontend
 
 - Los componentes nunca llaman a `HttpClient` directamente: usan un repositorio de `data-access` inyectado por su clase abstracta. Es la misma idea de puertos del backend y permite cambiar HTTP por IndexedDB sin tocar la pantalla (RF12).

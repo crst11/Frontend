@@ -1,16 +1,16 @@
-.categories {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-.categories ul {
-  list-style: none;
-  padding: 0;
+.categories__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.categories li {
-  padding: 0.75rem 0.25rem;
-  border-bottom: 1px solid #ddd;
+.categories__item {
+  border-left: 4px solid var(--color-primary);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-ink);
 }

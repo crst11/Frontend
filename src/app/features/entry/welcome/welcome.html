@@ -1,0 +1,22 @@
+<main class="screen welcome">
+  <div class="welcome__brand">
+    <div class="welcome__logo" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+        <path d="M6 12v5c3 2 9 2 12 0v-5" />
+      </svg>
+    </div>
+    <h1 class="welcome__name">CundiApp</h1>
+    <p class="welcome__tagline">Tu semestre en un solo lugar</p>
+  </div>
+
+  <div class="screen__footer">
+    @if (sesion.estaAutenticada()) {
+      <a class="button button--primary" routerLink="/cuenta/mi-cuenta">Ir a mi cuenta</a>
+    } @else {
+      <a class="button button--primary" routerLink="/cuenta/entrar">Iniciar sesión</a>
+      <a class="button button--soft" routerLink="/cuenta/registro">Crear cuenta</a>
+    }
+    <p class="link-row"><a routerLink="/guia">Consultar guía institucional</a></p>
+  </div>
+</main>

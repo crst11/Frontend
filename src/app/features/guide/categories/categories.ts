@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { CategoriaDeRecurso, CategoriaDeRecursoRepository } from '../../../data-access/categoria-de-recurso.repository';
 
 /**
@@ -8,7 +9,7 @@ import { CategoriaDeRecurso, CategoriaDeRecursoRepository } from '../../../data-
  */
 @Component({
   selector: 'app-categories',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './categories.html',
   styleUrl: './categories.css',
 })

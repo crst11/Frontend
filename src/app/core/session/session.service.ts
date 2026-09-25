@@ -60,6 +60,8 @@ export class SessionService {
   limpiar(): void {
     this.tokenDeAcceso.set(null);
     this.cuentaActual.set(null);
+    // Sin esto, una sesión que ya no existe en el servidor se reintentaría en cada carga de la app.
+    document.cookie = 'XSRF-TOKEN=; Max-Age=0; path=/';
   }
 
   private guardar(sesion: SesionIniciada): void {
