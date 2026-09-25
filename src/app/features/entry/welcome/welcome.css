@@ -1,0 +1,38 @@
+.welcome__brand {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding-top: 64px;
+}
+
+.welcome__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  background: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 0 0 12px var(--color-primary-soft);
+}
+
+.welcome__name {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.welcome__tagline {
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.welcome .screen__footer {
+  margin-top: 0;
+}

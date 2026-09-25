@@ -1,0 +1,69 @@
+<main class="screen verification">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/cuenta/registro" aria-label="Volver">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+  </header>
+
+  <div class="verification__intro">
+    <div class="verification__icon" aria-hidden="true">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <path d="m3 7 9 6 9-6" />
+      </svg>
+    </div>
+    <h1 class="title">Verifica tu correo</h1>
+
+    @if (verificada()) {
+      <p class="notice" role="status">Tu correo quedó verificado y tu cuenta está activa.</p>
+    } @else {
+      <p class="subtitle">Enviamos un código de 6 dígitos a tu correo institucional</p>
+      @if (correoDelRegistro) {
+        <p class="verification__email">{{ correoDelRegistro }}</p>
+      }
+    }
+  </div>
+
+  @if (verificada()) {
+    <div class="screen__footer">
+      <a class="button button--primary" routerLink="/cuenta/entrar">Iniciar sesión</a>
+    </div>
+  } @else {
+    <form class="screen__body verification__form" [formGroup]="formulario" (ngSubmit)="verificar()" novalidate>
+      @if (!correoDelRegistro) {
+        <div class="field">
+          <label class="field__label" for="correo">Correo institucional</label>
+          <input id="correo" class="field__input" type="email" formControlName="correo"
+            placeholder="estudiante@ucundinamarca.edu.co" autocomplete="email" />
+        </div>
+      }
+
+      <fieldset class="verification__code">
+        <legend class="visually-hidden">Código de verificación</legend>
+        @for (posicion of posiciones; track posicion) {
+          <input #casilla class="verification__digit" [class.verification__digit--filled]="digitos()[posicion]"
+            type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+            [attr.aria-label]="'Dígito ' + (posicion + 1) + ' de 6'"
+            (input)="escribir(posicion, $event)" (keydown)="retroceder(posicion, $event)" (paste)="pegar(posicion, $event)" />
+        }
+      </fieldset>
+
+      @if (error()) {
+        <p class="alert" role="alert">{{ error() }}</p>
+      }
+      @if (aviso()) {
+        <p class="notice" role="status">{{ aviso() }}</p>
+      }
+
+      <div class="screen__footer">
+        <button class="button button--primary" type="submit" [disabled]="enviando()">
+          {{ enviando() ? 'Verificando…' : 'Verificar' }}
+        </button>
+        <p class="link-row">
+          ¿No recibiste el código?
+          <button class="verification__resend" type="button" (click)="reenviar()">Reenviar código</button>
+        </p>
+      </div>
+    </form>
+  }
+</main>

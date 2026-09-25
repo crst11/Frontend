@@ -1,0 +1,10 @@
+.login__form {
+  flex: 1;
+}
+
+.login__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}

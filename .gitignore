@@ -3,10 +3,12 @@
 .env.*
 !.env.example
 
+# Guía de trabajo interna: no va en el repositorio público
+CLAUDE.md
+
 # IDE y sistema
 .idea/
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .DS_Store
 
 # Construcción

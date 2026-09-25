@@ -1,0 +1,51 @@
+<main class="screen login">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/" aria-label="Volver">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">CundiApp</span>
+  </header>
+
+  <form class="screen__body login__form" [formGroup]="formulario" (ngSubmit)="entrar()" novalidate>
+    <div class="login__intro">
+      <h1 class="title">Bienvenido de nuevo</h1>
+      <p class="subtitle">Inicia sesión para continuar monitoreando tu semestre.</p>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="correo">Correo institucional</label>
+      <input id="correo" class="field__input" type="email" formControlName="correo"
+        placeholder="ejemplo@ucundinamarca.edu.co" autocomplete="username"
+        [attr.aria-invalid]="formulario.controls.correo.invalid && formulario.controls.correo.touched" />
+      @if (formulario.controls.correo.invalid && formulario.controls.correo.touched) {
+        <p class="field__error">Escribe tu correo institucional.</p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="contrasena">Contraseña</label>
+      <input id="contrasena" class="field__input" type="password" formControlName="contrasena"
+        placeholder="Tu contraseña" autocomplete="current-password"
+        [attr.aria-invalid]="formulario.controls.contrasena.invalid && formulario.controls.contrasena.touched" />
+      @if (formulario.controls.contrasena.invalid && formulario.controls.contrasena.touched) {
+        <p class="field__error">Escribe tu contraseña.</p>
+      }
+    </div>
+
+    @if (error()) {
+      <p class="alert" role="alert">{{ error() }}</p>
+    }
+    @if (cuentaPendiente()) {
+      <a class="button button--soft" routerLink="/cuenta/verificacion" [queryParams]="{ correo: correoEscrito() }">
+        Verificar mi correo ahora
+      </a>
+    }
+
+    <div class="screen__footer">
+      <button class="button button--primary" type="submit" [disabled]="enviando()">
+        {{ enviando() ? 'Iniciando sesión…' : 'Iniciar sesión' }}
+      </button>
+      <p class="link-row">¿No tienes cuenta? <a routerLink="/cuenta/registro">Regístrate</a></p>
+    </div>
+  </form>
+</main>
