@@ -31,14 +31,25 @@ export interface SesionIniciada {
   cuenta: Cuenta;
 }
 
-/** Puerto del frontend hacia la cuenta del estudiante (RF01): registro, verificación y sesión. */
+/** Si la cuenta tiene Google vinculado y con qué correo de Google (SCRUM-48). */
+export interface VinculoConGoogle {
+  vinculada: boolean;
+  correo: string | null;
+  fechaVinculacion: string | null;
+}
+
+/** Puerto del frontend hacia la cuenta del estudiante (RF01): registro, verificación, sesión y Google. */
 @Injectable()
 export abstract class EstudianteRepository {
   abstract registrar(datos: DatosDeRegistro): Observable<CuentaRegistrada>;
   abstract verificarCorreo(correo: string, codigo: string): Observable<CuentaRegistrada>;
   abstract reenviarCodigo(correo: string): Observable<void>;
   abstract iniciarSesion(correo: string, contrasena: string): Observable<SesionIniciada>;
+  abstract iniciarSesionConGoogle(idToken: string): Observable<SesionIniciada>;
   abstract renovarSesion(): Observable<SesionIniciada>;
   abstract cerrarSesion(): Observable<void>;
   abstract miCuenta(): Observable<Cuenta>;
+  abstract vinculoConGoogle(): Observable<VinculoConGoogle>;
+  abstract vincularGoogle(idToken: string): Observable<VinculoConGoogle>;
+  abstract desvincularGoogle(): Observable<void>;
 }

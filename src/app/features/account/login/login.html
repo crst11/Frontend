@@ -45,6 +45,14 @@
       <button class="button button--primary" type="submit" [disabled]="enviando()">
         {{ enviando() ? 'Iniciando sesión…' : 'Iniciar sesión' }}
       </button>
+      @if (google.disponible) {
+        <div class="login__divider" aria-hidden="true"><span>o</span></div>
+        <!-- Botón oficial de Google (API externa): lo dibuja Google Identity Services. -->
+        <div #botonGoogle class="login__google"></div>
+        @if (googleSinCargar()) {
+          <p class="field__hint login__google-hint">El inicio con Google no está disponible en este momento.</p>
+        }
+      }
       <p class="link-row">¿No tienes cuenta? <a routerLink="/cuenta/registro">Regístrate</a></p>
     </div>
   </form>

@@ -28,6 +28,14 @@ export class SessionService {
     );
   }
 
+  /** Entrar con un toque: el ID token de Google lo valida el backend y la sesión queda igual que con contraseña. */
+  iniciarConGoogle(idToken: string): Observable<Cuenta> {
+    return this.repositorio.iniciarSesionConGoogle(idToken).pipe(
+      tap((sesion) => this.guardar(sesion)),
+      map((sesion) => sesion.cuenta),
+    );
+  }
+
   /** Varias peticiones que fallan a la vez comparten un solo refresco. */
   renovar(): Observable<string> {
     this.renovacionEnCurso ??= this.repositorio.renovarSesion().pipe(
