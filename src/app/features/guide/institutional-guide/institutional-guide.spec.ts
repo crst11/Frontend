@@ -89,7 +89,9 @@ describe('InstitutionalGuide', () => {
     expect(html.textContent).toContain('Verificado el');
   });
 
-  it('una sugerencia busca de inmediato y queda marcada', () => {
+  it('una sugerencia busca de inmediato, queda marcada y baja hasta los resultados', () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
     const buscar = vi.fn().mockReturnValueOnce(of([reglamento, plantillaWord])).mockReturnValueOnce(of([plantillaWord]));
     const { fixture, html } = crear(buscar);
 
@@ -100,6 +102,35 @@ describe('InstitutionalGuide', () => {
     expect(html.querySelectorAll('.guide__doc').length).toBe(1);
     expect(boton(html, 'Plantillas').getAttribute('aria-pressed')).toBe('true');
     expect(html.querySelector<HTMLInputElement>('#buscar')!.value).toBe('Plantillas');
+    // Al elegir una sugerencia se ve toda la lista (no se filtra) y la pantalla baja al resultado.
+    expect(boton(html, 'Calendario académico')).toBeTruthy();
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it('al escribir a mano solo aparecen las sugerencias relacionadas con lo escrito', () => {
+    const { fixture, html } = crear(vi.fn().mockReturnValue(of([reglamento])));
+    const campo = html.querySelector<HTMLInputElement>('#buscar')!;
+
+    campo.value = 'cal';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(html.textContent).toContain('Búsquedas sugeridas');
+    expect(boton(html, 'Calendario académico')).toBeTruthy();
+    expect(boton(html, 'Plantillas')).toBeFalsy();
+
+    campo.value = 'algo que ninguna sugerencia tiene';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(html.textContent).not.toContain('Búsquedas sugeridas');
+
+    campo.value = '';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(boton(html, 'Plantillas')).toBeTruthy();
+    expect(boton(html, 'Calendario académico')).toBeTruthy();
   });
 
   it('al escribir espera a que la persona termine antes de buscar', () => {

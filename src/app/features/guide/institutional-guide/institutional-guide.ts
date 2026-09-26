@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subject, catchError, debounceTime, distinctUntilChanged, map, of, switchMap } from 'rxjs';
@@ -20,6 +20,11 @@ type Resultado = { recursos: RecursoInstitucional[] } | { falla: { status?: numb
 
 /** Espera tras la última tecla antes de buscar, para no llamar al servidor con cada letra. */
 const ESPERA_AL_ESCRIBIR_MS = 300;
+
+/** Sin tildes ni mayúsculas, para comparar como lo hace la búsqueda del backend. */
+function normalizar(texto: string): string {
+  return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+}
 
 /**
  * Guía institucional (RF11, SCRUM-19): se consulta sin cuenta. Busca documentos oficiales, propone
@@ -45,6 +50,9 @@ export class InstitutionalGuide {
   protected readonly recursos = signal<RecursoInstitucional[]>([]);
   protected readonly cargando = signal(true);
   protected readonly error = signal(false);
+  /** El texto que se ve viene de escribir a mano (no de tocar una sugerencia ni de limpiar el campo). */
+  protected readonly escribiendoLibremente = signal(false);
+  private readonly resultados = viewChild<ElementRef<HTMLElement>>('resultados');
 
   /** Los documentos llegan ordenados por categoría: se agrupan sin cambiar ese orden. */
   protected readonly grupos = computed<GrupoDeRecursos[]>(() => {
@@ -58,6 +66,20 @@ export class InstitutionalGuide {
       }
     }
     return grupos;
+  });
+
+  /**
+   * Mientras se escribe a mano, solo se ven las sugerencias que de verdad tienen que ver con lo
+   * escrito (así el buscador guía sin tapar el resultado); si no hay ninguna relacionada, no se
+   * muestra nada. Al tocar una sugerencia o dejar el campo vacío, se vuelve a ver la lista completa.
+   */
+  protected readonly sugerenciasMostradas = computed<string[]>(() => {
+    const consulta = this.texto().trim();
+    if (!consulta || !this.escribiendoLibremente()) {
+      return this.sugerencias();
+    }
+    const consultaNormalizada = normalizar(consulta);
+    return this.sugerencias().filter((sugerencia) => normalizar(sugerencia).includes(consultaNormalizada));
   });
 
   constructor() {
@@ -87,16 +109,20 @@ export class InstitutionalGuide {
   protected escribir(evento: Event): void {
     const texto = (evento.target as HTMLInputElement).value;
     this.texto.set(texto);
+    this.escribiendoLibremente.set(texto.trim().length > 0);
     this.escritura.next(texto);
   }
 
   protected usarSugerencia(sugerencia: string): void {
     this.texto.set(sugerencia);
+    this.escribiendoLibremente.set(false);
     this.buscar({ ...this.filtros(), texto: sugerencia });
+    this.resultados()?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
   protected limpiar(): void {
     this.texto.set('');
+    this.escribiendoLibremente.set(false);
     this.buscar({ ...this.filtros(), texto: '' });
   }
 
