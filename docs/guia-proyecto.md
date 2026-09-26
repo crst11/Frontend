@@ -241,6 +241,7 @@ src/app/
   core/          transversal a toda la app
     session/       session.service (sesión en memoria), session.interceptor (Bearer y refresco),
                    session.guard (rutas protegidas)
+    google/        google-identity.service: dibuja el botón oficial de Google y entrega el ID token
     feedback/      notifier.service (avisos emergentes con SweetAlert2), server-failure (distingue
                    una falla del sistema de un dato que la persona puede corregir)
   data-access/   "puertos" del frontend: clases abstractas (EstudianteRepository, CategoriaDeRecursoRepository...)
@@ -285,7 +286,7 @@ Las pantallas siguen el diseño móvil acordado por el equipo (entrada, registro
 
 **Cuándo usar cada aviso.** Lo que la persona puede corregir (un dato mal escrito, un correo ya registrado, un código incorrecto) va junto al formulario, en el campo o en `.alert`. La ventana emergente es para tres cosas: confirmar una acción que no se puede deshacer (`confirmar`, p. ej. cerrar sesión), celebrar un paso que abre el siguiente (`exito`, `aviso`), explicar algo que pasó sin culpa de la persona (`informar`, p. ej. la sesión venció) y avisar de una falla del sistema (`problema`, cuando `esFalloDelServidor(err)`: sin conexión o error 5xx). El aviso emergente no reemplaza al mensaje en pantalla cuando la pantalla queda vacía (una lista que no cargó): se muestran los dos. Las pantallas no importan SweetAlert2 directamente: piden el aviso al servicio, que descarga la librería solo la primera vez que se usa.
 
-Reglas: errores junto al campo que los causa, además del mensaje del backend en `.alert`; nada de botones de funciones que aún no existen (Google llega con SCRUM-48 y "¿Olvidaste tu contraseña?" cuando exista su historia); la barra de navegación inferior del diseño (Inicio, Horario, Calificaciones, Pendientes, Más) llega con la pantalla del día (RF07), cuando haya secciones a las que ir.
+Reglas: errores junto al campo que los causa, además del mensaje del backend en `.alert`; nada de botones de funciones que aún no existen ("¿Olvidaste tu contraseña?" llega cuando exista su historia); el botón de Google es el oficial que dibuja Google Identity Services (sus reglas de marca no permiten uno propio) y solo aparece si hay `googleClientId`; la barra de navegación inferior del diseño (Inicio, Horario, Calificaciones, Pendientes, Más) llega con la pantalla del día (RF07), cuando haya secciones a las que ir.
 
 ### Reglas del frontend
 
