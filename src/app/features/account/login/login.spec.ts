@@ -7,9 +7,12 @@ import { SessionService } from '../../../core/session/session.service';
 import { Login } from './login';
 
 describe('Login', () => {
-  const notificador = { problema: vi.fn() };
+  const notificador = { problema: vi.fn(), aviso: vi.fn() };
 
-  beforeEach(() => notificador.problema.mockReset().mockResolvedValue(undefined));
+  beforeEach(() => {
+    notificador.problema.mockReset().mockResolvedValue(undefined);
+    notificador.aviso.mockReset().mockResolvedValue(undefined);
+  });
 
   function crear(iniciar: ReturnType<typeof vi.fn>) {
     TestBed.configureTestingModule({
@@ -49,6 +52,7 @@ describe('Login', () => {
 
     expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
     expect(navegar).toHaveBeenCalledWith(['/cuenta/mi-cuenta']);
+    expect(notificador.aviso).toHaveBeenCalledWith('Sesión iniciada.');
   });
 
   it('muestra el mensaje genérico del backend si las credenciales fallan', () => {

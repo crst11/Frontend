@@ -9,9 +9,13 @@ import { MyAccount } from './my-account';
 
 describe('MyAccount', () => {
   const cuenta = { id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', nombres: 'Ana', apellidos: 'Díaz', estado: 'activa' };
-  const notificador = { confirmar: vi.fn() };
+  const notificador = { confirmar: vi.fn(), aviso: vi.fn(), problema: vi.fn() };
 
-  beforeEach(() => notificador.confirmar.mockReset().mockResolvedValue(true));
+  beforeEach(() => {
+    notificador.confirmar.mockReset().mockResolvedValue(true);
+    notificador.aviso.mockReset().mockResolvedValue(undefined);
+    notificador.problema.mockReset().mockResolvedValue(undefined);
+  });
 
   function crear(miCuenta: ReturnType<typeof vi.fn>, cerrar = vi.fn().mockReturnValue(of(undefined))) {
     TestBed.configureTestingModule({
@@ -52,6 +56,14 @@ describe('MyAccount', () => {
     expect(notificador.confirmar).toHaveBeenCalled();
     expect(cerrar).toHaveBeenCalled();
     expect(navegar).toHaveBeenCalledWith(['/cuenta/entrar']);
+    expect(notificador.aviso).toHaveBeenCalledWith('Sesión cerrada.');
+  });
+
+  it('si el servidor no responde al cargar la cuenta, lo avisa en una ventana además del mensaje en pantalla', () => {
+    const { html } = crear(vi.fn().mockReturnValue(throwError(() => ({ status: 0 }))));
+
+    expect(notificador.problema).toHaveBeenCalledWith('No pudimos cargar tu cuenta', expect.any(String));
+    expect(html.querySelector('[role="alert"]')).toBeTruthy();
   });
 
   it('si la persona se arrepiente en la confirmación, la sesión sigue abierta', async () => {

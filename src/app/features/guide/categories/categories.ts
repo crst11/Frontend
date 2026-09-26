@@ -1,5 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { NotifierService } from '../../../core/feedback/notifier.service';
+import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { CategoriaDeRecurso, CategoriaDeRecursoRepository } from '../../../data-access/categoria-de-recurso.repository';
 
 /**
@@ -15,6 +17,7 @@ import { CategoriaDeRecurso, CategoriaDeRecursoRepository } from '../../../data-
 })
 export class Categories {
   private readonly repositorio = inject(CategoriaDeRecursoRepository);
+  private readonly notificador = inject(NotifierService);
 
   protected readonly categorias = signal<CategoriaDeRecurso[]>([]);
   protected readonly cargando = signal(true);
@@ -26,9 +29,15 @@ export class Categories {
         this.categorias.set(categorias);
         this.cargando.set(false);
       },
-      error: () => {
+      error: (err: { status?: number }) => {
         this.error.set(true);
         this.cargando.set(false);
+        if (esFalloDelServidor(err)) {
+          void this.notificador.problema(
+            'No pudimos cargar la guía',
+            'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
+          );
+        }
       },
     });
   }

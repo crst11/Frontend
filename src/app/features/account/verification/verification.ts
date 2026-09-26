@@ -34,7 +34,6 @@ export class Verification {
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly aviso = signal<string | null>(null);
   protected readonly verificada = signal(false);
 
   protected escribir(posicion: number, evento: Event): void {
@@ -72,7 +71,6 @@ export class Verification {
 
     this.enviando.set(true);
     this.error.set(null);
-    this.aviso.set(null);
     this.repositorio.verificarCorreo(this.formulario.controls.correo.value, this.digitos().join('')).subscribe({
       next: () => {
         this.enviando.set(false);
@@ -100,9 +98,8 @@ export class Verification {
     }
 
     this.error.set(null);
-    this.aviso.set(null);
     this.repositorio.reenviarCodigo(correo.value).subscribe({
-      next: () => this.aviso.set('Si tu cuenta está pendiente de verificar, te enviamos un código nuevo.'),
+      next: () => void this.notificador.aviso('Si tu cuenta está pendiente de verificar, te enviamos un código nuevo.'),
       error: (err: HttpErrorResponse) => {
         if (esFalloDelServidor(err)) {
           this.avisarFalloDelServidor('No pudimos enviar el código');

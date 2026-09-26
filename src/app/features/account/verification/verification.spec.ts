@@ -8,9 +8,10 @@ import { EstudianteRepository } from '../../../data-access/estudiante.repository
 import { Verification } from './verification';
 
 describe('Verification', () => {
-  const notificador = { exito: vi.fn(), problema: vi.fn() };
+  const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn() };
 
   beforeEach(() => {
+    notificador.aviso.mockReset().mockResolvedValue(undefined);
     notificador.exito.mockReset().mockResolvedValue(undefined);
     notificador.problema.mockReset().mockResolvedValue(undefined);
   });
@@ -150,6 +151,6 @@ describe('Verification', () => {
     fixture.detectChanges();
 
     expect(reenviarCodigo).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co');
-    expect(html.querySelector('[role="status"]')?.textContent).toContain('Si tu cuenta está pendiente');
+    expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Si tu cuenta está pendiente'));
   });
 });

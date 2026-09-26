@@ -323,6 +323,7 @@ a {
 }
 
 .swal2-popup.app-popup .swal2-icon.swal2-success,
+.swal2-popup.app-popup .swal2-icon.swal2-info,
 .swal2-popup.app-popup .swal2-icon.swal2-question {
   border-color: var(--color-primary);
   color: var(--color-primary);

@@ -42,6 +42,7 @@ export class Login {
       next: () => {
         this.enviando.set(false);
         void this.router.navigate(['/cuenta/mi-cuenta']);
+        void this.notificador.aviso('Sesión iniciada.');
       },
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);

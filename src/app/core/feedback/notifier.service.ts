@@ -27,6 +27,11 @@ export class NotifierService {
     await this.mostrar({ icon: 'error', title: titulo, text: texto, confirmButtonText: 'Entendido' });
   }
 
+  /** Explica algo que pasó sin que la persona hiciera nada mal, como una sesión que venció. */
+  async informar(titulo: string, texto: string): Promise<void> {
+    await this.mostrar({ icon: 'info', title: titulo, text: texto, confirmButtonText: 'Entendido' });
+  }
+
   /** Pide confirmar una acción; con "Cancelar" enfocado para que un Enter distraído no la ejecute. */
   async confirmar(titulo: string, texto: string, textoBoton: string): Promise<boolean> {
     const resultado = await this.mostrar({
