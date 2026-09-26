@@ -26,6 +26,8 @@ describe('MyAccount', () => {
         { provide: EstudianteRepository, useValue: { miCuenta } },
         { provide: SessionService, useValue: { cerrar } },
         { provide: NotifierService, useValue: notificador },
+        // Las pruebas no dependen del environment: sin botón de Google, como sin googleClientId.
+        { provide: GoogleIdentityService, useValue: { disponible: false, dibujarBoton: vi.fn() } },
       ],
     });
     const fixture = TestBed.createComponent(MyAccount);

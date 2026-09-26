@@ -22,6 +22,8 @@ describe('Login', () => {
         provideRouter([]),
         { provide: SessionService, useValue: { iniciar } },
         { provide: NotifierService, useValue: notificador },
+        // Las pruebas no dependen del environment: sin botón de Google, como sin googleClientId.
+        { provide: GoogleIdentityService, useValue: { disponible: false, dibujarBoton: vi.fn() } },
       ],
     });
     const fixture = TestBed.createComponent(Login);
