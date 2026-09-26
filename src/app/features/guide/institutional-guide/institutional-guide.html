@@ -20,11 +20,11 @@
     }
   </form>
 
-  @if (sugerencias().length) {
+  @if (sugerenciasMostradas().length) {
     <section class="guide__block" aria-labelledby="titulo-sugerencias">
       <h2 id="titulo-sugerencias" class="guide__label">Búsquedas sugeridas</h2>
       <div class="chips">
-        @for (sugerencia of sugerencias(); track sugerencia) {
+        @for (sugerencia of sugerenciasMostradas(); track sugerencia) {
           <button class="chip" type="button" [class.chip--active]="filtros().texto === sugerencia"
             [attr.aria-pressed]="filtros().texto === sugerencia" (click)="usarSugerencia(sugerencia)">
             {{ sugerencia }}
@@ -47,7 +47,7 @@
     </div>
   }
 
-  <div class="guide__results" aria-live="polite">
+  <div class="guide__results" aria-live="polite" #resultados>
     @if (cargando()) {
       <p class="subtitle">Buscando…</p>
     } @else if (error()) {
