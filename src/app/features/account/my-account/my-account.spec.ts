@@ -3,6 +3,7 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
+import { GoogleIdentityService } from '../../../core/google/google-identity.service';
 import { SessionService } from '../../../core/session/session.service';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 import { MyAccount } from './my-account';
@@ -76,5 +77,93 @@ describe('MyAccount', () => {
 
     expect(cerrar).not.toHaveBeenCalled();
     expect(navegar).not.toHaveBeenCalled();
+  });
+});
+
+describe('MyAccount con Google', () => {
+  const cuenta = { id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', nombres: 'Ana', apellidos: 'Díaz', estado: 'activa' };
+  const sinVincular = { vinculada: false, correo: null, fechaVinculacion: null };
+  const vinculada = { vinculada: true, correo: 'ana.diaz@gmail.com', fechaVinculacion: '2026-09-26T10:00:00Z' };
+  const notificador = { confirmar: vi.fn(), aviso: vi.fn(), problema: vi.fn(), informar: vi.fn() };
+  let alElegirCuenta: (idToken: string) => void = () => undefined;
+  const google = {
+    disponible: true,
+    dibujarBoton: vi.fn(async (_contenedor: HTMLElement, _texto: string, alElegir: (idToken: string) => void) => {
+      alElegirCuenta = alElegir;
+    }),
+  };
+
+  beforeEach(() => {
+    Object.values(notificador).forEach((simulado) => simulado.mockReset().mockResolvedValue(undefined));
+    notificador.confirmar.mockResolvedValue(true);
+    google.dibujarBoton.mockClear();
+  });
+
+  async function crear(repositorio: Record<string, ReturnType<typeof vi.fn>>) {
+    TestBed.configureTestingModule({
+      imports: [MyAccount],
+      providers: [
+        provideRouter([]),
+        { provide: EstudianteRepository, useValue: { miCuenta: vi.fn().mockReturnValue(of(cuenta)), ...repositorio } },
+        { provide: SessionService, useValue: { cerrar: vi.fn() } },
+        { provide: NotifierService, useValue: notificador },
+        { provide: GoogleIdentityService, useValue: google },
+      ],
+    });
+    const fixture = TestBed.createComponent(MyAccount);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    return { fixture, html: fixture.nativeElement as HTMLElement };
+  }
+
+  it('si no tiene Google, muestra el botón oficial para vincularlo', async () => {
+    const { html } = await crear({ vinculoConGoogle: vi.fn().mockReturnValue(of(sinVincular)) });
+
+    expect(html.textContent).toContain('Vincula tu cuenta de Google');
+    expect(google.dibujarBoton).toHaveBeenCalledWith(
+      html.querySelector('.my-account__google-button'),
+      'continue_with',
+      expect.any(Function),
+    );
+  });
+
+  it('al elegir la cuenta de Google la vincula y muestra su correo', async () => {
+    const vincularGoogle = vi.fn().mockReturnValue(of(vinculada));
+    const { fixture, html } = await crear({ vinculoConGoogle: vi.fn().mockReturnValue(of(sinVincular)), vincularGoogle });
+
+    alElegirCuenta('id-token-de-google');
+    await fixture.whenStable();
+
+    expect(vincularGoogle).toHaveBeenCalledWith('id-token-de-google');
+    expect(html.textContent).toContain('ana.diaz@gmail.com');
+    expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('vinculada'));
+  });
+
+  it('si esa cuenta de Google ya está en otra cuenta, lo explica con el mensaje del servidor', async () => {
+    const detalle = 'Esa cuenta de Google ya está vinculada a otra cuenta de CundiApp';
+    await crear({
+      vinculoConGoogle: vi.fn().mockReturnValue(of(sinVincular)),
+      vincularGoogle: vi
+        .fn()
+        .mockReturnValue(throwError(() => ({ status: 409, error: { title: 'Google ya vinculado', detail: detalle } }))),
+    });
+
+    alElegirCuenta('id-token-de-google');
+
+    expect(notificador.informar).toHaveBeenCalledWith('No pudimos vincular Google', detalle);
+  });
+
+  it('con Google vinculado muestra el correo y, tras confirmar, lo quita', async () => {
+    const desvincularGoogle = vi.fn().mockReturnValue(of(undefined));
+    const { fixture, html } = await crear({ vinculoConGoogle: vi.fn().mockReturnValue(of(vinculada)), desvincularGoogle });
+    expect(html.textContent).toContain('ana.diaz@gmail.com');
+
+    const quitar = Array.from(html.querySelectorAll('button')).find((boton) => boton.textContent?.includes('Quitar Google'))!;
+    quitar.click();
+    await fixture.whenStable();
+
+    expect(notificador.confirmar).toHaveBeenCalled();
+    expect(desvincularGoogle).toHaveBeenCalled();
+    expect(html.textContent).toContain('Vincula tu cuenta de Google');
   });
 });

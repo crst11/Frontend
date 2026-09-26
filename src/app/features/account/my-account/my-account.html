@@ -27,6 +27,24 @@
       </div>
     </section>
 
+    @if (google.disponible && vinculo(); as estadoGoogle) {
+      <section class="card my-account__google" aria-labelledby="titulo-google">
+        <h2 id="titulo-google" class="my-account__section-title">Inicio con Google</h2>
+        @if (estadoGoogle.vinculada) {
+          <p class="my-account__google-text">
+            Entras con un toque usando <b class="my-account__google-email">{{ estadoGoogle.correo }}</b>
+          </p>
+          <button class="button button--outline" type="button" (click)="quitarGoogle()">Quitar Google</button>
+        } @else {
+          <p class="my-account__google-text">
+            Vincula tu cuenta de Google para entrar con un toque, sin escribir tu contraseña.
+          </p>
+          <!-- Botón oficial de Google (API externa): lo dibuja Google Identity Services. -->
+          <div #botonGoogle class="my-account__google-button"></div>
+        }
+      </section>
+    }
+
     <p class="notice">Pronto verás aquí tus clases de hoy, tus próximas entregas y la Brújula Académica.</p>
   }
 
