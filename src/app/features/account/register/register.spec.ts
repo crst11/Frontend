@@ -105,6 +105,24 @@ describe('Register', () => {
     expect(html.querySelector('[role="alert"]')).toBeNull();
   });
 
+  it('si la cuenta se creó pero el correo no salió, lleva a la verificación y explica qué hacer', () => {
+    const detalle = 'Tu cuenta quedó creada, pero no pudimos enviarte el código. Pide uno nuevo en la pantalla de verificación';
+    const registrar = vi
+      .fn()
+      .mockReturnValue(throwError(() => ({ status: 503, error: { title: 'Correo no enviado', detail: detalle } })));
+    const fixture = crear({ registrar });
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const html = fixture.nativeElement as HTMLElement;
+
+    llenarFormularioValido(html);
+    html.querySelector('form')!.dispatchEvent(new Event('submit'));
+
+    expect(navegar).toHaveBeenCalledWith(['/cuenta/verificacion'], {
+      queryParams: { correo: 'ana.diaz@ucundinamarca.edu.co' },
+    });
+    expect(notificador.problema).toHaveBeenCalledWith('No pudimos enviarte el código', detalle);
+  });
+
   it('las dos contraseñas traen el ojo y cada uno muestra solo su campo', () => {
     const fixture = crear({});
     const html = fixture.nativeElement as HTMLElement;
