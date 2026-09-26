@@ -8,3 +8,30 @@
   gap: 8px;
   margin-bottom: 8px;
 }
+
+.login__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.login__divider::before,
+.login__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* Google fija la altura de su botón; se reserva el espacio para que la pantalla no salte al cargarlo. */
+.login__google {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.login__google-hint {
+  text-align: center;
+}
