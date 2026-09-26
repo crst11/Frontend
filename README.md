@@ -13,7 +13,7 @@ Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, 
 | Pantalla | Ruta | Estado |
 |---|---|---|
 | Entrada (iniciar sesión, crear cuenta o consultar la guía) | `/` | Hecho |
-| Guía institucional (categorías) | `/guia` | Hecho, pública |
+| Guía institucional | `/guia` | Hecho, pública: buscador con sugerencias, filtro por categoría y 19 documentos oficiales (reglamentos, calendario, trámites, plantillas de Word, Excel y PowerPoint, convocatorias y plataformas) |
 | Crear cuenta | `/cuenta/registro` | Hecho |
 | Verificar el correo | `/cuenta/verificacion` | Hecho |
 | Iniciar sesión | `/cuenta/entrar` | Hecho, con contraseña o con el botón de Google |
@@ -40,7 +40,7 @@ src/app/
   data-access/      servicios de consumo de la API detrás de clases abstractas (http/ los implementa)
   features/
     entry/          welcome
-    guide/          categories
+    guide/          institutional-guide
     account/        register, verification, login, my-account
 src/styles.css      sistema visual compartido (colores, tipografías, campos, botones)
 ```

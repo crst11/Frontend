@@ -5,6 +5,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Sin publicar]
 
 ### Agregado
+- Guía institucional con buscador (SCRUM-19): sugerencias de qué buscar (reglamento, calendario, plantillas, cancelar materias, grados...), filtro por categoría y documentos agrupados, cada uno con su enlace oficial, *Descargar PDF/Word/Excel/PowerPoint* o *Abrir página oficial*, si sigue vigente y cuándo se verificó. Si no hay resultados, propone las sugerencias. Nuevas clases del sistema visual: `.chip` y `.badge`.
 - Inicio de sesión con Google (SCRUM-48), la API externa del proyecto: botón oficial "Continuar con Google" en *Iniciar sesión* y sección *Inicio con Google* en *Mi cuenta* para vincular o quitar la cuenta de Google. La librería de Google se descarga solo cuando hay que mostrar el botón, y sin `googleClientId` el botón no aparece.
 - Ojo para mostrar u ocultar la contraseña en el registro (las dos contraseñas) y en el inicio de sesión, con el componente reutilizable `app-password-input`.
 - Avisos emergentes con SweetAlert2 detrás de `NotifierService`, con los colores y tipografías de la app: aviso al crear la cuenta, ventana al verificar el correo, confirmación antes de cerrar sesión y ventana cuando el servidor no responde.
