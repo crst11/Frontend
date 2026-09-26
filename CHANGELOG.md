@@ -7,8 +7,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ### Agregado
 - Ojo para mostrar u ocultar la contraseña en el registro (las dos contraseñas) y en el inicio de sesión, con el componente reutilizable `app-password-input`.
 - Avisos emergentes con SweetAlert2 detrás de `NotifierService`, con los colores y tipografías de la app: aviso al crear la cuenta, ventana al verificar el correo, confirmación antes de cerrar sesión y ventana cuando el servidor no responde.
-
 - Aviso "Tu sesión venció" cuando la renovación falla (antes la persona era llevada al inicio de sesión sin explicación) y avisos breves al iniciar sesión, cerrar sesión y pedir un código nuevo.
+- Si la cuenta se crea pero el correo con el código no sale (503 `Correo no enviado`), el registro lleva a la verificación y explica que hay que pedir otro código; el reenvío muestra el mismo aviso si vuelve a fallar.
 
 ### Cambiado
 - Si no hay conexión con el servidor (o responde con un error interno), el registro, el inicio de sesión y la verificación lo dicen con una ventana clara en vez del mensaje genérico dentro del formulario. Los datos que la persona puede corregir siguen mostrándose junto al campo.

@@ -3,7 +3,7 @@ import { Component, ElementRef, computed, inject, signal, viewChildren } from '@
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
-import { esFalloDelServidor } from '../../../core/feedback/server-failure';
+import { esCorreoNoEnviado, esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 
 const LARGO_CODIGO = 6;
@@ -101,6 +101,10 @@ export class Verification {
     this.repositorio.reenviarCodigo(correo.value).subscribe({
       next: () => void this.notificador.aviso('Si tu cuenta está pendiente de verificar, te enviamos un código nuevo.'),
       error: (err: HttpErrorResponse) => {
+        if (esCorreoNoEnviado(err)) {
+          void this.notificador.problema('No pudimos enviar el código', err.error.detail);
+          return;
+        }
         if (esFalloDelServidor(err)) {
           this.avisarFalloDelServidor('No pudimos enviar el código');
           return;
