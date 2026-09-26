@@ -1,0 +1,140 @@
+.guide__search {
+  position: relative;
+}
+
+.guide__search-icon {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.guide__search-input {
+  padding-left: 44px;
+  padding-right: 44px;
+}
+
+/* El navegador dibuja su propia equis en los type="search": se usa la de la app. */
+.guide__search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.guide__clear {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.guide__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.guide__block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.guide__results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.guide__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guide__group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.guide__count {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 13px;
+}
+
+.guide__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide__doc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-left: 4px solid var(--color-primary);
+}
+
+.guide__doc-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.guide__doc-text {
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.guide__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.guide__verified {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.guide__action {
+  height: 44px;
+  font-size: 15px;
+}
+
+.guide__empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide__empty-title {
+  font-weight: 700;
+  color: var(--color-ink);
+}
