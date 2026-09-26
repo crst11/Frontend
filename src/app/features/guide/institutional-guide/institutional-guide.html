@@ -1,0 +1,111 @@
+<main class="screen guide">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/" aria-label="Volver">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Guía institucional</span>
+  </header>
+
+  <p class="subtitle">Documentos oficiales de la universidad, sin necesidad de cuenta.</p>
+
+  <form class="guide__search" role="search" (submit)="$event.preventDefault()">
+    <label class="guide__visually-hidden" for="buscar">Buscar en la guía</label>
+    <svg class="guide__search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+    <input id="buscar" class="field__input guide__search-input" type="search" maxlength="80" autocomplete="off"
+      placeholder="Reglamento, calendario, plantillas…" [value]="texto()" (input)="escribir($event)" />
+    @if (texto()) {
+      <button class="guide__clear" type="button" aria-label="Borrar la búsqueda" (click)="limpiar()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      </button>
+    }
+  </form>
+
+  @if (sugerencias().length) {
+    <section class="guide__block" aria-labelledby="titulo-sugerencias">
+      <h2 id="titulo-sugerencias" class="guide__label">Búsquedas sugeridas</h2>
+      <div class="chips">
+        @for (sugerencia of sugerencias(); track sugerencia) {
+          <button class="chip" type="button" [class.chip--active]="filtros().texto === sugerencia"
+            [attr.aria-pressed]="filtros().texto === sugerencia" (click)="usarSugerencia(sugerencia)">
+            {{ sugerencia }}
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  @if (categorias().length) {
+    <div class="chips guide__categories" role="group" aria-label="Filtrar por categoría">
+      <button class="chip" type="button" [class.chip--active]="filtros().idCategoria === null"
+        [attr.aria-pressed]="filtros().idCategoria === null" (click)="filtrarPorCategoria(null)">Todas</button>
+      @for (categoria of categorias(); track categoria.id) {
+        <button class="chip" type="button" [class.chip--active]="filtros().idCategoria === categoria.id"
+          [attr.aria-pressed]="filtros().idCategoria === categoria.id" (click)="filtrarPorCategoria(categoria.id)">
+          {{ categoria.nombre }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="guide__results" aria-live="polite">
+    @if (cargando()) {
+      <p class="subtitle">Buscando…</p>
+    } @else if (error()) {
+      <p class="alert" role="alert">No se pudo cargar la guía. Intenta de nuevo más tarde.</p>
+    } @else if (!grupos().length) {
+      <div class="guide__empty">
+        <p class="guide__empty-title">
+          @if (filtros().texto.trim()) {
+            No encontramos documentos para «{{ filtros().texto }}».
+          } @else if (filtros().idCategoria !== null) {
+            Esta categoría todavía no tiene documentos.
+          } @else {
+            La guía todavía no tiene documentos.
+          }
+        </p>
+        @if (sugerencias().length) {
+          <p class="subtitle">Prueba con uno de estos temas:</p>
+          <div class="chips">
+            @for (sugerencia of sugerencias(); track sugerencia) {
+              <button class="chip" type="button" (click)="usarSugerencia(sugerencia)">{{ sugerencia }}</button>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      @for (grupo of grupos(); track grupo.categoria.id) {
+        <section class="guide__group" [attr.aria-labelledby]="'categoria-' + grupo.categoria.id">
+          <h2 class="guide__group-title" [id]="'categoria-' + grupo.categoria.id">
+            {{ grupo.categoria.nombre }} <span class="guide__count">{{ grupo.recursos.length }}</span>
+          </h2>
+          <ul class="guide__list">
+            @for (recurso of grupo.recursos; track recurso.id) {
+              <li class="card guide__doc">
+                <h3 class="guide__doc-title">{{ recurso.titulo }}</h3>
+                @if (recurso.descripcion) {
+                  <p class="guide__doc-text">{{ recurso.descripcion }}</p>
+                }
+                <div class="guide__badges">
+                  <span class="badge">{{ recurso.formato ?? 'Página web' }}</span>
+                  <span class="badge" [class.badge--ok]="recurso.vigente">{{ recurso.vigente ? 'Vigente' : 'En revisión' }}</span>
+                  @if (recurso.fechaVerificacion) {
+                    <span class="guide__verified">Verificado el {{ fecha(recurso.fechaVerificacion) }}</span>
+                  }
+                </div>
+                <a class="button button--soft guide__action" [href]="recurso.url" target="_blank" rel="noopener noreferrer"
+                  [attr.download]="recurso.descargable ? '' : null">
+                  {{ recurso.descargable ? 'Descargar ' + recurso.formato : 'Abrir página oficial' }}
+                </a>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </div>
+
+  <p class="notice guide__source">
+    Contenido de apoyo: cada documento se abre en el portal oficial de la Universidad de Cundinamarca, que es
+    la fuente vigente.
+  </p>
+</main>
