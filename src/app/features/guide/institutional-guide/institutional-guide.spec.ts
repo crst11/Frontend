@@ -146,6 +146,13 @@ describe('InstitutionalGuide', () => {
     expect(html.querySelector('.guide__empty')?.textContent).toContain('Prueba con uno de estos temas');
   });
 
+  it('sin búsqueda ni resultados no muestra comillas vacías', () => {
+    const { html } = crear(vi.fn().mockReturnValue(of([])));
+
+    expect(html.querySelector('.guide__empty')?.textContent).toContain('La guía todavía no tiene documentos');
+    expect(html.querySelector('.guide__empty')?.textContent).not.toContain('«»');
+  });
+
   it('si el servidor no responde lo avisa en pantalla y en una ventana', () => {
     const { html } = crear(vi.fn().mockReturnValue(throwError(() => ({ status: 0 }))));
 
