@@ -46,3 +46,30 @@
   font-size: 14px;
   font-weight: 700;
 }
+
+.my-account__google {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.my-account__section-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.my-account__google-text {
+  font-size: 15px;
+  color: var(--color-text);
+}
+
+.my-account__google-email {
+  overflow-wrap: anywhere;
+  color: var(--color-ink);
+}
+
+.my-account__google-button {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}

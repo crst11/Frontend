@@ -8,6 +8,7 @@ import {
   DatosDeRegistro,
   EstudianteRepository,
   SesionIniciada,
+  VinculoConGoogle,
 } from '../estudiante.repository';
 
 /** Valor de la cookie XSRF-TOKEN que el backend deja al iniciar sesión (no es HttpOnly a propósito). */
@@ -37,6 +38,10 @@ export class EstudianteHttpRepository extends EstudianteRepository {
     return this.http.post<SesionIniciada>(`${this.publico}/login`, { correo, contrasena }, { withCredentials: true });
   }
 
+  override iniciarSesionConGoogle(idToken: string): Observable<SesionIniciada> {
+    return this.http.post<SesionIniciada>(`${this.publico}/google`, { idToken }, { withCredentials: true });
+  }
+
   override renovarSesion(): Observable<SesionIniciada> {
     return this.http.post<SesionIniciada>(`${this.publico}/refresco`, null, this.opcionesConCsrf());
   }
@@ -47,6 +52,18 @@ export class EstudianteHttpRepository extends EstudianteRepository {
 
   override miCuenta(): Observable<Cuenta> {
     return this.http.get<Cuenta>(`${environment.apiUrl}/mis/cuenta`);
+  }
+
+  override vinculoConGoogle(): Observable<VinculoConGoogle> {
+    return this.http.get<VinculoConGoogle>(`${environment.apiUrl}/mis/google`);
+  }
+
+  override vincularGoogle(idToken: string): Observable<VinculoConGoogle> {
+    return this.http.post<VinculoConGoogle>(`${environment.apiUrl}/mis/google`, { idToken });
+  }
+
+  override desvincularGoogle(): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/mis/google`);
   }
 
   private opcionesConCsrf() {
