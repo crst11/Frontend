@@ -3,7 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
-import { esFalloDelServidor } from '../../../core/feedback/server-failure';
+import { esCorreoNoEnviado, esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 import { PasswordInput } from '../../../shared/password-input/password-input';
 
@@ -67,6 +67,12 @@ export class Register {
       },
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);
+        if (esCorreoNoEnviado(err)) {
+          // La cuenta sí se creó: lo que sigue es pedir otro código desde la verificación.
+          void this.router.navigate(['/cuenta/verificacion'], { queryParams: { correo } });
+          void this.notificador.problema('No pudimos enviarte el código', err.error.detail);
+          return;
+        }
         if (esFalloDelServidor(err)) {
           void this.notificador.problema(
             'No pudimos crear tu cuenta',

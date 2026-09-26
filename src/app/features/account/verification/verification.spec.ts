@@ -142,6 +142,18 @@ describe('Verification', () => {
     expect(html.querySelector('[role="alert"]')?.textContent).toContain('6 dígitos');
   });
 
+  it('si el correo con el código nuevo no sale, muestra el mensaje del servidor', () => {
+    const detalle = 'No pudimos enviar el código a tu correo. Intenta de nuevo en unos minutos';
+    const reenviarCodigo = vi
+      .fn()
+      .mockReturnValue(throwError(() => ({ status: 503, error: { title: 'Correo no enviado', detail: detalle } })));
+    const fixture = crear({ reenviarCodigo });
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('.verification__resend')!.click();
+
+    expect(notificador.problema).toHaveBeenCalledWith('No pudimos enviar el código', detalle);
+  });
+
   it('pide un código nuevo y avisa sin revelar si la cuenta existe', () => {
     const reenviarCodigo = vi.fn().mockReturnValue(of(undefined));
     const fixture = crear({ reenviarCodigo });
