@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.institutional-email {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-field);
+  background: var(--color-surface);
+}
+
+.institutional-email:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.institutional-email--invalid {
+  border-color: var(--color-danger);
+}
+
+.institutional-email__user {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+}
+
+.institutional-email__user:focus {
+  outline: none;
+}
+
+.institutional-email__user::placeholder {
+  color: #9ca3af;
+}
+
+.institutional-email__domain {
+  flex: none;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 16px;
+  white-space: nowrap;
+}
