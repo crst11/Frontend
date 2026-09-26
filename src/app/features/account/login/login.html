@@ -24,9 +24,9 @@
 
     <div class="field">
       <label class="field__label" for="contrasena">Contraseña</label>
-      <input id="contrasena" class="field__input" type="password" formControlName="contrasena"
-        placeholder="Tu contraseña" autocomplete="current-password"
-        [attr.aria-invalid]="formulario.controls.contrasena.invalid && formulario.controls.contrasena.touched" />
+      <app-password-input inputId="contrasena" formControlName="contrasena" placeholder="Tu contraseña"
+        autocomplete="current-password"
+        [invalid]="formulario.controls.contrasena.invalid && formulario.controls.contrasena.touched" />
       @if (formulario.controls.contrasena.invalid && formulario.controls.contrasena.touched) {
         <p class="field__error">Escribe tu contraseña.</p>
       }

@@ -51,9 +51,6 @@
       @if (error()) {
         <p class="alert" role="alert">{{ error() }}</p>
       }
-      @if (aviso()) {
-        <p class="notice" role="status">{{ aviso() }}</p>
-      }
 
       <div class="screen__footer">
         <button class="button button--primary" type="submit" [disabled]="enviando()">

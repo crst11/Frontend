@@ -25,6 +25,7 @@ La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence,
 
 - Angular 22 con componentes standalone y señales, en TypeScript estricto
 - PWA con service worker
+- SweetAlert2 para los avisos emergentes (detrás de `NotifierService`, se carga solo cuando hace falta)
 - Pruebas con Vitest (runner del CLI de Angular) y ESLint
 
 ## Estructura
@@ -32,6 +33,8 @@ La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence,
 ```
 src/app/
   core/session/     sesión en memoria, interceptor (Bearer y renovación) y guardia de rutas
+  core/feedback/    avisos emergentes (NotifierService) y detección de fallas del servidor
+  shared/           componentes reutilizables (password-input: contraseña con ojo)
   data-access/      servicios de consumo de la API detrás de clases abstractas (http/ los implementa)
   features/
     entry/          welcome
