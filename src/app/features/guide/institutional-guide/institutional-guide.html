@@ -54,7 +54,15 @@
       <p class="alert" role="alert">No se pudo cargar la guía. Intenta de nuevo más tarde.</p>
     } @else if (!grupos().length) {
       <div class="guide__empty">
-        <p class="guide__empty-title">No encontramos documentos para «{{ filtros().texto }}».</p>
+        <p class="guide__empty-title">
+          @if (filtros().texto.trim()) {
+            No encontramos documentos para «{{ filtros().texto }}».
+          } @else if (filtros().idCategoria !== null) {
+            Esta categoría todavía no tiene documentos.
+          } @else {
+            La guía todavía no tiene documentos.
+          }
+        </p>
         @if (sugerencias().length) {
           <p class="subtitle">Prueba con uno de estos temas:</p>
           <div class="chips">
