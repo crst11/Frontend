@@ -16,8 +16,8 @@ Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, 
 | Guía institucional (categorías) | `/guia` | Hecho, pública |
 | Crear cuenta | `/cuenta/registro` | Hecho |
 | Verificar el correo | `/cuenta/verificacion` | Hecho |
-| Iniciar sesión | `/cuenta/entrar` | Hecho |
-| Mi cuenta (protegida) | `/cuenta/mi-cuenta` | Hecho |
+| Iniciar sesión | `/cuenta/entrar` | Hecho, con contraseña o con el botón de Google |
+| Mi cuenta (protegida) | `/cuenta/mi-cuenta` | Hecho; ahí se vincula o se quita Google |
 
 La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence, se renueva con la cookie de refresco que maneja el navegador.
 
@@ -26,6 +26,7 @@ La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence,
 - Angular 22 con componentes standalone y señales, en TypeScript estricto
 - PWA con service worker
 - SweetAlert2 para los avisos emergentes (detrás de `NotifierService`, se carga solo cuando hace falta)
+- API externa: Google Identity Services, el botón oficial "Continuar con Google" (detrás de `GoogleIdentityService`; sin `googleClientId` el botón no aparece)
 - Pruebas con Vitest (runner del CLI de Angular) y ESLint
 
 ## Estructura
@@ -34,6 +35,7 @@ La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence,
 src/app/
   core/session/     sesión en memoria, interceptor (Bearer y renovación) y guardia de rutas
   core/feedback/    avisos emergentes (NotifierService) y detección de fallas del servidor
+  core/google/      botón de Google Identity Services (GoogleIdentityService)
   shared/           componentes reutilizables (password-input: contraseña con ojo)
   data-access/      servicios de consumo de la API detrás de clases abstractas (http/ los implementa)
   features/
