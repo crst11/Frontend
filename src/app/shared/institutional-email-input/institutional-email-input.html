@@ -1,0 +1,17 @@
+<div class="institutional-email" [class.institutional-email--invalid]="invalid()">
+  <input
+    class="institutional-email__user"
+    [id]="inputId()"
+    type="text"
+    inputmode="email"
+    [value]="usuario()"
+    [disabled]="deshabilitado()"
+    [attr.placeholder]="placeholder()"
+    [attr.autocomplete]="autocomplete()"
+    [attr.aria-invalid]="invalid()"
+    [attr.aria-describedby]="inputId() + '-dominio'"
+    (input)="escribir($event)"
+    (blur)="tocar()"
+  />
+  <span class="institutional-email__domain" [id]="inputId() + '-dominio'">{{ dominio }}</span>
+</div>

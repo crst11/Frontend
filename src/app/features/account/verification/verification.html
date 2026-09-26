@@ -33,8 +33,7 @@
       @if (!correoDelRegistro) {
         <div class="field">
           <label class="field__label" for="correo">Correo institucional</label>
-          <input id="correo" class="field__input" type="email" formControlName="correo"
-            placeholder="estudiante@ucundinamarca.edu.co" autocomplete="email" />
+          <app-institutional-email-input inputId="correo" formControlName="correo" autocomplete="email" />
         </div>
       }
 
