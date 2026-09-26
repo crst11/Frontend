@@ -247,7 +247,7 @@ src/app/
   data-access/   "puertos" del frontend: clases abstractas (EstudianteRepository, CategoriaDeRecursoRepository...)
     http/          sus implementaciones con HttpClient; indexeddb/ llega con RF12 (sprint 6)
   features/      una carpeta por área funcional, cada pantalla cargada de forma diferida:
-    guide/         RF11 (categories)
+    guide/         RF11 (institutional-guide: buscador, sugerencias y documentos oficiales)
     account/       RF01, RF02 (register, verification, login, my-account)
     entry/         pantalla con los dos caminos (consulta pública o iniciar sesión)
     importing/     RF03
@@ -281,6 +281,7 @@ Las pantallas siguen el diseño móvil acordado por el equipo (entrada, registro
 | Formularios | `.field`, `.field-row` (dos campos lado a lado), `.field__label`, `.field__input`, `.field__hint`, `.field__error`, `.checkbox` |
 | Botones | `.button` con `--primary` (acción principal), `--soft` (secundaria verde) o `--outline` |
 | Mensajes y bloques | `.alert` (error), `.notice` (aviso), `.card` |
+| Chips y etiquetas | `.chips` con `.chip` / `.chip--active` (sugerencias y filtros que se tocan; con `aria-pressed`), `.badge` / `.badge--ok` (formato del archivo, vigencia) |
 | Contraseñas | `<app-password-input inputId="..." formControlName="...">` de `shared/`: todo campo de contraseña lo usa para traer el ojo; no se escribe un `<input type="password">` suelto |
 | Avisos emergentes | `NotifierService` (`core/feedback`): `exito`, `problema`, `informar`, `confirmar` y `aviso` (mensaje breve que se cierra solo). Están tematizados con los mismos tokens (clase `app-popup` en `styles.css`) |
 
