@@ -241,6 +241,8 @@ src/app/
   core/          transversal a toda la app
     session/       session.service (sesión en memoria), session.interceptor (Bearer y refresco),
                    session.guard (rutas protegidas)
+    feedback/      notifier.service (avisos emergentes con SweetAlert2), server-failure (distingue
+                   una falla del sistema de un dato que la persona puede corregir)
   data-access/   "puertos" del frontend: clases abstractas (EstudianteRepository, CategoriaDeRecursoRepository...)
     http/          sus implementaciones con HttpClient; indexeddb/ llega con RF12 (sprint 6)
   features/      una carpeta por área funcional, cada pantalla cargada de forma diferida:
@@ -255,6 +257,7 @@ src/app/
     simulator/     RF08
     compass/       RF09 Brújula Académica
   shared/        componentes de interfaz reutilizables, pipes, utilidades
+    password-input/  campo de contraseña con el ojo para mostrarla u ocultarla
   app.config.ts
   app.routes.ts
 ```
@@ -277,6 +280,10 @@ Las pantallas siguen el diseño móvil acordado por el equipo (entrada, registro
 | Formularios | `.field`, `.field-row` (dos campos lado a lado), `.field__label`, `.field__input`, `.field__hint`, `.field__error`, `.checkbox` |
 | Botones | `.button` con `--primary` (acción principal), `--soft` (secundaria verde) o `--outline` |
 | Mensajes y bloques | `.alert` (error), `.notice` (aviso), `.card` |
+| Contraseñas | `<app-password-input inputId="..." formControlName="...">` de `shared/`: todo campo de contraseña lo usa para traer el ojo; no se escribe un `<input type="password">` suelto |
+| Avisos emergentes | `NotifierService` (`core/feedback`): `exito`, `problema`, `informar`, `confirmar` y `aviso` (mensaje breve que se cierra solo). Están tematizados con los mismos tokens (clase `app-popup` en `styles.css`) |
+
+**Cuándo usar cada aviso.** Lo que la persona puede corregir (un dato mal escrito, un correo ya registrado, un código incorrecto) va junto al formulario, en el campo o en `.alert`. La ventana emergente es para tres cosas: confirmar una acción que no se puede deshacer (`confirmar`, p. ej. cerrar sesión), celebrar un paso que abre el siguiente (`exito`, `aviso`), explicar algo que pasó sin culpa de la persona (`informar`, p. ej. la sesión venció) y avisar de una falla del sistema (`problema`, cuando `esFalloDelServidor(err)`: sin conexión o error 5xx). El aviso emergente no reemplaza al mensaje en pantalla cuando la pantalla queda vacía (una lista que no cargó): se muestran los dos. Las pantallas no importan SweetAlert2 directamente: piden el aviso al servicio, que descarga la librería solo la primera vez que se usa.
 
 Reglas: errores junto al campo que los causa, además del mensaje del backend en `.alert`; nada de botones de funciones que aún no existen (Google llega con SCRUM-48 y "¿Olvidaste tu contraseña?" cuando exista su historia); la barra de navegación inferior del diseño (Inicio, Horario, Calificaciones, Pendientes, Más) llega con la pantalla del día (RF07), cuando haya secciones a las que ir.
 

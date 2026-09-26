@@ -1,16 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { NotifierService } from '../../../core/feedback/notifier.service';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 import { Verification } from './verification';
 
 describe('Verification', () => {
+  const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn() };
+
+  beforeEach(() => {
+    notificador.aviso.mockReset().mockResolvedValue(undefined);
+    notificador.exito.mockReset().mockResolvedValue(undefined);
+    notificador.problema.mockReset().mockResolvedValue(undefined);
+  });
+
   function crear(repositorio: Partial<EstudianteRepository>, parametros: Record<string, string> = { correo: 'ana.diaz@ucundinamarca.edu.co' }) {
     TestBed.configureTestingModule({
       imports: [Verification, ReactiveFormsModule],
       providers: [
+        provideRouter([]),
+        { provide: NotifierService, useValue: notificador },
         { provide: EstudianteRepository, useValue: repositorio },
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(parametros) } } },
       ],
@@ -66,6 +77,31 @@ describe('Verification', () => {
     expect(html.querySelector('[role="status"]')?.textContent).toContain('cuenta está activa');
   });
 
+  it('al verificar celebra con una ventana y lleva a iniciar sesión', async () => {
+    const verificarCorreo = vi.fn().mockReturnValue(of({ id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', estado: 'activa' }));
+    const fixture = crear({ verificarCorreo });
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    teclear(fixture.nativeElement as HTMLElement, '123456');
+    enviar(fixture);
+    await fixture.whenStable();
+
+    expect(notificador.exito).toHaveBeenCalledWith('¡Correo verificado!', expect.any(String), 'Iniciar sesión');
+    expect(navegar).toHaveBeenCalledWith(['/cuenta/entrar']);
+  });
+
+  it('si el servidor no responde avisa en una ventana y no dice que el código es malo', () => {
+    const verificarCorreo = vi.fn().mockReturnValue(throwError(() => ({ status: 0, error: null })));
+    const fixture = crear({ verificarCorreo });
+    const html = fixture.nativeElement as HTMLElement;
+
+    teclear(html, '123456');
+    enviar(fixture);
+
+    expect(notificador.problema).toHaveBeenCalledWith('No pudimos verificar tu código', expect.any(String));
+    expect(html.querySelector('[role="alert"]')).toBeNull();
+  });
+
   it('reparte en las casillas un código pegado o autocompletado de una vez', () => {
     const verificarCorreo = vi.fn().mockReturnValue(of({ id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', estado: 'activa' }));
     const fixture = crear({ verificarCorreo });
@@ -115,6 +151,6 @@ describe('Verification', () => {
     fixture.detectChanges();
 
     expect(reenviarCodigo).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co');
-    expect(html.querySelector('[role="status"]')?.textContent).toContain('Si tu cuenta está pendiente');
+    expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Si tu cuenta está pendiente'));
   });
 });

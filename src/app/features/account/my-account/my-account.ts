@@ -1,5 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { NotifierService } from '../../../core/feedback/notifier.service';
+import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { SessionService } from '../../../core/session/session.service';
 import { Cuenta, EstudianteRepository } from '../../../data-access/estudiante.repository';
 
@@ -14,6 +16,7 @@ export class MyAccount {
   private readonly repositorio = inject(EstudianteRepository);
   private readonly sesion = inject(SessionService);
   private readonly router = inject(Router);
+  private readonly notificador = inject(NotifierService);
 
   protected readonly cuenta = signal<Cuenta | null>(null);
   protected readonly cargando = signal(true);
@@ -25,9 +28,15 @@ export class MyAccount {
         this.cuenta.set(cuenta);
         this.cargando.set(false);
       },
-      error: () => {
+      error: (err: { status?: number }) => {
         this.error.set(true);
         this.cargando.set(false);
+        if (esFalloDelServidor(err)) {
+          void this.notificador.problema(
+            'No pudimos cargar tu cuenta',
+            'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
+          );
+        }
       },
     });
   }
@@ -49,8 +58,20 @@ export class MyAccount {
     return ((nombres.trim()[0] ?? '') + (apellidos.trim()[0] ?? '')).toUpperCase();
   }
 
-  protected cerrarSesion(): void {
-    const irAEntrar = () => void this.router.navigate(['/cuenta/entrar']);
+  protected async cerrarSesion(): Promise<void> {
+    const confirmado = await this.notificador.confirmar(
+      '¿Cerrar sesión?',
+      'Tendrás que iniciar sesión de nuevo para ver tu cuenta.',
+      'Cerrar sesión',
+    );
+    if (!confirmado) {
+      return;
+    }
+
+    const irAEntrar = () => {
+      void this.router.navigate(['/cuenta/entrar']);
+      void this.notificador.aviso('Sesión cerrada.');
+    };
     this.sesion.cerrar().subscribe({ next: irAEntrar, error: irAEntrar });
   }
 }

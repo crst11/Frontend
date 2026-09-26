@@ -1,7 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, computed, inject, signal, viewChildren } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NotifierService } from '../../../core/feedback/notifier.service';
+import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 
 const LARGO_CODIGO = 6;
@@ -16,6 +18,8 @@ export class Verification {
   private readonly repositorio = inject(EstudianteRepository);
   private readonly fb = inject(FormBuilder);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly notificador = inject(NotifierService);
   private readonly casillas = viewChildren<ElementRef<HTMLInputElement>>('casilla');
 
   /** El correo llega desde el registro; si alguien abre la pantalla directamente, lo escribe. */
@@ -30,7 +34,6 @@ export class Verification {
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly aviso = signal<string | null>(null);
   protected readonly verificada = signal(false);
 
   protected escribir(posicion: number, evento: Event): void {
@@ -68,14 +71,20 @@ export class Verification {
 
     this.enviando.set(true);
     this.error.set(null);
-    this.aviso.set(null);
     this.repositorio.verificarCorreo(this.formulario.controls.correo.value, this.digitos().join('')).subscribe({
       next: () => {
         this.enviando.set(false);
         this.verificada.set(true);
+        void this.notificador
+          .exito('¡Correo verificado!', 'Tu cuenta quedó activa. Ya puedes iniciar sesión.', 'Iniciar sesión')
+          .then(() => this.router.navigate(['/cuenta/entrar']));
       },
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);
+        if (esFalloDelServidor(err)) {
+          this.avisarFalloDelServidor('No pudimos verificar tu código');
+          return;
+        }
         this.error.set(err.error?.detail ?? 'No se pudo verificar el código. Intenta de nuevo.');
       },
     });
@@ -89,12 +98,23 @@ export class Verification {
     }
 
     this.error.set(null);
-    this.aviso.set(null);
     this.repositorio.reenviarCodigo(correo.value).subscribe({
-      next: () => this.aviso.set('Si tu cuenta está pendiente de verificar, te enviamos un código nuevo.'),
-      error: (err: HttpErrorResponse) =>
-        this.error.set(err.error?.detail ?? 'No se pudo enviar el código. Intenta de nuevo.'),
+      next: () => void this.notificador.aviso('Si tu cuenta está pendiente de verificar, te enviamos un código nuevo.'),
+      error: (err: HttpErrorResponse) => {
+        if (esFalloDelServidor(err)) {
+          this.avisarFalloDelServidor('No pudimos enviar el código');
+          return;
+        }
+        this.error.set(err.error?.detail ?? 'No se pudo enviar el código. Intenta de nuevo.');
+      },
     });
+  }
+
+  private avisarFalloDelServidor(titulo: string): void {
+    void this.notificador.problema(
+      titulo,
+      'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
+    );
   }
 
   private repartir(numeros: string, desde: number): void {
