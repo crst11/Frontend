@@ -138,3 +138,8 @@
   font-weight: 700;
   color: var(--color-ink);
 }
+
+/* La altura la calcula el componente: solo lo justo para que el resultado alcance a subir arriba. */
+.guide__scroll-spacer {
+  height: 0;
+}
