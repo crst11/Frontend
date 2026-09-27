@@ -54,6 +54,10 @@ export class EstudianteHttpRepository extends EstudianteRepository {
     return this.http.get<Cuenta>(`${environment.apiUrl}/mis/cuenta`);
   }
 
+  override eliminarCuenta(): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/mis/cuenta`);
+  }
+
   override vinculoConGoogle(): Observable<VinculoConGoogle> {
     return this.http.get<VinculoConGoogle>(`${environment.apiUrl}/mis/google`);
   }
