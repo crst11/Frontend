@@ -129,7 +129,11 @@ export class InstitutionalGuide {
   }
 
   protected filtrarPorCategoria(idCategoria: number | null): void {
-    this.buscar({ ...this.filtros(), idCategoria });
+    // Categoría y búsqueda por texto son dos formas distintas de mirar la guía: combinarlas podía
+    // dejar un filtro de texto de una sugerencia anterior sin ningún documento en la nueva categoría.
+    this.texto.set('');
+    this.escribiendoLibremente.set(false);
+    this.buscar({ texto: '', idCategoria });
   }
 
   /** "2026-09-26" → "26 sept. 2026", sin depender de la zona horaria del navegador. */

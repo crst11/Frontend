@@ -155,7 +155,7 @@ describe('InstitutionalGuide', () => {
     }
   });
 
-  it('filtra por categoría conservando lo que se buscó', () => {
+  it('filtra por categoría', () => {
     const buscar = vi.fn().mockReturnValue(of([plantillaWord]));
     const { fixture, html } = crear(buscar);
 
@@ -164,6 +164,25 @@ describe('InstitutionalGuide', () => {
 
     expect(buscar).toHaveBeenLastCalledWith('', 3);
     expect(boton(html, 'Todas').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('elegir una categoría limpia la búsqueda, para que no queden dos cosas marcadas a la vez', () => {
+    const buscar = vi.fn()
+      .mockReturnValueOnce(of([])) // carga inicial
+      .mockReturnValueOnce(of([reglamento])) // tocar la sugerencia Calendario académico
+      .mockReturnValueOnce(of([])); // filtrar por Reglamentos
+    const { fixture, html } = crear(buscar);
+
+    boton(html, 'Calendario académico').click();
+    fixture.detectChanges();
+    boton(html, 'Reglamentos').click();
+    fixture.detectChanges();
+
+    expect(buscar).toHaveBeenLastCalledWith('', 1);
+    expect(html.querySelector<HTMLInputElement>('#buscar')!.value).toBe('');
+    // Ya no queda ninguna sugerencia marcada a la vez que la categoría: solo hay un filtro activo.
+    expect(boton(html, 'Calendario académico').getAttribute('aria-pressed')).toBe('false');
+    expect(boton(html, 'Reglamentos').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('una sugerencia busca en toda la guía aunque haya quedado un filtro de categoría puesto', () => {
