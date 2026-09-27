@@ -6,11 +6,12 @@ import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { GoogleIdentityService } from '../../../core/google/google-identity.service';
 import { SessionService } from '../../../core/session/session.service';
+import { InstitutionalEmailInput } from '../../../shared/institutional-email-input/institutional-email-input';
 import { PasswordInput } from '../../../shared/password-input/password-input';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, PasswordInput],
+  imports: [ReactiveFormsModule, RouterLink, PasswordInput, InstitutionalEmailInput],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })

@@ -58,6 +58,15 @@ describe('Login', () => {
     expect(notificador.aviso).toHaveBeenCalledWith('Sesión iniciada.');
   });
 
+  it('entra con solo el usuario: el dominio institucional ya está puesto', () => {
+    const iniciar = vi.fn().mockReturnValue(of({ id: 1 }));
+    const fixture = crear(iniciar);
+
+    enviar(fixture, 'ana.diaz', 'claveSegura1');
+
+    expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
+  });
+
   it('muestra el mensaje genérico del backend si las credenciales fallan', () => {
     const iniciar = vi.fn().mockReturnValue(throwError(() => ({ status: 401, error: { detail: 'Correo o contraseña incorrectos' } })));
     const fixture = crear(iniciar);

@@ -57,10 +57,11 @@ describe('Verification', () => {
     expect(html.querySelector('#correo')).toBeNull();
   });
 
-  it('pide el correo si la pantalla se abre sin venir del registro', () => {
+  it('pide el correo si la pantalla se abre sin venir del registro, con el dominio ya puesto', () => {
     const html = crear({}, {}).nativeElement as HTMLElement;
 
     expect(html.querySelector('#correo')).toBeTruthy();
+    expect(html.querySelector('.institutional-email__domain')?.textContent?.trim()).toBe('@ucundinamarca.edu.co');
   });
 
   it('verifica el código escrito en las casillas y confirma que la cuenta quedó activa', () => {

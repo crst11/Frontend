@@ -46,6 +46,28 @@ describe('Register', () => {
     consentimiento.dispatchEvent(new Event('change'));
   }
 
+  it('el correo institucional ya trae el dominio puesto: solo se escribe el usuario', () => {
+    const html = crear({}).nativeElement as HTMLElement;
+
+    expect(html.querySelector('.institutional-email__domain')?.textContent?.trim()).toBe('@ucundinamarca.edu.co');
+  });
+
+  it('registra con solo el usuario escrito, el dominio se agrega solo', () => {
+    const registrar = vi.fn().mockReturnValue(of({ id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', estado: 'pendiente' }));
+    const fixture = crear({ registrar });
+    const html = fixture.nativeElement as HTMLElement;
+
+    escribir(html, 'nombres', 'Ana');
+    escribir(html, 'apellidos', 'Díaz');
+    escribir(html, 'correo', 'ana.diaz');
+    escribir(html, 'contrasena', 'unaClaveSegura');
+    escribir(html, 'confirmacion', 'unaClaveSegura');
+    html.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click();
+    html.querySelector('form')!.dispatchEvent(new Event('submit'));
+
+    expect(registrar).toHaveBeenCalledWith(expect.objectContaining({ correo: 'ana.diaz@ucundinamarca.edu.co' }));
+  });
+
   it('no envía si la confirmación no coincide y lo avisa en el campo', () => {
     const registrar = vi.fn();
     const fixture = crear({ registrar });
