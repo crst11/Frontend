@@ -49,6 +49,7 @@ export abstract class EstudianteRepository {
   abstract renovarSesion(): Observable<SesionIniciada>;
   abstract cerrarSesion(): Observable<void>;
   abstract miCuenta(): Observable<Cuenta>;
+  abstract eliminarCuenta(): Observable<void>;
   abstract vinculoConGoogle(): Observable<VinculoConGoogle>;
   abstract vincularGoogle(idToken: string): Observable<VinculoConGoogle>;
   abstract desvincularGoogle(): Observable<void>;
