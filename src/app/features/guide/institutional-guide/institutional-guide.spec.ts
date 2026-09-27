@@ -66,12 +66,18 @@ describe('InstitutionalGuide', () => {
     return Array.from(html.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.trim() === texto)!;
   }
 
+  /** El desplazamiento a resultados se calcula tras dos vueltas de setTimeout (medir, luego bajar). */
+  function esperarElDesplazamiento(): Promise<void> {
+    return new Promise((resolver) => setTimeout(() => setTimeout(resolver, 10), 10));
+  }
+
   it('muestra toda la guía agrupada por categoría, con las sugerencias para buscar', () => {
     const { html } = crear(vi.fn().mockReturnValue(of([reglamento, gaceta, plantillaWord])));
 
     const grupos = Array.from(html.querySelectorAll('.guide__group-title')).map((h) => h.textContent?.replace(/\s+/g, ' ').trim());
     expect(grupos).toEqual(['Reglamentos 2', 'Plantillas y formatos 1']);
     expect(html.textContent).toContain('Búsquedas sugeridas');
+    expect(html.textContent).toContain('Categorías');
     expect(boton(html, 'Plantillas')).toBeTruthy();
   });
 
@@ -89,17 +95,49 @@ describe('InstitutionalGuide', () => {
     expect(html.textContent).toContain('Verificado el');
   });
 
-  it('una sugerencia busca de inmediato y queda marcada', () => {
+  it('una sugerencia busca de inmediato, queda marcada y baja hasta los resultados', async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
     const buscar = vi.fn().mockReturnValueOnce(of([reglamento, plantillaWord])).mockReturnValueOnce(of([plantillaWord]));
     const { fixture, html } = crear(buscar);
 
     boton(html, 'Plantillas').click();
     fixture.detectChanges();
+    await esperarElDesplazamiento();
 
     expect(buscar).toHaveBeenLastCalledWith('Plantillas', null);
     expect(html.querySelectorAll('.guide__doc').length).toBe(1);
     expect(boton(html, 'Plantillas').getAttribute('aria-pressed')).toBe('true');
     expect(html.querySelector<HTMLInputElement>('#buscar')!.value).toBe('Plantillas');
+    // Al elegir una sugerencia se ve toda la lista (no se filtra) y la pantalla baja al resultado.
+    expect(boton(html, 'Calendario académico')).toBeTruthy();
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it('al escribir a mano solo aparecen las sugerencias relacionadas con lo escrito', () => {
+    const { fixture, html } = crear(vi.fn().mockReturnValue(of([reglamento])));
+    const campo = html.querySelector<HTMLInputElement>('#buscar')!;
+
+    campo.value = 'cal';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(html.textContent).toContain('Búsquedas sugeridas');
+    expect(boton(html, 'Calendario académico')).toBeTruthy();
+    expect(boton(html, 'Plantillas')).toBeFalsy();
+
+    campo.value = 'algo que ninguna sugerencia tiene';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(html.textContent).not.toContain('Búsquedas sugeridas');
+
+    campo.value = '';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(boton(html, 'Plantillas')).toBeTruthy();
+    expect(boton(html, 'Calendario académico')).toBeTruthy();
   });
 
   it('al escribir espera a que la persona termine antes de buscar', () => {
@@ -124,15 +162,75 @@ describe('InstitutionalGuide', () => {
     }
   });
 
-  it('filtra por categoría conservando lo que se buscó', () => {
+  it('escribir no mueve la pantalla: solo se baja al elegir algo', () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    vi.useFakeTimers();
+    try {
+      const { html } = crear(vi.fn().mockReturnValue(of([reglamento])));
+      const campo = html.querySelector<HTMLInputElement>('#buscar')!;
+
+      campo.value = 'reglamento';
+      campo.dispatchEvent(new Event('input'));
+      vi.advanceTimersByTime(300);
+
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('filtra por categoría y baja hasta el resultado', async () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
     const buscar = vi.fn().mockReturnValue(of([plantillaWord]));
     const { fixture, html } = crear(buscar);
 
     boton(html, 'Plantillas y formatos').click();
     fixture.detectChanges();
+    await esperarElDesplazamiento();
 
     expect(buscar).toHaveBeenLastCalledWith('', 3);
     expect(boton(html, 'Todas').getAttribute('aria-pressed')).toBe('false');
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  it('elegir una categoría limpia la búsqueda, para que no queden dos cosas marcadas a la vez', () => {
+    const buscar = vi.fn()
+      .mockReturnValueOnce(of([])) // carga inicial
+      .mockReturnValueOnce(of([reglamento])) // tocar la sugerencia Calendario académico
+      .mockReturnValueOnce(of([])); // filtrar por Reglamentos
+    const { fixture, html } = crear(buscar);
+
+    boton(html, 'Calendario académico').click();
+    fixture.detectChanges();
+    boton(html, 'Reglamentos').click();
+    fixture.detectChanges();
+
+    expect(buscar).toHaveBeenLastCalledWith('', 1);
+    expect(html.querySelector<HTMLInputElement>('#buscar')!.value).toBe('');
+    // Ya no queda ninguna sugerencia marcada a la vez que la categoría: solo hay un filtro activo.
+    expect(boton(html, 'Calendario académico').getAttribute('aria-pressed')).toBe('false');
+    expect(boton(html, 'Reglamentos').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('una sugerencia busca en toda la guía aunque haya quedado un filtro de categoría puesto', () => {
+    const buscar = vi.fn()
+      .mockReturnValueOnce(of([])) // carga inicial
+      .mockReturnValueOnce(of([])) // filtrar por Reglamentos
+      .mockReturnValueOnce(of([plantillaWord])); // tocar la sugerencia Plantillas
+    const { fixture, html } = crear(buscar);
+
+    // Filtrar por Reglamentos y luego tocar una sugerencia de otra categoría (Plantillas y formatos)
+    // no debía combinar los dos filtros: antes eso hacía que no apareciera nada.
+    boton(html, 'Reglamentos').click();
+    fixture.detectChanges();
+    boton(html, 'Plantillas').click();
+    fixture.detectChanges();
+
+    expect(buscar).toHaveBeenLastCalledWith('Plantillas', null);
+    expect(boton(html, 'Todas').getAttribute('aria-pressed')).toBe('true');
+    expect(html.querySelectorAll('.guide__doc').length).toBe(1);
   });
 
   it('si no encuentra nada lo dice y propone las sugerencias', () => {
