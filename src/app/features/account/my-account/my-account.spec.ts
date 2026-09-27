@@ -18,13 +18,18 @@ describe('MyAccount', () => {
     notificador.problema.mockReset().mockResolvedValue(undefined);
   });
 
-  function crear(miCuenta: ReturnType<typeof vi.fn>, cerrar = vi.fn().mockReturnValue(of(undefined))) {
+  function crear(
+    miCuenta: ReturnType<typeof vi.fn>,
+    cerrar = vi.fn().mockReturnValue(of(undefined)),
+    eliminarCuenta = vi.fn().mockReturnValue(of(undefined)),
+  ) {
+    const limpiar = vi.fn();
     TestBed.configureTestingModule({
       imports: [MyAccount],
       providers: [
         provideRouter([]),
-        { provide: EstudianteRepository, useValue: { miCuenta } },
-        { provide: SessionService, useValue: { cerrar } },
+        { provide: EstudianteRepository, useValue: { miCuenta, eliminarCuenta } },
+        { provide: SessionService, useValue: { cerrar, limpiar } },
         { provide: NotifierService, useValue: notificador },
         // Las pruebas no dependen del environment: sin botón de Google, como sin googleClientId.
         { provide: GoogleIdentityService, useValue: { disponible: false, dibujarBoton: vi.fn() } },
@@ -32,7 +37,11 @@ describe('MyAccount', () => {
     });
     const fixture = TestBed.createComponent(MyAccount);
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement, cerrar };
+    return { fixture, html: fixture.nativeElement as HTMLElement, cerrar, eliminarCuenta, limpiar };
+  }
+
+  function botonEliminar(html: HTMLElement): HTMLButtonElement {
+    return Array.from(html.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.includes('Eliminar mi cuenta'))!;
   }
 
   it('muestra los datos de la cuenta del estudiante autenticado', () => {
@@ -78,6 +87,46 @@ describe('MyAccount', () => {
     await fixture.whenStable();
 
     expect(cerrar).not.toHaveBeenCalled();
+    expect(navegar).not.toHaveBeenCalled();
+  });
+
+  it('eliminar cuenta pide confirmación, limpia la sesión local sin otra petición y lleva a la entrada', async () => {
+    const { fixture, html, eliminarCuenta, limpiar } = crear(vi.fn().mockReturnValue(of(cuenta)));
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    botonEliminar(html).click();
+    await fixture.whenStable();
+
+    expect(notificador.confirmar).toHaveBeenCalled();
+    expect(eliminarCuenta).toHaveBeenCalled();
+    expect(limpiar).toHaveBeenCalled();
+    expect(navegar).toHaveBeenCalledWith(['/']);
+    expect(notificador.aviso).toHaveBeenCalledWith('Tu cuenta fue eliminada.');
+  });
+
+  it('si se arrepiente al eliminar la cuenta, no pasa nada', async () => {
+    notificador.confirmar.mockResolvedValue(false);
+    const { fixture, html, eliminarCuenta, limpiar } = crear(vi.fn().mockReturnValue(of(cuenta)));
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    botonEliminar(html).click();
+    await fixture.whenStable();
+
+    expect(eliminarCuenta).not.toHaveBeenCalled();
+    expect(limpiar).not.toHaveBeenCalled();
+    expect(navegar).not.toHaveBeenCalled();
+  });
+
+  it('si el servidor falla al eliminar la cuenta, lo avisa y la sesión sigue abierta', async () => {
+    const eliminarCuenta = vi.fn().mockReturnValue(throwError(() => ({ status: 0 })));
+    const { fixture, html, limpiar } = crear(vi.fn().mockReturnValue(of(cuenta)), undefined, eliminarCuenta);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    botonEliminar(html).click();
+    await fixture.whenStable();
+
+    expect(notificador.problema).toHaveBeenCalledWith('No pudimos eliminar tu cuenta', expect.any(String));
+    expect(limpiar).not.toHaveBeenCalled();
     expect(navegar).not.toHaveBeenCalled();
   });
 });
