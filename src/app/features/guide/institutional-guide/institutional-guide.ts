@@ -52,7 +52,11 @@ export class InstitutionalGuide {
   protected readonly error = signal(false);
   /** El texto que se ve viene de escribir a mano (no de tocar una sugerencia ni de limpiar el campo). */
   protected readonly escribiendoLibremente = signal(false);
+  /** Cuánto espacio en blanco hace falta al final para que el resultado alcance a subir hasta arriba. */
+  protected readonly alturaEspacio = signal(0);
   private readonly resultados = viewChild<ElementRef<HTMLElement>>('resultados');
+  /** Si la búsqueda en curso viene de elegir algo (sugerencia o categoría), hay que bajar al resultado. */
+  private irAResultadosAlTerminar = false;
 
   /** Los documentos llegan ordenados por categoría: se agrupan sin cambiar ese orden. */
   protected readonly grupos = computed<GrupoDeRecursos[]>(() => {
@@ -112,21 +116,27 @@ export class InstitutionalGuide {
     const texto = (evento.target as HTMLInputElement).value;
     this.texto.set(texto);
     this.escribiendoLibremente.set(texto.trim().length > 0);
+    // Escribir nunca baja la pantalla: el espacio que pudo quedar de una sugerencia o categoría
+    // elegida antes ya no aplica a lo que se está escribiendo ahora.
+    this.alturaEspacio.set(0);
     this.escritura.next(texto);
   }
 
   protected usarSugerencia(sugerencia: string): void {
     this.texto.set(sugerencia);
     this.escribiendoLibremente.set(false);
+    // La bandera se marca ANTES de buscar: como la búsqueda puede responder en el mismo instante
+    // (síncrona en las pruebas), mostrar() ya la revisa antes de que buscar() termine de ejecutarse.
+    this.irAResultadosAlTerminar = true;
     // Una sugerencia busca en toda la guía: si quedaba un filtro de categoría puesto de antes,
     // combinado con el texto podía no encontrar nada aunque el documento sí existiera.
     this.buscar({ texto: sugerencia, idCategoria: null });
-    this.irAResultados();
   }
 
   protected limpiar(): void {
     this.texto.set('');
     this.escribiendoLibremente.set(false);
+    this.alturaEspacio.set(0);
     this.buscar({ ...this.filtros(), texto: '' });
   }
 
@@ -135,8 +145,9 @@ export class InstitutionalGuide {
     // dejar un filtro de texto de una sugerencia anterior sin ningún documento en la nueva categoría.
     this.texto.set('');
     this.escribiendoLibremente.set(false);
+    // La bandera se marca ANTES de buscar: ver el comentario en usarSugerencia().
+    this.irAResultadosAlTerminar = true;
     this.buscar({ texto: '', idCategoria });
-    this.irAResultados();
   }
 
   /** "2026-09-26" → "26 sept. 2026", sin depender de la zona horaria del navegador. */
@@ -151,9 +162,25 @@ export class InstitutionalGuide {
     this.solicitudes.next(filtros);
   }
 
-  /** Sube el resultado buscado hasta arriba de la pantalla, para que quede claro que sí se buscó. */
+  /**
+   * Sube el resultado buscado hasta arriba de la pantalla. Si el resultado es corto y no hay de
+   * dónde tomar espacio para subirlo del todo, se agrega solo el espacio en blanco que haga falta
+   * (nunca de más, para no dejar una zona vacía en búsquedas que ya llenan la pantalla).
+   */
   private irAResultados(): void {
-    this.resultados()?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    const destino = this.resultados()?.nativeElement;
+    if (!destino) {
+      return;
+    }
+    // Se espera a que Angular pinte el resultado ya cargado antes de medir cuánto falta.
+    setTimeout(() => {
+      const alturaSinEspacio = document.documentElement.scrollHeight - this.alturaEspacio();
+      const offsetDestino = destino.getBoundingClientRect().top + window.scrollY;
+      const faltante = offsetDestino + window.innerHeight - alturaSinEspacio;
+      this.alturaEspacio.set(Math.max(0, faltante));
+      // Y a que se pinte el nuevo espacio, antes de que el desplazamiento calcule hasta dónde llegar.
+      setTimeout(() => destino.scrollIntoView?.({ behavior: 'smooth', block: 'start' }));
+    });
   }
 
   private mostrar(resultado: Resultado): void {
@@ -161,15 +188,19 @@ export class InstitutionalGuide {
     if ('recursos' in resultado) {
       this.error.set(false);
       this.recursos.set(resultado.recursos);
-      return;
+    } else {
+      this.error.set(true);
+      this.recursos.set([]);
+      if (esFalloDelServidor(resultado.falla)) {
+        void this.notificador.problema(
+          'No pudimos cargar la guía',
+          'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
+        );
+      }
     }
-    this.error.set(true);
-    this.recursos.set([]);
-    if (esFalloDelServidor(resultado.falla)) {
-      void this.notificador.problema(
-        'No pudimos cargar la guía',
-        'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
-      );
+    if (this.irAResultadosAlTerminar) {
+      this.irAResultadosAlTerminar = false;
+      this.irAResultados();
     }
   }
 }
