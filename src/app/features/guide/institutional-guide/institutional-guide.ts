@@ -139,6 +139,7 @@ export class InstitutionalGuide {
     this.texto.set('');
     this.escribiendoLibremente.set(false);
     this.buscar({ texto: '', idCategoria });
+    this.irAResultados();
   }
 
   /** "2026-09-26" → "26 sept. 2026", sin depender de la zona horaria del navegador. */

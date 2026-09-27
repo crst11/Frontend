@@ -174,7 +174,9 @@ describe('InstitutionalGuide', () => {
     }
   });
 
-  it('filtra por categoría', () => {
+  it('filtra por categoría y baja hasta el resultado', () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
     const buscar = vi.fn().mockReturnValue(of([plantillaWord]));
     const { fixture, html } = crear(buscar);
 
@@ -183,6 +185,7 @@ describe('InstitutionalGuide', () => {
 
     expect(buscar).toHaveBeenLastCalledWith('', 3);
     expect(boton(html, 'Todas').getAttribute('aria-pressed')).toBe('false');
+    expect(scrollIntoView).toHaveBeenCalled();
   });
 
   it('elegir una categoría limpia la búsqueda, para que no queden dos cosas marcadas a la vez', () => {
