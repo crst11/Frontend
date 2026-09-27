@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esCorreoNoEnviado, esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
+import { InstitutionalEmailInput } from '../../../shared/institutional-email-input/institutional-email-input';
 import { PasswordInput } from '../../../shared/password-input/password-input';
 
 /** Confirmar la contraseña es solo una ayuda de la interfaz: el backend nunca la recibe. */
@@ -16,7 +17,7 @@ function contrasenasIguales(grupo: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, PasswordInput],
+  imports: [ReactiveFormsModule, RouterLink, PasswordInput, InstitutionalEmailInput],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })

@@ -14,11 +14,10 @@
 
     <div class="field">
       <label class="field__label" for="correo">Correo institucional</label>
-      <input id="correo" class="field__input" type="email" formControlName="correo"
-        placeholder="ejemplo@ucundinamarca.edu.co" autocomplete="username"
-        [attr.aria-invalid]="formulario.controls.correo.invalid && formulario.controls.correo.touched" />
+      <app-institutional-email-input inputId="correo" formControlName="correo"
+        [invalid]="formulario.controls.correo.invalid && formulario.controls.correo.touched" />
       @if (formulario.controls.correo.invalid && formulario.controls.correo.touched) {
-        <p class="field__error">Escribe tu correo institucional.</p>
+        <p class="field__error">Escribe tu usuario institucional.</p>
       }
     </div>
 

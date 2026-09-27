@@ -5,12 +5,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esCorreoNoEnviado, esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
+import { InstitutionalEmailInput } from '../../../shared/institutional-email-input/institutional-email-input';
 
 const LARGO_CODIGO = 6;
 
 @Component({
   selector: 'app-verification',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, InstitutionalEmailInput],
   templateUrl: './verification.html',
   styleUrl: './verification.css',
 })

@@ -33,13 +33,10 @@
 
     <div class="field">
       <label class="field__label" for="correo">Correo institucional</label>
-      <input id="correo" class="field__input" type="email" formControlName="correo"
-        placeholder="estudiante@ucundinamarca.edu.co" autocomplete="email"
-        aria-describedby="correo-ayuda" [attr.aria-invalid]="invalido('correo')" />
+      <app-institutional-email-input inputId="correo" formControlName="correo" autocomplete="email"
+        [invalid]="invalido('correo')" />
       @if (invalido('correo')) {
-        <p class="field__error">Escribe un correo válido.</p>
-      } @else {
-        <p id="correo-ayuda" class="field__hint">Debe terminar en &#64;ucundinamarca.edu.co</p>
+        <p class="field__error">Escribe tu usuario institucional.</p>
       }
     </div>
 
