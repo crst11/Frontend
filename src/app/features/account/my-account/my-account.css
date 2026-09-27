@@ -73,3 +73,15 @@
   justify-content: center;
   min-height: 44px;
 }
+
+.my-account__delete {
+  align-self: center;
+  padding: 8px;
+  border: 0;
+  background: none;
+  color: var(--color-danger);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}

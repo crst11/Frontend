@@ -140,4 +140,29 @@ export class MyAccount {
     };
     this.sesion.cerrar().subscribe({ next: irAEntrar, error: irAEntrar });
   }
+
+  protected async eliminarCuenta(): Promise<void> {
+    const confirmado = await this.notificador.confirmar(
+      '¿Eliminar tu cuenta?',
+      'Dejarás de poder iniciar sesión con este correo, con contraseña o con Google. No podrás deshacerlo desde la app.',
+      'Eliminar cuenta',
+    );
+    if (!confirmado) {
+      return;
+    }
+
+    this.repositorio.eliminarCuenta().subscribe({
+      next: () => {
+        // El backend ya revocó la sesión: solo hace falta limpiar el estado local, sin otra petición.
+        this.sesion.limpiar();
+        void this.router.navigate(['/']);
+        void this.notificador.aviso('Tu cuenta fue eliminada.');
+      },
+      error: () =>
+        void this.notificador.problema(
+          'No pudimos eliminar tu cuenta',
+          'No logramos comunicarnos con el servidor. Intenta de nuevo en unos minutos.',
+        ),
+    });
+  }
 }
