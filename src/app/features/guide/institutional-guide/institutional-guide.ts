@@ -96,14 +96,11 @@ export class InstitutionalGuide {
       )
       .subscribe((resultado) => this.mostrar(resultado));
 
+    // Escribir no baja la pantalla: eso se sentía como si se moviera solo. Solo se baja al elegir
+    // algo (una sugerencia o una categoría), que es cuando la persona de verdad pidió un resultado.
     this.escritura
       .pipe(debounceTime(ESPERA_AL_ESCRIBIR_MS), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((texto) => {
-        this.buscar({ ...this.filtros(), texto });
-        if (texto.trim()) {
-          this.irAResultados();
-        }
-      });
+      .subscribe((texto) => this.buscar({ ...this.filtros(), texto }));
 
     // Las sugerencias y las categorías son ayudas: si fallan, la guía sigue funcionando sin ellas.
     this.repositorio.sugerencias().subscribe({ next: (s) => this.sugerencias.set(s), error: () => undefined });
