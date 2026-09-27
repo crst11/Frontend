@@ -72,6 +72,7 @@ describe('InstitutionalGuide', () => {
     const grupos = Array.from(html.querySelectorAll('.guide__group-title')).map((h) => h.textContent?.replace(/\s+/g, ' ').trim());
     expect(grupos).toEqual(['Reglamentos 2', 'Plantillas y formatos 1']);
     expect(html.textContent).toContain('Búsquedas sugeridas');
+    expect(html.textContent).toContain('Categorías');
     expect(boton(html, 'Plantillas')).toBeTruthy();
   });
 
@@ -150,6 +151,24 @@ describe('InstitutionalGuide', () => {
 
       expect(buscar).toHaveBeenCalledTimes(2);
       expect(buscar).toHaveBeenLastCalledWith('cal', null);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('al buscar escribiendo también baja hasta el resultado', () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    vi.useFakeTimers();
+    try {
+      const { html } = crear(vi.fn().mockReturnValue(of([reglamento])));
+      const campo = html.querySelector<HTMLInputElement>('#buscar')!;
+
+      campo.value = 'reglamento';
+      campo.dispatchEvent(new Event('input'));
+      vi.advanceTimersByTime(300);
+
+      expect(scrollIntoView).toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }

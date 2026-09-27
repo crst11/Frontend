@@ -35,16 +35,19 @@
   }
 
   @if (categorias().length) {
-    <div class="chips guide__categories" role="group" aria-label="Filtrar por categoría">
-      <button class="chip" type="button" [class.chip--active]="filtros().idCategoria === null"
-        [attr.aria-pressed]="filtros().idCategoria === null" (click)="filtrarPorCategoria(null)">Todas</button>
-      @for (categoria of categorias(); track categoria.id) {
-        <button class="chip" type="button" [class.chip--active]="filtros().idCategoria === categoria.id"
-          [attr.aria-pressed]="filtros().idCategoria === categoria.id" (click)="filtrarPorCategoria(categoria.id)">
-          {{ categoria.nombre }}
-        </button>
-      }
-    </div>
+    <section class="guide__block" aria-labelledby="titulo-categorias">
+      <h2 id="titulo-categorias" class="guide__label">Categorías</h2>
+      <div class="chips" role="group" aria-label="Filtrar por categoría">
+        <button class="chip" type="button" [class.chip--active]="filtros().idCategoria === null"
+          [attr.aria-pressed]="filtros().idCategoria === null" (click)="filtrarPorCategoria(null)">Todas</button>
+        @for (categoria of categorias(); track categoria.id) {
+          <button class="chip" type="button" [class.chip--active]="filtros().idCategoria === categoria.id"
+            [attr.aria-pressed]="filtros().idCategoria === categoria.id" (click)="filtrarPorCategoria(categoria.id)">
+            {{ categoria.nombre }}
+          </button>
+        }
+      </div>
+    </section>
   }
 
   <div class="guide__results" aria-live="polite" #resultados>
@@ -108,4 +111,7 @@
     Contenido de apoyo: cada documento se abre en el portal oficial de la Universidad de Cundinamarca, que es
     la fuente vigente.
   </p>
+
+  <!-- Deja aire debajo para que el resultado buscado siempre pueda subir hasta arriba de la pantalla. -->
+  <div class="guide__scroll-spacer" aria-hidden="true"></div>
 </main>
