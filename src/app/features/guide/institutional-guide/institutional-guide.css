@@ -138,3 +138,8 @@
   font-weight: 700;
   color: var(--color-ink);
 }
+
+/* Sin esto, un resultado corto no tiene de dónde tomar espacio para subir hasta arriba de la pantalla. */
+.guide__scroll-spacer {
+  min-height: 100vh;
+}

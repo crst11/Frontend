@@ -98,7 +98,12 @@ export class InstitutionalGuide {
 
     this.escritura
       .pipe(debounceTime(ESPERA_AL_ESCRIBIR_MS), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((texto) => this.buscar({ ...this.filtros(), texto }));
+      .subscribe((texto) => {
+        this.buscar({ ...this.filtros(), texto });
+        if (texto.trim()) {
+          this.irAResultados();
+        }
+      });
 
     // Las sugerencias y las categorías son ayudas: si fallan, la guía sigue funcionando sin ellas.
     this.repositorio.sugerencias().subscribe({ next: (s) => this.sugerencias.set(s), error: () => undefined });
@@ -119,7 +124,7 @@ export class InstitutionalGuide {
     // Una sugerencia busca en toda la guía: si quedaba un filtro de categoría puesto de antes,
     // combinado con el texto podía no encontrar nada aunque el documento sí existiera.
     this.buscar({ texto: sugerencia, idCategoria: null });
-    this.resultados()?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    this.irAResultados();
   }
 
   protected limpiar(): void {
@@ -146,6 +151,11 @@ export class InstitutionalGuide {
     this.filtros.set(filtros);
     this.cargando.set(true);
     this.solicitudes.next(filtros);
+  }
+
+  /** Sube el resultado buscado hasta arriba de la pantalla, para que quede claro que sí se buscó. */
+  private irAResultados(): void {
+    this.resultados()?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
   private mostrar(resultado: Resultado): void {
