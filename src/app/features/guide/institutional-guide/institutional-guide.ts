@@ -116,7 +116,9 @@ export class InstitutionalGuide {
   protected usarSugerencia(sugerencia: string): void {
     this.texto.set(sugerencia);
     this.escribiendoLibremente.set(false);
-    this.buscar({ ...this.filtros(), texto: sugerencia });
+    // Una sugerencia busca en toda la guía: si quedaba un filtro de categoría puesto de antes,
+    // combinado con el texto podía no encontrar nada aunque el documento sí existiera.
+    this.buscar({ texto: sugerencia, idCategoria: null });
     this.resultados()?.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 

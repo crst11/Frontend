@@ -166,6 +166,25 @@ describe('InstitutionalGuide', () => {
     expect(boton(html, 'Todas').getAttribute('aria-pressed')).toBe('false');
   });
 
+  it('una sugerencia busca en toda la guía aunque haya quedado un filtro de categoría puesto', () => {
+    const buscar = vi.fn()
+      .mockReturnValueOnce(of([])) // carga inicial
+      .mockReturnValueOnce(of([])) // filtrar por Reglamentos
+      .mockReturnValueOnce(of([plantillaWord])); // tocar la sugerencia Plantillas
+    const { fixture, html } = crear(buscar);
+
+    // Filtrar por Reglamentos y luego tocar una sugerencia de otra categoría (Plantillas y formatos)
+    // no debía combinar los dos filtros: antes eso hacía que no apareciera nada.
+    boton(html, 'Reglamentos').click();
+    fixture.detectChanges();
+    boton(html, 'Plantillas').click();
+    fixture.detectChanges();
+
+    expect(buscar).toHaveBeenLastCalledWith('Plantillas', null);
+    expect(boton(html, 'Todas').getAttribute('aria-pressed')).toBe('true');
+    expect(html.querySelectorAll('.guide__doc').length).toBe(1);
+  });
+
   it('si no encuentra nada lo dice y propone las sugerencias', () => {
     const buscar = vi.fn().mockReturnValueOnce(of([reglamento])).mockReturnValueOnce(of([]));
     const { fixture, html } = crear(buscar);
