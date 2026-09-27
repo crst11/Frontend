@@ -156,7 +156,7 @@ describe('InstitutionalGuide', () => {
     }
   });
 
-  it('al buscar escribiendo también baja hasta el resultado', () => {
+  it('escribir no mueve la pantalla: solo se baja al elegir algo', () => {
     const scrollIntoView = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoView;
     vi.useFakeTimers();
@@ -168,7 +168,7 @@ describe('InstitutionalGuide', () => {
       campo.dispatchEvent(new Event('input'));
       vi.advanceTimersByTime(300);
 
-      expect(scrollIntoView).toHaveBeenCalled();
+      expect(scrollIntoView).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
