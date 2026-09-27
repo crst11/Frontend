@@ -139,7 +139,7 @@
   color: var(--color-ink);
 }
 
-/* Sin esto, un resultado corto no tiene de dónde tomar espacio para subir hasta arriba de la pantalla. */
+/* La altura la calcula el componente: solo lo justo para que el resultado alcance a subir arriba. */
 .guide__scroll-spacer {
-  min-height: 100vh;
+  height: 0;
 }

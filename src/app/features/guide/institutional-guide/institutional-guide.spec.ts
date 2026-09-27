@@ -66,6 +66,11 @@ describe('InstitutionalGuide', () => {
     return Array.from(html.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.trim() === texto)!;
   }
 
+  /** El desplazamiento a resultados se calcula tras dos vueltas de setTimeout (medir, luego bajar). */
+  function esperarElDesplazamiento(): Promise<void> {
+    return new Promise((resolver) => setTimeout(() => setTimeout(resolver, 10), 10));
+  }
+
   it('muestra toda la guía agrupada por categoría, con las sugerencias para buscar', () => {
     const { html } = crear(vi.fn().mockReturnValue(of([reglamento, gaceta, plantillaWord])));
 
@@ -90,7 +95,7 @@ describe('InstitutionalGuide', () => {
     expect(html.textContent).toContain('Verificado el');
   });
 
-  it('una sugerencia busca de inmediato, queda marcada y baja hasta los resultados', () => {
+  it('una sugerencia busca de inmediato, queda marcada y baja hasta los resultados', async () => {
     const scrollIntoView = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoView;
     const buscar = vi.fn().mockReturnValueOnce(of([reglamento, plantillaWord])).mockReturnValueOnce(of([plantillaWord]));
@@ -98,6 +103,7 @@ describe('InstitutionalGuide', () => {
 
     boton(html, 'Plantillas').click();
     fixture.detectChanges();
+    await esperarElDesplazamiento();
 
     expect(buscar).toHaveBeenLastCalledWith('Plantillas', null);
     expect(html.querySelectorAll('.guide__doc').length).toBe(1);
@@ -174,7 +180,7 @@ describe('InstitutionalGuide', () => {
     }
   });
 
-  it('filtra por categoría y baja hasta el resultado', () => {
+  it('filtra por categoría y baja hasta el resultado', async () => {
     const scrollIntoView = vi.fn();
     Element.prototype.scrollIntoView = scrollIntoView;
     const buscar = vi.fn().mockReturnValue(of([plantillaWord]));
@@ -182,6 +188,7 @@ describe('InstitutionalGuide', () => {
 
     boton(html, 'Plantillas y formatos').click();
     fixture.detectChanges();
+    await esperarElDesplazamiento();
 
     expect(buscar).toHaveBeenLastCalledWith('', 3);
     expect(boton(html, 'Todas').getAttribute('aria-pressed')).toBe('false');

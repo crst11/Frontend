@@ -112,6 +112,7 @@
     la fuente vigente.
   </p>
 
-  <!-- Deja aire debajo para que el resultado buscado siempre pueda subir hasta arriba de la pantalla. -->
-  <div class="guide__scroll-spacer" aria-hidden="true"></div>
+  <!-- Solo mide lo justo para que el resultado buscado pueda subir hasta arriba: si ya llena la
+       pantalla (por ejemplo, viendo todas las categorías) no deja ninguna zona vacía. -->
+  <div class="guide__scroll-spacer" aria-hidden="true" [style.height.px]="alturaEspacio()"></div>
 </main>
