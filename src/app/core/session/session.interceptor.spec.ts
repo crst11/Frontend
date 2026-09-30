@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { environment } from '../../../environments/environment';
+import { NotifierService } from '../feedback/notifier.service';
 import { sessionInterceptor } from './session.interceptor';
 import { SessionService } from './session.service';
 
@@ -13,18 +14,22 @@ describe('sessionInterceptor', () => {
   let controlador: HttpTestingController;
   const sesion = { token: vi.fn(), renovar: vi.fn(), limpiar: vi.fn() };
   const router = { navigate: vi.fn().mockResolvedValue(true) };
+  const notificador = { informar: vi.fn(), problema: vi.fn() };
 
   beforeEach(() => {
     sesion.token.mockReset().mockReturnValue('jwt-viejo');
     sesion.renovar.mockReset();
     sesion.limpiar.mockReset();
     router.navigate.mockClear();
+    notificador.informar.mockReset().mockResolvedValue(undefined);
+    notificador.problema.mockReset().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([sessionInterceptor])),
         provideHttpClientTesting(),
         { provide: SessionService, useValue: sesion },
         { provide: Router, useValue: router },
+        { provide: NotifierService, useValue: notificador },
       ],
     });
     http = TestBed.inject(HttpClient);
@@ -76,6 +81,17 @@ describe('sessionInterceptor', () => {
     expect(fallo).toBe(true);
     expect(sesion.limpiar).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/cuenta/entrar']);
+    expect(notificador.informar).toHaveBeenCalledWith('Tu sesión venció', expect.any(String));
+  });
+
+  it('si la renovación falla porque no hay conexión, no dice que la sesión venció', () => {
+    sesion.renovar.mockReturnValue(throwError(() => ({ status: 0 })));
+    http.get(`${environment.apiUrl}/mis/cuenta`).subscribe({ error: () => undefined });
+
+    controlador.expectOne(`${environment.apiUrl}/mis/cuenta`).flush(null, { status: 401, statusText: 'No autorizado' });
+
+    expect(notificador.problema).toHaveBeenCalledWith('No pudimos comprobar tu sesión', expect.any(String));
+    expect(notificador.informar).not.toHaveBeenCalled();
   });
 
   it('no intenta renovar por errores que no son 401', () => {

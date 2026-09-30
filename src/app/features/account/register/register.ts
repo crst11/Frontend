@@ -2,7 +2,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { NotifierService } from '../../../core/feedback/notifier.service';
+import { esCorreoNoEnviado, esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
+import { InstitutionalEmailInput } from '../../../shared/institutional-email-input/institutional-email-input';
+import { PasswordInput } from '../../../shared/password-input/password-input';
 
 /** Confirmar la contraseña es solo una ayuda de la interfaz: el backend nunca la recibe. */
 function contrasenasIguales(grupo: AbstractControl): ValidationErrors | null {
@@ -13,12 +17,13 @@ function contrasenasIguales(grupo: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, PasswordInput, InstitutionalEmailInput],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
 export class Register {
   private readonly repositorio = inject(EstudianteRepository);
+  private readonly notificador = inject(NotifierService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
 
@@ -59,9 +64,23 @@ export class Register {
       next: (cuenta) => {
         this.enviando.set(false);
         void this.router.navigate(['/cuenta/verificacion'], { queryParams: { correo: cuenta.correo } });
+        void this.notificador.aviso('Cuenta creada. Ahora verifica tu correo.');
       },
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);
+        if (esCorreoNoEnviado(err)) {
+          // La cuenta sí se creó: lo que sigue es pedir otro código desde la verificación.
+          void this.router.navigate(['/cuenta/verificacion'], { queryParams: { correo } });
+          void this.notificador.problema('No pudimos enviarte el código', err.error.detail);
+          return;
+        }
+        if (esFalloDelServidor(err)) {
+          void this.notificador.problema(
+            'No pudimos crear tu cuenta',
+            'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
+          );
+          return;
+        }
         this.error.set(err.error?.detail ?? 'No se pudo completar el registro. Intenta de nuevo.');
       },
     });

@@ -36,6 +36,17 @@ describe('SessionService', () => {
     expect(servicio.cuenta()?.correo).toBe(cuenta.correo);
   });
 
+  it('con Google la sesión queda igual que con contraseña', () => {
+    const iniciarSesionConGoogle = vi.fn().mockReturnValue(of(sesion('jwt-google')));
+    const servicio = crear({ iniciarSesionConGoogle });
+
+    servicio.iniciarConGoogle('id-token-de-google').subscribe();
+
+    expect(iniciarSesionConGoogle).toHaveBeenCalledWith('id-token-de-google');
+    expect(servicio.token()).toBe('jwt-google');
+    expect(servicio.cuenta()?.correo).toBe(cuenta.correo);
+  });
+
   it('al cerrar sesión borra todo del dispositivo', () => {
     const cerrarSesion = vi.fn().mockReturnValue(of(undefined));
     const servicio = crear({ iniciarSesion: () => of(sesion('jwt-1')), cerrarSesion });
