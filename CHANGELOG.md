@@ -4,6 +4,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+## [0.2.0] - 2026-09-29 · Sprint 1 (Review 1, avance)
+
 ### Agregado
 - Campo de correo institucional (registro, inicio de sesión y verificación): la persona solo escribe su usuario y el dominio `@ucundinamarca.edu.co` ya está puesto, siempre a la vista. Si pega un correo completo o escribe la arroba, lo que sigue se descarta solo. Componente reutilizable `app-institutional-email-input`.
 - Guía institucional con buscador (SCRUM-19): sugerencias de qué buscar (reglamento, calendario, plantillas, cancelar materias, grados...), filtro por categoría y documentos agrupados, cada uno con su enlace oficial, *Descargar PDF/Word/Excel/PowerPoint* o *Abrir página oficial*, si sigue vigente y cuándo se verificó. Si no hay resultados, propone las sugerencias. Nuevas clases del sistema visual: `.chip` y `.badge`.
