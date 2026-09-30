@@ -61,6 +61,7 @@ describe('Login', () => {
   it('entra con solo el usuario: el dominio institucional ya está puesto', () => {
     const iniciar = vi.fn().mockReturnValue(of({ id: 1 }));
     const fixture = crear(iniciar);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     enviar(fixture, 'ana.diaz', 'claveSegura1');
 
