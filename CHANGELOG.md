@@ -2,6 +2,23 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y versionado semántico. Cada versión corresponde a lo que se promueve a la rama `produccion`.
 
+## [Sin publicar]
+
+## [0.2.0] - 2026-09-29 · Sprint 1 (Review 1, avance)
+
+### Agregado
+- Campo de correo institucional (registro, inicio de sesión y verificación): la persona solo escribe su usuario y el dominio `@ucundinamarca.edu.co` ya está puesto, siempre a la vista. Si pega un correo completo o escribe la arroba, lo que sigue se descarta solo. Componente reutilizable `app-institutional-email-input`.
+- Guía institucional con buscador (SCRUM-19): sugerencias de qué buscar (reglamento, calendario, plantillas, cancelar materias, grados...), filtro por categoría y documentos agrupados, cada uno con su enlace oficial, *Descargar PDF/Word/Excel/PowerPoint* o *Abrir página oficial*, si sigue vigente y cuándo se verificó. Si no hay resultados, propone las sugerencias. Nuevas clases del sistema visual: `.chip` y `.badge`.
+- Inicio de sesión con Google (SCRUM-48), la API externa del proyecto: botón oficial "Continuar con Google" en *Iniciar sesión* y sección *Inicio con Google* en *Mi cuenta* para vincular o quitar la cuenta de Google. La librería de Google se descarga solo cuando hay que mostrar el botón, y sin `googleClientId` el botón no aparece.
+- Ojo para mostrar u ocultar la contraseña en el registro (las dos contraseñas) y en el inicio de sesión, con el componente reutilizable `app-password-input`.
+- Avisos emergentes con SweetAlert2 detrás de `NotifierService`, con los colores y tipografías de la app: aviso al crear la cuenta, ventana al verificar el correo, confirmación antes de cerrar sesión y ventana cuando el servidor no responde.
+- Aviso "Tu sesión venció" cuando la renovación falla (antes la persona era llevada al inicio de sesión sin explicación) y avisos breves al iniciar sesión, cerrar sesión y pedir un código nuevo.
+- Si la cuenta se crea pero el correo con el código no sale (503 `Correo no enviado`), el registro lleva a la verificación y explica que hay que pedir otro código; el reenvío muestra el mismo aviso si vuelve a fallar.
+
+### Cambiado
+- Si no hay conexión con el servidor (o responde con un error interno), el registro, el inicio de sesión y la verificación lo dicen con una ventana clara en vez del mensaje genérico dentro del formulario. Los datos que la persona puede corregir siguen mostrándose junto al campo.
+- SweetAlert2 se descarga solo al mostrar el primer aviso (18,75 kB), no en la carga inicial.
+
 ## [0.1.0] - 2026-09-25 · Sprint 1 (Review 1)
 
 ### Agregado

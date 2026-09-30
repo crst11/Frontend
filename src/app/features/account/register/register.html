@@ -33,20 +33,17 @@
 
     <div class="field">
       <label class="field__label" for="correo">Correo institucional</label>
-      <input id="correo" class="field__input" type="email" formControlName="correo"
-        placeholder="estudiante@ucundinamarca.edu.co" autocomplete="email"
-        aria-describedby="correo-ayuda" [attr.aria-invalid]="invalido('correo')" />
+      <app-institutional-email-input inputId="correo" formControlName="correo" autocomplete="email"
+        [invalid]="invalido('correo')" />
       @if (invalido('correo')) {
-        <p class="field__error">Escribe un correo válido.</p>
-      } @else {
-        <p id="correo-ayuda" class="field__hint">Debe terminar en &#64;ucundinamarca.edu.co</p>
+        <p class="field__error">Escribe tu usuario institucional.</p>
       }
     </div>
 
     <div class="field">
       <label class="field__label" for="contrasena">Contraseña</label>
-      <input id="contrasena" class="field__input" type="password" formControlName="contrasena"
-        placeholder="Mínimo 8 caracteres" autocomplete="new-password" [attr.aria-invalid]="invalido('contrasena')" />
+      <app-password-input inputId="contrasena" formControlName="contrasena" placeholder="Mínimo 8 caracteres"
+        autocomplete="new-password" [invalid]="invalido('contrasena')" />
       @if (invalido('contrasena')) {
         <p class="field__error">La contraseña debe tener al menos 8 caracteres.</p>
       }
@@ -54,9 +51,8 @@
 
     <div class="field">
       <label class="field__label" for="confirmacion">Confirmar contraseña</label>
-      <input id="confirmacion" class="field__input" type="password" formControlName="confirmacion"
-        placeholder="Repite tu contraseña" autocomplete="new-password"
-        [attr.aria-invalid]="invalido('confirmacion') || confirmacionDistinta()" />
+      <app-password-input inputId="confirmacion" formControlName="confirmacion" placeholder="Repite tu contraseña"
+        autocomplete="new-password" [invalid]="invalido('confirmacion') || confirmacionDistinta()" />
       @if (confirmacionDistinta()) {
         <p class="field__error">Las contraseñas no coinciden.</p>
       } @else if (invalido('confirmacion')) {

@@ -4,7 +4,8 @@ import { sessionGuard } from './core/session/session.guard';
 export const routes: Routes = [
   {
     path: 'guia',
-    loadComponent: () => import('./features/guide/categories/categories').then((m) => m.Categories),
+    loadComponent: () =>
+      import('./features/guide/institutional-guide/institutional-guide').then((m) => m.InstitutionalGuide),
   },
   {
     path: 'cuenta/registro',
