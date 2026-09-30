@@ -55,6 +55,7 @@ describe('Register', () => {
   it('registra con solo el usuario escrito, el dominio se agrega solo', () => {
     const registrar = vi.fn().mockReturnValue(of({ id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', estado: 'pendiente' }));
     const fixture = crear({ registrar });
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const html = fixture.nativeElement as HTMLElement;
 
     escribir(html, 'nombres', 'Ana');
