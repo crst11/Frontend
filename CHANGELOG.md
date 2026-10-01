@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+### Agregado
+- El registro muestra los requisitos de la contraseña y los va marcando mientras la persona escribe (SCRUM-66): 10 caracteres, mayúscula, minúscula, número y carácter especial. Avisar antes es más amable que rechazar el formulario al enviarlo. La política (`shared/password-policy`) es el espejo de la del backend, que es quien manda, y se reutilizará al restablecer la contraseña.
+
 ## [0.2.0] - 2026-09-29 · Sprint 1 (Review 1, avance)
 
 ### Agregado

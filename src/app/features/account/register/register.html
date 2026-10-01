@@ -42,10 +42,13 @@
 
     <div class="field">
       <label class="field__label" for="contrasena">Contraseña</label>
-      <app-password-input inputId="contrasena" formControlName="contrasena" placeholder="Mínimo 8 caracteres"
+      <app-password-input inputId="contrasena" formControlName="contrasena" placeholder="Mínimo 10 caracteres"
         autocomplete="new-password" [invalid]="invalido('contrasena')" />
-      @if (invalido('contrasena')) {
-        <p class="field__error">La contraseña debe tener al menos 8 caracteres.</p>
+      <app-password-requirements [valor]="contrasenaEscrita()" />
+      @if (contrasenaMuyLarga()) {
+        <p class="field__error">La contraseña no puede superar los 72 caracteres.</p>
+      } @else if (contrasenaConElCorreo()) {
+        <p class="field__error">La contraseña no puede contener tu usuario del correo institucional.</p>
       }
     </div>
 
