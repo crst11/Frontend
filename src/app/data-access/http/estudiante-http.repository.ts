@@ -34,6 +34,14 @@ export class EstudianteHttpRepository extends EstudianteRepository {
     return this.http.post<void>(`${this.publico}/verificacion/reenvio`, { correo });
   }
 
+  override solicitarRecuperacion(correo: string): Observable<void> {
+    return this.http.post<void>(`${this.publico}/recuperacion`, { correo });
+  }
+
+  override restablecerContrasena(correo: string, codigo: string, contrasenaNueva: string): Observable<void> {
+    return this.http.post<void>(`${this.publico}/recuperacion/confirmacion`, { correo, codigo, contrasenaNueva });
+  }
+
   override iniciarSesion(correo: string, contrasena: string): Observable<SesionIniciada> {
     return this.http.post<SesionIniciada>(`${this.publico}/login`, { correo, contrasena }, { withCredentials: true });
   }
