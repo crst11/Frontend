@@ -21,6 +21,15 @@ export const routes: Routes = [
       import('./features/account/login/login').then((m) => m.Login),
   },
   {
+    path: 'cuenta/recuperar',
+    loadComponent: () =>
+      import('./features/account/password-recovery/password-recovery').then((m) => m.PasswordRecovery),
+  },
+  {
+    path: 'cuenta/nueva-contrasena',
+    loadComponent: () => import('./features/account/password-reset/password-reset').then((m) => m.PasswordReset),
+  },
+  {
     path: 'cuenta/mi-cuenta',
     canActivate: [sessionGuard],
     loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
