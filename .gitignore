@@ -5,6 +5,7 @@
 
 # Guía de trabajo interna: no va en el repositorio público
 CLAUDE.md
+.claude/
 
 # IDE y sistema
 .idea/
