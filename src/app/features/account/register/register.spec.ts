@@ -39,8 +39,8 @@ describe('Register', () => {
     escribir(html, 'nombres', 'Ana');
     escribir(html, 'apellidos', 'Díaz');
     escribir(html, 'correo', 'ana.diaz@ucundinamarca.edu.co');
-    escribir(html, 'contrasena', 'unaClaveSegura');
-    escribir(html, 'confirmacion', 'unaClaveSegura');
+    escribir(html, 'contrasena', 'UnaClaveSegura1!');
+    escribir(html, 'confirmacion', 'UnaClaveSegura1!');
     const consentimiento = html.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
     consentimiento.checked = true;
     consentimiento.dispatchEvent(new Event('change'));
@@ -61,8 +61,8 @@ describe('Register', () => {
     escribir(html, 'nombres', 'Ana');
     escribir(html, 'apellidos', 'Díaz');
     escribir(html, 'correo', 'ana.diaz');
-    escribir(html, 'contrasena', 'unaClaveSegura');
-    escribir(html, 'confirmacion', 'unaClaveSegura');
+    escribir(html, 'contrasena', 'UnaClaveSegura1!');
+    escribir(html, 'confirmacion', 'UnaClaveSegura1!');
     html.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click();
     html.querySelector('form')!.dispatchEvent(new Event('submit'));
 
@@ -182,7 +182,7 @@ describe('Register', () => {
     escribir(html, 'nombres', 'Ana');
     escribir(html, 'apellidos', 'Díaz');
     escribir(html, 'correo', 'ana.diaz@ucundinamarca.edu.co');
-    escribir(html, 'contrasena', 'unaClaveSegura');
+    escribir(html, 'contrasena', 'UnaClaveSegura1!');
     html.querySelector('form')!.dispatchEvent(new Event('submit'));
     fixture.detectChanges();
 

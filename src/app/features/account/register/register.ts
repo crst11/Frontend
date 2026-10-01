@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
@@ -7,6 +8,8 @@ import { esCorreoNoEnviado, esFalloDelServidor } from '../../../core/feedback/se
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 import { InstitutionalEmailInput } from '../../../shared/institutional-email-input/institutional-email-input';
 import { PasswordInput } from '../../../shared/password-input/password-input';
+import { contrasenaDistintaDelCorreo, contrasenaSegura } from '../../../shared/password-policy/password-policy';
+import { PasswordRequirements } from '../../../shared/password-policy/password-requirements';
 
 /** Confirmar la contraseña es solo una ayuda de la interfaz: el backend nunca la recibe. */
 function contrasenasIguales(grupo: AbstractControl): ValidationErrors | null {
@@ -17,7 +20,7 @@ function contrasenasIguales(grupo: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, PasswordInput, InstitutionalEmailInput],
+  imports: [ReactiveFormsModule, RouterLink, PasswordInput, InstitutionalEmailInput, PasswordRequirements],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
@@ -32,12 +35,17 @@ export class Register {
       nombres: ['', Validators.required],
       apellidos: ['', Validators.required],
       correo: ['', [Validators.required, Validators.email]],
-      contrasena: ['', [Validators.required, Validators.minLength(8)]],
+      contrasena: ['', [Validators.required, contrasenaSegura]],
       confirmacion: ['', Validators.required],
       aceptaTratamientoDatos: [false, Validators.requiredTrue],
     },
-    { validators: contrasenasIguales },
+    { validators: [contrasenasIguales, contrasenaDistintaDelCorreo] },
   );
+
+  /** Alimenta la lista de requisitos mientras la persona escribe. */
+  protected readonly contrasenaEscrita = toSignal(this.formulario.controls.contrasena.valueChanges, {
+    initialValue: '',
+  });
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -49,6 +57,14 @@ export class Register {
 
   protected confirmacionDistinta(): boolean {
     return this.formulario.hasError('contrasenasDistintas') && this.formulario.controls.confirmacion.touched;
+  }
+
+  protected contrasenaMuyLarga(): boolean {
+    return this.formulario.controls.contrasena.hasError('contrasenaMuyLarga');
+  }
+
+  protected contrasenaConElCorreo(): boolean {
+    return this.formulario.hasError('contrasenaConElCorreo') && this.formulario.controls.contrasena.touched;
   }
 
   enviar(): void {
