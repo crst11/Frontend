@@ -8,7 +8,11 @@ import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 import { InstitutionalEmailInput } from '../../../shared/institutional-email-input/institutional-email-input';
 import { PasswordInput } from '../../../shared/password-input/password-input';
-import { contrasenaDistintaDelCorreo, contrasenaSegura } from '../../../shared/password-policy/password-policy';
+import {
+  contrasenaDistintaDelCorreo,
+  contrasenaSegura,
+  REGLA_DE_CONTRASENA,
+} from '../../../shared/password-policy/password-policy';
 import { PasswordRequirements } from '../../../shared/password-policy/password-requirements';
 
 /** Confirmar la contraseña es solo una ayuda de la interfaz: el backend nunca la recibe. */
@@ -48,6 +52,9 @@ export class PasswordReset {
   protected readonly contrasenaEscrita = toSignal(this.formulario.controls.contrasena.valueChanges, {
     initialValue: '',
   });
+
+  /** La regla completa en una frase, siempre visible bajo el campo. */
+  protected readonly reglaDeContrasena = REGLA_DE_CONTRASENA;
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
