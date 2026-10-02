@@ -11,7 +11,7 @@ describe('política de contraseña', () => {
   });
 
   it.each([
-    ['menos de 10 caracteres', 'Corta1!'],
+    ['menos de 8 caracteres', 'Corta1!'],
     ['sin mayúscula', 'segura2026!'],
     ['sin minúscula', 'SEGURA2026!'],
     ['sin número', 'SeguraClave!'],
