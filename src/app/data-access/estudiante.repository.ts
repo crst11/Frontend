@@ -38,12 +38,15 @@ export interface VinculoConGoogle {
   fechaVinculacion: string | null;
 }
 
-/** Puerto del frontend hacia la cuenta del estudiante (RF01): registro, verificación, sesión y Google. */
+/** Puerto del frontend hacia la cuenta del estudiante (RF01): registro, verificación, sesión, recuperación y Google. */
 @Injectable()
 export abstract class EstudianteRepository {
   abstract registrar(datos: DatosDeRegistro): Observable<CuentaRegistrada>;
   abstract verificarCorreo(correo: string, codigo: string): Observable<CuentaRegistrada>;
   abstract reenviarCodigo(correo: string): Observable<void>;
+  /** Pide el código para cambiar la contraseña. Responde igual exista o no la cuenta (SCRUM-68). */
+  abstract solicitarRecuperacion(correo: string): Observable<void>;
+  abstract restablecerContrasena(correo: string, codigo: string, contrasenaNueva: string): Observable<void>;
   abstract iniciarSesion(correo: string, contrasena: string): Observable<SesionIniciada>;
   abstract iniciarSesionConGoogle(idToken: string): Observable<SesionIniciada>;
   abstract renovarSesion(): Observable<SesionIniciada>;
