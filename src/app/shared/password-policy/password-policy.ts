@@ -8,7 +8,14 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
  * Si la política cambia en el backend, cambia aquí también.
  */
 
-export const LONGITUD_MINIMA = 10;
+export const LONGITUD_MINIMA = 8;
+
+/**
+ * La regla completa en una sola frase, como la escriben Google y las demás plataformas. Es el espejo
+ * de `Contrasena.REGLA` del backend.
+ */
+export const REGLA_DE_CONTRASENA =
+  `Usa ${LONGITUD_MINIMA} caracteres como mínimo con una combinación de mayúsculas, minúsculas, números y símbolos`;
 
 /** bcrypt solo tiene en cuenta los primeros 72 bytes: más allá no agrega seguridad. */
 export const MAXIMO_BYTES = 72;
