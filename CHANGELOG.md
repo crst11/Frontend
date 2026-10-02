@@ -4,10 +4,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
-### Agregado
-- Pantallas para recuperar la contraseña olvidada (SCRUM-68): *¿Olvidaste tu contraseña?* pide el código al correo institucional y *Crea tu contraseña nueva* lo recibe junto con la contraseña. El enlace está en el inicio de sesión. El aviso nunca confirma si ese correo tiene cuenta, igual que el backend. La contraseña nueva usa la misma lista de requisitos del registro (`shared/password-policy`), que para esto se escribió aparte.
+## [0.3.0] - 2026-10-01 · Sprint 1 (cierre)
 
 ### Agregado
+- Pantallas para recuperar la contraseña olvidada (SCRUM-68): *¿Olvidaste tu contraseña?* pide el código al correo institucional y *Crea tu contraseña nueva* lo recibe junto con la contraseña. El enlace está en el inicio de sesión. El aviso nunca confirma si ese correo tiene cuenta, igual que el backend. La contraseña nueva usa la misma lista de requisitos del registro (`shared/password-policy`), que para esto se escribió aparte.
 - El registro y el restablecimiento muestran bajo el campo la regla completa de la contraseña, redactada como en Google: *Usa 8 caracteres como mínimo con una combinación de mayúsculas, minúsculas, números y símbolos* (SCRUM-66). Debajo, una lista marca cada requisito mientras la persona escribe: avisar antes es más amable que rechazar el formulario al enviarlo. La política (`shared/password-policy`) es el espejo de la del backend, que es quien manda.
 
 ## [0.2.0] - 2026-09-29 · Sprint 1 (Review 1, avance)
