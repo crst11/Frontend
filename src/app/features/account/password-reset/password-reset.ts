@@ -2,9 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
-import { esCorreoNoEnviado, esFalloDelServidor } from '../../../core/feedback/server-failure';
+import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { EstudianteRepository } from '../../../data-access/estudiante.repository';
 import { InstitutionalEmailInput } from '../../../shared/institutional-email-input/institutional-email-input';
 import { PasswordInput } from '../../../shared/password-input/password-input';
@@ -22,31 +22,33 @@ function contrasenasIguales(grupo: AbstractControl): ValidationErrors | null {
   return confirmacion && contrasena !== confirmacion ? { contrasenasDistintas: true } : null;
 }
 
+/** Define la contraseña nueva con el código que llegó al correo (SCRUM-68). */
 @Component({
-  selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, PasswordInput, InstitutionalEmailInput, PasswordRequirements],
-  templateUrl: './register.html',
-  styleUrl: './register.css',
+  selector: 'app-password-reset',
+  imports: [ReactiveFormsModule, RouterLink, InstitutionalEmailInput, PasswordInput, PasswordRequirements],
+  templateUrl: './password-reset.html',
+  styleUrl: './password-reset.css',
 })
-export class Register {
+export class PasswordReset {
   private readonly repositorio = inject(EstudianteRepository);
   private readonly notificador = inject(NotifierService);
   private readonly fb = inject(FormBuilder);
+  private readonly ruta = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /** El correo llega de la pantalla anterior; si alguien abre esta directamente, lo escribe. */
+  protected readonly correoRecibido = this.ruta.snapshot.queryParamMap.get('correo') ?? '';
 
   protected readonly formulario = this.fb.nonNullable.group(
     {
-      nombres: ['', Validators.required],
-      apellidos: ['', Validators.required],
-      correo: ['', [Validators.required, Validators.email]],
+      correo: [this.correoRecibido, [Validators.required, Validators.email]],
+      codigo: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
       contrasena: ['', [Validators.required, contrasenaSegura]],
       confirmacion: ['', Validators.required],
-      aceptaTratamientoDatos: [false, Validators.requiredTrue],
     },
     { validators: [contrasenasIguales, contrasenaDistintaDelCorreo] },
   );
 
-  /** Alimenta la lista de requisitos mientras la persona escribe. */
   protected readonly contrasenaEscrita = toSignal(this.formulario.controls.contrasena.valueChanges, {
     initialValue: '',
   });
@@ -57,17 +59,13 @@ export class Register {
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  protected invalido(campo: keyof typeof this.formulario.controls): boolean {
+  protected invalido(campo: 'correo' | 'codigo'): boolean {
     const control = this.formulario.controls[campo];
     return control.invalid && control.touched;
   }
 
   protected confirmacionDistinta(): boolean {
     return this.formulario.hasError('contrasenasDistintas') && this.formulario.controls.confirmacion.touched;
-  }
-
-  protected contrasenaMuyLarga(): boolean {
-    return this.formulario.controls.contrasena.hasError('contrasenaMuyLarga');
   }
 
   protected contrasenaConElCorreo(): boolean {
@@ -80,31 +78,25 @@ export class Register {
       return;
     }
 
-    const { nombres, apellidos, correo, contrasena, aceptaTratamientoDatos } = this.formulario.getRawValue();
+    const { correo, codigo, contrasena } = this.formulario.getRawValue();
     this.enviando.set(true);
     this.error.set(null);
-    this.repositorio.registrar({ nombres, apellidos, correo, contrasena, aceptaTratamientoDatos }).subscribe({
-      next: (cuenta) => {
+    this.repositorio.restablecerContrasena(correo, codigo, contrasena).subscribe({
+      next: () => {
         this.enviando.set(false);
-        void this.router.navigate(['/cuenta/verificacion'], { queryParams: { correo: cuenta.correo } });
-        void this.notificador.aviso('Cuenta creada. Ahora verifica tu correo.');
+        void this.router.navigate(['/cuenta/entrar']);
+        void this.notificador.aviso('Tu contraseña quedó cambiada. Inicia sesión con la nueva.');
       },
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);
-        if (esCorreoNoEnviado(err)) {
-          // La cuenta sí se creó: lo que sigue es pedir otro código desde la verificación.
-          void this.router.navigate(['/cuenta/verificacion'], { queryParams: { correo } });
-          void this.notificador.problema('No pudimos enviarte el código', err.error.detail);
-          return;
-        }
         if (esFalloDelServidor(err)) {
           void this.notificador.problema(
-            'No pudimos crear tu cuenta',
+            'No pudimos cambiar tu contraseña',
             'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
           );
           return;
         }
-        this.error.set(err.error?.detail ?? 'No se pudo completar el registro. Intenta de nuevo.');
+        this.error.set(err.error?.detail ?? 'No se pudo cambiar la contraseña. Intenta de nuevo.');
       },
     });
   }
