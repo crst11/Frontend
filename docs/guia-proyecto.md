@@ -155,13 +155,15 @@ Se construye en este orden: primero base de datos, luego backend y luego fronten
 3. **Adaptador de persistencia:** entidad JPA, repositorio Spring Data, mapeador y prueba de integración.
 4. **Caso de uso y API:** implementación del caso de uso, controlador REST, DTOs y documentación OpenAPI.
 5. **Pantalla en Angular:** repositorio de datos, componente, ruta y pruebas.
-6. **Despliegue en preproducción** y demostración.
+6. **Demostración en local** (Postman y la app corriendo). El despliegue en preproducción llega al final del proyecto, en SCRUM-71.
 
 Una funcionalidad no cuenta como avance hasta recorrer los seis. Las capas sueltas nunca son historias propias: siempre son subtareas. Además de los seis pasos, cada historia lleva su historia de usuario (HU) y su caso de uso (CU) documentados.
 
 ### Tablero
 
-Cinco columnas: Pendiente, Listo para desarrollar, En desarrollo, En revisión y Hecho, con un máximo de dos tarjetas en curso. Al crear la rama la tarjeta pasa a En desarrollo; al abrir el pull request, a En revisión; al fusionar y desplegar en preproducción, a Hecho.
+Cinco columnas: Pendiente, Listo para desarrollar, En desarrollo, En revisión y Hecho, con un máximo de dos tarjetas en curso. Al crear la rama la tarjeta pasa a En desarrollo; al abrir el pull request, a En revisión; al fusionar a `desarrollo` con el CI en verde, a Hecho.
+
+**Ajuste del 1 de octubre de 2026.** Antes una tarjeta llegaba a Hecho solo después de desplegarse en preproducción. El equipo decidió construir y probar todo en local y dejar el despliegue para el final (SCRUM-70 y SCRUM-71, en el Sprint 7), así que esa condición dejaría todo el tablero congelado durante seis sprints. Mientras no exista el ambiente de preproducción, una tarjeta se da por terminada al fusionarse en `desarrollo`. Cuando el despliegue exista, SCRUM-71 recupera esa verificación.
 
 ### Plan de sprints
 
@@ -169,13 +171,13 @@ Sprints de dos semanas, dos funcionalidades por sprint, cada uno cierra con un C
 
 | Sprint | Funcionalidades |
 |---|---|
-| 1 | Esquema de base de datos, RF01 y RF11, primer despliegue |
+| 1 | Esquema de base de datos, RF01 y RF11 |
 | 2 | RF02 y RF03 |
 | 3 | RF04 y RF05 |
 | 4 | RF06 y RF07 |
 | 5 | RF08 y RF09 |
 | 6 | RF10 y RF12 |
-| 7 | Estabilización, pruebas de carga, documentación y paso a producción |
+| 7 | Estabilización, pruebas de carga, documentación, Docker y despliegue a preproducción y producción |
 
 ### Definición de Listo
 
@@ -187,7 +189,7 @@ Una historia entra al sprint solo si tiene criterios de aceptación claros, esti
 - Pruebas escritas y en verde (unitarias de dominio; de integración si toca persistencia).
 - ArchUnit en verde.
 - Pull request revisado y aprobado por el compañero, y fusionado a `desarrollo`.
-- Funcionalidad desplegada en preproducción y verificable por un tercero.
+- Funcionalidad verificable en local siguiendo el README, sin pasos ocultos.
 - Documentación actualizada (README, OpenAPI y ADR si hubo decisión).
 - Incidencia cerrada en Jira.
 
