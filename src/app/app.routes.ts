@@ -35,6 +35,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   },
   {
+    path: 'cuenta/mis-sesiones',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/account/my-sessions/my-sessions').then((m) => m.MySessions),
+  },
+  {
     path: 'cuenta/plan-de-estudios',
     canActivate: [sessionGuard],
     loadComponent: () => import('./features/account/study-plan/study-plan').then((m) => m.StudyPlan),
