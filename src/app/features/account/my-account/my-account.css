@@ -85,3 +85,25 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.my-account__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.my-account__link-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.my-account__link-text {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
