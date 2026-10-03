@@ -38,6 +38,19 @@ export interface VinculoConGoogle {
   fechaVinculacion: string | null;
 }
 
+/**
+ * Una sesión abierta en algún dispositivo (SCRUM-49). La huella del token de refresco no viaja:
+ * identifica la sesión por dentro y no es asunto de la pantalla.
+ */
+export interface SesionAbierta {
+  consecutivo: number;
+  metodo: string;
+  fechaInicio: string;
+  fechaExpiracion: string;
+  dispositivo: string | null;
+  ip: string | null;
+}
+
 /** Puerto del frontend hacia la cuenta del estudiante (RF01): registro, verificación, sesión, recuperación y Google. */
 @Injectable()
 export abstract class EstudianteRepository {
@@ -53,6 +66,10 @@ export abstract class EstudianteRepository {
   abstract cerrarSesion(): Observable<void>;
   abstract miCuenta(): Observable<Cuenta>;
   abstract eliminarCuenta(): Observable<void>;
+  abstract misSesiones(): Observable<SesionAbierta[]>;
+  abstract cerrarSesionEnDispositivo(consecutivo: number): Observable<void>;
+  /** Cierra todas, incluida la de quien lo pide: el backend lo hace a propósito (SCRUM-49). */
+  abstract cerrarTodasMisSesiones(): Observable<void>;
   abstract vinculoConGoogle(): Observable<VinculoConGoogle>;
   abstract vincularGoogle(idToken: string): Observable<VinculoConGoogle>;
   abstract desvincularGoogle(): Observable<void>;

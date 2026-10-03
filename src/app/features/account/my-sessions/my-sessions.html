@@ -1,0 +1,84 @@
+<main class="screen sessions">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/cuenta/mi-cuenta" aria-label="Volver a mi cuenta">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Mis sesiones</span>
+  </header>
+
+  <p class="subtitle">
+    Estos son los dispositivos donde tu cuenta tiene una sesión abierta. Si no reconoces alguno, ciérralo.
+  </p>
+
+  @if (cargando()) {
+    <p class="subtitle">Cargando tus sesiones…</p>
+  } @else if (error()) {
+    <p class="alert" role="alert">No pudimos cargar tus sesiones. Intenta de nuevo más tarde.</p>
+  } @else if (sesiones().length === 0) {
+    <p class="notice">No hay otras sesiones abiertas.</p>
+  } @else {
+    <ul class="sessions__list">
+      @for (sesion of sesiones(); track sesion.consecutivo) {
+        <li class="card sessions__item">
+          <div class="sessions__device">
+            <span class="sessions__icon" aria-hidden="true">
+              @if (dispositivo(sesion).esTelefono) {
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="6" y="2" width="12" height="20" rx="2" />
+                  <path d="M11 18h2" />
+                </svg>
+              } @else {
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="13" rx="2" />
+                  <path d="M8 21h8M12 17v4" />
+                </svg>
+              }
+            </span>
+            <div class="sessions__titles">
+              <h2 class="sessions__name">{{ dispositivo(sesion).nombre }}</h2>
+              @if (dispositivo(sesion).sistema) {
+                <p class="sessions__system">{{ dispositivo(sesion).sistema }}</p>
+              }
+            </div>
+            <span class="badge">{{ vigenciaRestante(sesion.fechaExpiracion) }}</span>
+          </div>
+
+          <dl class="sessions__facts">
+            <div class="sessions__fact">
+              <dt class="field__label">Inició</dt>
+              <dd>{{ desdeCuando(sesion.fechaInicio) }}</dd>
+            </div>
+            <div class="sessions__fact">
+              <dt class="field__label">Método</dt>
+              <dd>{{ metodo(sesion) }}</dd>
+            </div>
+            @if (sesion.ip) {
+              <div class="sessions__fact">
+                <dt class="field__label">Dirección IP</dt>
+                <dd>{{ sesion.ip }}</dd>
+              </div>
+            }
+          </dl>
+
+          <button
+            class="button button--outline"
+            type="button"
+            [disabled]="cerrando() === sesion.consecutivo"
+            (click)="cerrarUna(sesion)"
+          >
+            {{ cerrando() === sesion.consecutivo ? 'Cerrando…' : 'Cerrar esta sesión' }}
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (varias()) {
+      <div class="screen__footer">
+        <button class="button button--primary" type="button" (click)="cerrarTodas()">
+          Cerrar sesión en todos los dispositivos
+        </button>
+        <p class="sessions__warning">También se cerrará la de este dispositivo.</p>
+      </div>
+    }
+  }
+</main>
