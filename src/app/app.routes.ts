@@ -35,6 +35,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   },
   {
+    path: 'cuenta/plan-de-estudios',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/account/study-plan/study-plan').then((m) => m.StudyPlan),
+  },
+  {
     path: '',
     pathMatch: 'full',
     loadComponent: () => import('./features/entry/welcome/welcome').then((m) => m.Welcome),

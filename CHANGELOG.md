@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+### Agregado
+- Pantalla *Mi plan de estudios* (SCRUM-21), enlazada desde Mi cuenta. Si todavía no hay programa elegido, lo primero es elegirlo; después la pantalla muestra la ruta de aprendizaje semestre por semestre, con los créditos de cada uno y, en cada asignatura, lo que hay que ver antes. Los prerrequisitos se muestran por su nombre y no por su código: `CAD612021102` no le dice nada a nadie. Las de diagnóstico y nivelatorio se marcan como *No pondera*, que es lo que significan sus 0 créditos. Los semestres se abren de a uno, con el primero abierto, porque en un teléfono nueve listas desplegadas no se leen. La agrupación por período y los créditos llegan hechos del backend: el frontend no calcula nada.
+
 ## [0.3.0] - 2026-10-01 · Sprint 1 (cierre)
 
 ### Agregado
