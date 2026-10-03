@@ -1,0 +1,178 @@
+.plan__program-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.plan__program-place {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.plan__totals {
+  display: flex;
+  gap: 28px;
+  margin: 14px 0 0;
+}
+
+.plan__totals dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+.plan__periods,
+.plan__options,
+.plan__subjects {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan__periods,
+.plan__options {
+  gap: 10px;
+}
+
+.plan__period {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* La cabecera es el botón completo: en un teléfono toda la fila tiene que ser tocable. */
+.plan__period-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan__period-number {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.plan__period-titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.plan__period-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.plan__period-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.plan__chevron {
+  flex: 0 0 auto;
+  color: var(--color-muted);
+  transition: transform 0.15s ease;
+}
+
+.plan__chevron--open {
+  transform: rotate(180deg);
+}
+
+.plan__subjects {
+  gap: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.plan__subject {
+  padding: 12px 16px;
+}
+
+.plan__subject + .plan__subject {
+  border-top: 1px solid var(--color-border);
+}
+
+.plan__subject-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.plan__subject-name {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.plan__subject-head .badge {
+  flex: 0 0 auto;
+}
+
+.plan__requires {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+
+.plan__requirement {
+  padding: 3px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.plan__option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.plan__option-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.plan__option-place,
+.plan__option-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.plan__option .button {
+  margin-top: 10px;
+}
