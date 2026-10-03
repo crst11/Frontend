@@ -1,0 +1,110 @@
+<main class="screen plan">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/cuenta/mi-cuenta" aria-label="Volver a mi cuenta">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Mi plan de estudios</span>
+  </header>
+
+  @if (cargando()) {
+    <p class="subtitle">Cargando tu plan…</p>
+  } @else if (error()) {
+    <p class="alert" role="alert">No pudimos cargar tu plan de estudios. Intenta de nuevo más tarde.</p>
+  } @else if (plan(); as miPlan) {
+    <section class="card plan__program" aria-label="Mi programa">
+      <h1 class="plan__program-name">{{ miPlan.programa.nombre }}</h1>
+      <p class="plan__program-place">{{ miPlan.programa.facultad }} · Sede {{ miPlan.programa.sede }}</p>
+      <dl class="plan__totals">
+        <div>
+          <dt class="field__label">Créditos</dt>
+          <dd>{{ miPlan.programa.totalCreditos }}</dd>
+        </div>
+        <div>
+          <dt class="field__label">Semestres</dt>
+          <dd>{{ miPlan.programa.numeroPeriodos }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <p class="subtitle">Toca un semestre para ver sus asignaturas y lo que hay que ver antes.</p>
+
+    <ul class="plan__periods">
+      @for (periodo of miPlan.periodos; track periodo.periodo) {
+        <li class="card plan__period">
+          <button
+            class="plan__period-head"
+            type="button"
+            [attr.aria-expanded]="abierto(periodo.periodo)"
+            [attr.aria-controls]="'semestre-' + periodo.periodo"
+            (click)="alternar(periodo.periodo)"
+          >
+            <span class="plan__period-number" aria-hidden="true">{{ periodo.periodo }}</span>
+            <span class="plan__period-titles">
+              <span class="plan__period-name">Semestre {{ periodo.periodo }}</span>
+              <span class="plan__period-meta">
+                {{ totalDeAsignaturas(periodo) }} asignaturas · {{ etiquetaDeCreditos(periodo.creditos) }}
+              </span>
+            </span>
+            <svg class="plan__chevron" [class.plan__chevron--open]="abierto(periodo.periodo)" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+
+          @if (abierto(periodo.periodo)) {
+            <ul class="plan__subjects" [attr.id]="'semestre-' + periodo.periodo">
+              @for (asignatura of periodo.asignaturas; track asignatura.codigo) {
+                <li class="plan__subject">
+                  <div class="plan__subject-head">
+                    <h2 class="plan__subject-name">{{ asignatura.nombre }}</h2>
+                    @if (noPondera(asignatura)) {
+                      <span class="badge">No pondera</span>
+                    } @else {
+                      <span class="badge badge--ok">{{ etiquetaDeCreditos(asignatura.creditos) }}</span>
+                    }
+                  </div>
+                  @if (asignatura.prerrequisitos.length > 0) {
+                    <p class="plan__requires">
+                      <span class="field__label">Antes debes ver</span>
+                      @for (codigo of asignatura.prerrequisitos; track codigo) {
+                        <span class="plan__requirement">{{ nombreDelRequisito(codigo) }}</span>
+                      }
+                    </p>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <section class="plan__choose" aria-labelledby="titulo-elegir">
+      <h1 id="titulo-elegir" class="title">Elige tu programa</h1>
+      <p class="subtitle">
+        Con esto sabemos qué asignaturas te corresponden. Después podrás ver tu historial y tu avance.
+      </p>
+
+      @if (programas().length === 0) {
+        <p class="notice">Todavía no hay programas disponibles. Vuelve a intentarlo más tarde.</p>
+      } @else {
+        <ul class="plan__options">
+          @for (programa of programas(); track programa.codigo) {
+            <li class="card plan__option">
+              <h2 class="plan__option-name">{{ programa.nombre }}</h2>
+              <p class="plan__option-place">{{ programa.facultad }} · Sede {{ programa.sede }}</p>
+              <p class="plan__option-meta">
+                {{ programa.totalCreditos }} créditos en {{ programa.numeroPeriodos }} semestres
+              </p>
+              <button
+                class="button button--primary"
+                type="button"
+                [disabled]="guardando() === programa.codigo"
+                (click)="elegir(programa)"
+              >
+                {{ guardando() === programa.codigo ? 'Guardando…' : 'Elegir este programa' }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</main>
