@@ -5,7 +5,9 @@ import { environment } from '../../../environments/environment';
 import {
   AnalisisDeImportacion,
   Confirmacion,
+  Importacion,
   ImportacionRepository,
+  ResultadoDeDeshacer,
   ResultadoDeImportacion,
 } from '../importacion.repository';
 
@@ -22,5 +24,13 @@ export class ImportacionHttpRepository extends ImportacionRepository {
 
   override confirmar(confirmacion: Confirmacion): Observable<ResultadoDeImportacion> {
     return this.http.post<ResultadoDeImportacion>(this.ruta, confirmacion);
+  }
+
+  override misImportaciones(): Observable<Importacion[]> {
+    return this.http.get<Importacion[]>(this.ruta);
+  }
+
+  override deshacer(idImportacion: number): Observable<ResultadoDeDeshacer> {
+    return this.http.post<ResultadoDeDeshacer>(`${this.ruta}/${idImportacion}/reversion`, null);
   }
 }

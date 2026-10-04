@@ -66,10 +66,36 @@ export interface ResultadoDeImportacion {
   omitidas: number;
 }
 
+/**
+ * Una carga que el estudiante ya hizo (SCRUM-24).
+ *
+ * `sePuedeDeshacer` lo decide el servidor: solo la última carga confirmada, porque deshacer una
+ * anterior dejaría encima los cambios de las que vinieron después.
+ */
+export interface Importacion {
+  id: number;
+  tipoReporte: string;
+  nombreArchivo: string;
+  fechaCarga: string;
+  estado: string;
+  detectadas: number;
+  confirmadas: number;
+  sePuedeDeshacer: boolean;
+}
+
+/** `eliminadas` son las que la carga creó; `restauradas`, las que pisó y volvieron a su valor. */
+export interface ResultadoDeDeshacer {
+  idImportacion: number;
+  eliminadas: number;
+  restauradas: number;
+}
+
 /** Puerto del frontend hacia la importación de reportes institucionales (RF03). */
 @Injectable()
 export abstract class ImportacionRepository {
   /** Lee el archivo y devuelve lo detectado. No guarda nada. */
   abstract analizar(archivo: File): Observable<AnalisisDeImportacion>;
   abstract confirmar(confirmacion: Confirmacion): Observable<ResultadoDeImportacion>;
+  abstract misImportaciones(): Observable<Importacion[]>;
+  abstract deshacer(idImportacion: number): Observable<ResultadoDeDeshacer>;
 }
