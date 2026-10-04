@@ -142,5 +142,35 @@
       </span>
       <span class="import__zona-ayuda">Solo el archivo PDF, hasta 5 MB</span>
     </label>
+
+    @if (cargasAnteriores().length > 0) {
+      <section class="card import__historial" aria-labelledby="titulo-historial">
+        <h2 id="titulo-historial" class="import__historial-titulo">Tus cargas anteriores</h2>
+        <ul class="import__cargas">
+          @for (carga of cargasAnteriores(); track carga.id) {
+            <li class="import__carga" [class.import__carga--deshecha]="carga.estado === 'revertida'">
+              <div class="import__carga-texto">
+                <span class="import__carga-fecha">{{ fechaVisible(carga.fechaCarga) }}</span>
+                <span class="import__carga-meta">{{ estadoVisible(carga) }}</span>
+              </div>
+              @if (carga.sePuedeDeshacer) {
+                <button
+                  class="button button--outline import__deshacer"
+                  type="button"
+                  [disabled]="deshaciendo()"
+                  (click)="deshacerCarga(carga)"
+                >
+                  {{ deshaciendo() ? 'Deshaciendo…' : 'Deshacer' }}
+                </button>
+              }
+            </li>
+          }
+        </ul>
+        <p class="import__historial-nota">
+          Solo se puede deshacer la última carga: deshacer una anterior dejaría encima los cambios de las
+          que vinieron después.
+        </p>
+      </section>
+    }
   }
 </main>

@@ -6,6 +6,7 @@ import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import {
   AnalisisDeImportacion,
   AsignaturaDetectada,
+  Importacion,
   ImportacionRepository,
   PeriodoDetectado,
 } from '../../../data-access/importacion.repository';
@@ -48,6 +49,8 @@ export class ImportReport {
   protected readonly guardando = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly guiaAbierta = signal(false);
+  protected readonly cargasAnteriores = signal<Importacion[]>([]);
+  protected readonly deshaciendo = signal(false);
 
   protected readonly periodos = computed(() => this.analisis()?.periodos ?? []);
   protected readonly fueraDelPlan = computed(() =>
@@ -60,8 +63,61 @@ export class ImportReport {
     this.periodos().flatMap((p) => p.asignaturas.filter((a) => a.enElPlan && a.yaEstaba)).length,
   );
 
+  constructor() {
+    this.cargarHistorial();
+  }
+
   protected alternarGuia(): void {
     this.guiaAbierta.update((abierta) => !abierta);
+  }
+
+  /** Si el historial no carga, la pantalla sigue sirviendo para importar: no se bloquea por eso. */
+  private cargarHistorial(): void {
+    this.repositorio.misImportaciones().subscribe({
+      next: (cargas) => this.cargasAnteriores.set(cargas),
+      error: () => this.cargasAnteriores.set([]),
+    });
+  }
+
+  protected fechaVisible(fecha: string): string {
+    const cuando = new Date(fecha);
+    if (Number.isNaN(cuando.getTime())) {
+      return '';
+    }
+    return `${cuando.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}, ${cuando.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })}`;
+  }
+
+  protected estadoVisible(carga: Importacion): string {
+    return carga.estado === 'revertida' ? 'Deshecha' : `${carga.confirmadas} asignaturas`;
+  }
+
+  protected async deshacerCarga(carga: Importacion): Promise<void> {
+    const confirmado = await this.notificador.confirmar(
+      '¿Deshacer esta carga?',
+      'Lo que esta carga agregó se quita, y lo que cambió vuelve a la nota que tenía antes.',
+      'Deshacer',
+    );
+    if (!confirmado) {
+      return;
+    }
+
+    this.deshaciendo.set(true);
+    this.repositorio.deshacer(carga.id).subscribe({
+      next: (resultado) => {
+        this.deshaciendo.set(false);
+        this.cargarHistorial();
+        void this.notificador.aviso(
+          `Carga deshecha: ${resultado.eliminadas} se quitaron y ${resultado.restauradas} volvieron a su nota anterior.`,
+        );
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deshaciendo.set(false);
+        void this.notificador.problema(
+          'No pudimos deshacer la carga',
+          err.error?.detail ?? 'Intenta de nuevo en unos minutos.',
+        );
+      },
+    });
   }
 
   protected archivoElegido(evento: Event): void {
@@ -143,6 +199,7 @@ export class ImportReport {
       .subscribe({
         next: (resultado) => {
           this.guardando.set(false);
+          this.cargarHistorial();
           void this.notificador.exito(
             'Listo, tus notas quedaron cargadas',
             `${resultado.guardadas} asignaturas nuevas y ${resultado.actualizadas} actualizadas.`,

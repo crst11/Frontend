@@ -3,11 +3,38 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
-import { AnalisisDeImportacion, ImportacionRepository } from '../../../data-access/importacion.repository';
+import {
+  AnalisisDeImportacion,
+  Importacion,
+  ImportacionRepository,
+} from '../../../data-access/importacion.repository';
 import { ImportReport } from './import-report';
 
 describe('ImportReport', () => {
-  const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn() };
+  const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn(), confirmar: vi.fn() };
+
+  const CARGAS: Importacion[] = [
+    {
+      id: 2,
+      tipoReporte: 'historial',
+      nombreArchivo: 'registro_extendido.pdf',
+      fechaCarga: '2026-10-04T14:30:00Z',
+      estado: 'confirmada',
+      detectadas: 30,
+      confirmadas: 30,
+      sePuedeDeshacer: true,
+    },
+    {
+      id: 1,
+      tipoReporte: 'historial',
+      nombreArchivo: 'registro_extendido.pdf',
+      fechaCarga: '2026-09-01T10:00:00Z',
+      estado: 'confirmada',
+      detectadas: 20,
+      confirmadas: 20,
+      sePuedeDeshacer: false,
+    },
+  ];
 
   const DETECTADO: AnalisisDeImportacion = {
     nombreArchivo: 'registro_extendido.pdf',
@@ -35,17 +62,21 @@ describe('ImportReport', () => {
   beforeEach(() => {
     notificador.exito.mockReset().mockResolvedValue(undefined);
     notificador.problema.mockReset().mockResolvedValue(undefined);
+    notificador.aviso.mockReset().mockResolvedValue(undefined);
+    notificador.confirmar.mockReset().mockResolvedValue(true);
   });
 
   function crear(
     analizar = vi.fn().mockReturnValue(of(DETECTADO)),
     confirmar = vi.fn().mockReturnValue(of({ idImportacion: 1, guardadas: 2, actualizadas: 0, omitidas: 1 })),
+    misImportaciones = vi.fn().mockReturnValue(of(CARGAS)),
+    deshacer = vi.fn().mockReturnValue(of({ idImportacion: 2, eliminadas: 12, restauradas: 8 })),
   ) {
     TestBed.configureTestingModule({
       imports: [ImportReport],
       providers: [
         provideRouter([]),
-        { provide: ImportacionRepository, useValue: { analizar, confirmar } },
+        { provide: ImportacionRepository, useValue: { analizar, confirmar, misImportaciones, deshacer } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
@@ -54,7 +85,7 @@ describe('ImportReport', () => {
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(ImportReport);
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement, analizar, confirmar, navegar };
+    return { fixture, html: fixture.nativeElement as HTMLElement, analizar, confirmar, deshacer, navegar };
   }
 
   function boton(html: HTMLElement, texto: string): HTMLButtonElement {
@@ -159,6 +190,49 @@ describe('ImportReport', () => {
 
     expect(html.querySelector('[role="alert"]')?.textContent).toContain('no parece un Registro Académico Extendido');
     expect(html.textContent).toContain('registrarlas a mano');
+  });
+
+  it('muestra las cargas anteriores con su resumen', () => {
+    const { html } = crear();
+
+    expect(html.querySelectorAll('.import__carga')).toHaveLength(2);
+    expect(html.textContent).toContain('Tus cargas anteriores');
+    expect(html.textContent).toContain('30 asignaturas');
+  });
+
+  it('solo ofrece deshacer la carga que el servidor marca como deshacible', () => {
+    const { html } = crear();
+
+    expect(html.querySelectorAll('.import__deshacer')).toHaveLength(1);
+    expect(html.textContent).toContain('Solo se puede deshacer la última carga');
+  });
+
+  it('al deshacer dice cuántas se quitaron y cuántas volvieron a su nota', async () => {
+    const { fixture, html, deshacer } = crear();
+
+    boton(html, 'Deshacer').click();
+    await fixture.whenStable();
+
+    expect(deshacer).toHaveBeenCalledWith(2);
+    expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('12 se quitaron'));
+    expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('8 volvieron'));
+  });
+
+  it('no deshace nada si la persona cancela la confirmación', async () => {
+    notificador.confirmar.mockResolvedValue(false);
+    const { fixture, html, deshacer } = crear();
+
+    boton(html, 'Deshacer').click();
+    await fixture.whenStable();
+
+    expect(deshacer).not.toHaveBeenCalled();
+  });
+
+  it('si el historial de cargas no carga, la pantalla sigue sirviendo para importar', () => {
+    const { html } = crear(undefined, undefined, vi.fn().mockReturnValue(throwError(() => ({ status: 500 }))));
+
+    expect(html.querySelector('input[type="file"]')).not.toBeNull();
+    expect(html.querySelectorAll('.import__carga')).toHaveLength(0);
   });
 
   it('se puede volver a empezar para subir otro archivo', () => {
