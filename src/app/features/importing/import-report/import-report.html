@@ -1,0 +1,146 @@
+<main class="screen import">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/cuenta/mi-cuenta" aria-label="Volver a mi cuenta">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Importar mi reporte</span>
+  </header>
+
+  @if (analisis(); as detectado) {
+    <!-- Paso 2: lo detectado, para confirmar antes de guardar nada. -->
+    <section class="card import__resumen" aria-label="Lo que detectamos">
+      <h1 class="import__titulo">Esto encontramos en tu reporte</h1>
+      <p class="subtitle">Revísalo antes de guardar. Nada se guarda hasta que confirmes.</p>
+
+      <dl class="import__cuentas">
+        <div>
+          <dt class="field__label">Nuevas</dt>
+          <dd>{{ nuevas() }}</dd>
+        </div>
+        <div>
+          <dt class="field__label">Se actualizan</dt>
+          <dd>{{ actualizadas() }}</dd>
+        </div>
+        <div>
+          <dt class="field__label">Períodos</dt>
+          <dd>{{ periodos().length }}</dd>
+        </div>
+      </dl>
+
+      @if (!detectado.coincideConMiPrograma) {
+        <p class="alert" role="alert">
+          El reporte dice <b>{{ detectado.programaDelReporte }}</b>, que no es el programa que elegiste en
+          CundiApp. Si cambiaste de programa está bien; si no, revisa que sea tu reporte.
+        </p>
+      }
+
+      @if (fueraDelPlan().length > 0) {
+        <p class="notice">
+          {{ fueraDelPlan().length === 1 ? 'Una asignatura no está' : fueraDelPlan().length + ' asignaturas no están' }}
+          en tu ruta de aprendizaje, así que no se van a guardar. Las marcamos abajo para que sepas cuáles son.
+        </p>
+      }
+    </section>
+
+    @for (periodo of periodos(); track periodo.codigo) {
+      <section class="card import__periodo" [attr.aria-label]="nombreDelPeriodo(periodo.codigo)">
+        <header class="import__periodo-head">
+          <h2 class="import__periodo-nombre">{{ nombreDelPeriodo(periodo.codigo) }}</h2>
+          <span class="import__periodo-meta">
+            {{ totalDeAsignaturas(periodo) }} asignaturas
+            @if (periodo.promedioPeriodo !== null) {
+              · promedio {{ periodo.promedioPeriodo }}
+            }
+          </span>
+        </header>
+
+        <ul class="import__asignaturas">
+          @for (asignatura of periodo.asignaturas; track asignatura.codigo) {
+            <li class="import__asignatura" [class.import__asignatura--fuera]="!asignatura.enElPlan">
+              <div class="import__asignatura-texto">
+                <h3 class="import__asignatura-nombre">{{ asignatura.nombre }}</h3>
+                <p class="import__asignatura-meta">
+                  @if (asignatura.enElPlan) {
+                    {{ etiquetaDeCreditos(asignatura.creditos) }}
+                    @if (asignatura.yaEstaba) {
+                      · se actualiza
+                    } @else {
+                      · nueva
+                    }
+                  } @else {
+                    No está en tu ruta de aprendizaje · no se guarda
+                  }
+                </p>
+              </div>
+              <span class="import__asignatura-nota" [class.import__asignatura-nota--sin]="asignatura.nota === null">
+                {{ notaVisible(asignatura) }}
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <div class="screen__footer">
+      <button class="button button--primary" type="button" [disabled]="guardando()" (click)="confirmar()">
+        {{ guardando() ? 'Guardando…' : 'Confirmar y guardar' }}
+      </button>
+      <button class="button button--outline" type="button" [disabled]="guardando()" (click)="volverAEmpezar()">
+        Subir otro archivo
+      </button>
+    </div>
+  } @else {
+    <!-- Paso 1: de dónde sale el archivo y cómo subirlo. -->
+    <p class="subtitle">
+      Sube tu <b>Registro Académico Extendido</b> y CundiApp carga tus notas, tus promedios y tu avance sin
+      que tengas que digitarlos.
+    </p>
+
+    <section class="card import__guia" aria-labelledby="titulo-guia">
+      <button class="import__guia-head" type="button" [attr.aria-expanded]="guiaAbierta()" aria-controls="pasos-guia" (click)="alternarGuia()">
+        <span id="titulo-guia" class="import__guia-titulo">¿Dónde consigo ese archivo?</span>
+        <svg class="import__chevron" [class.import__chevron--open]="guiaAbierta()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+
+      @if (guiaAbierta()) {
+        <ol class="import__pasos" id="pasos-guia">
+          @for (paso of pasos; track paso.resaltado) {
+            <li class="import__paso">{{ paso.texto }} <b>{{ paso.resaltado }}</b>.</li>
+          }
+        </ol>
+        <p class="import__advertencia">
+          Súbelo tal como lo descargaste. Si lo abres y lo vuelves a guardar con otro programa, puede que ya
+          no se pueda leer. Ojo: <b>Consultar Notas Actuales</b> no sirve, porque no trae las notas definitivas.
+        </p>
+      }
+    </section>
+
+    @if (error(); as mensaje) {
+      <p class="alert" role="alert">{{ mensaje }}</p>
+      <p class="notice">
+        Si el archivo no se deja leer, no te quedas sin tus notas: puedes registrarlas a mano desde
+        <a routerLink="/cuenta/historial">Mi historial</a>.
+      </p>
+    }
+
+    <label class="import__zona" [class.import__zona--ocupada]="analizando()">
+      <input
+        class="import__archivo"
+        type="file"
+        accept="application/pdf,.pdf"
+        [disabled]="analizando()"
+        (change)="archivoElegido($event)"
+      />
+      <span class="import__zona-icono" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+          <path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3" />
+        </svg>
+      </span>
+      <span class="import__zona-texto">
+        {{ analizando() ? 'Leyendo tu reporte…' : 'Toca aquí para elegir tu PDF' }}
+      </span>
+      <span class="import__zona-ayuda">Solo el archivo PDF, hasta 5 MB</span>
+    </label>
+  }
+</main>

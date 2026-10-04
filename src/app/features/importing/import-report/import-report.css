@@ -1,0 +1,232 @@
+.import__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.import__resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import__cuentas {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+
+.import__cuentas dd {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+/* La zona de carga es la etiqueta completa: en un teléfono tiene que ser un blanco grande. */
+.import__zona {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 2px dashed var(--color-primary-ring);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  text-align: center;
+  cursor: pointer;
+}
+
+.import__zona:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.import__zona--ocupada {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+/* Se oculta sin display:none para que siga siendo alcanzable con el teclado. */
+.import__archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.import__archivo:focus-visible + .import__zona-icono {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.import__zona-icono {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.import__zona-texto {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.import__zona-ayuda {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.import__guia {
+  padding: 0;
+  overflow: hidden;
+}
+
+.import__guia-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.import__guia-titulo {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.import__chevron {
+  flex: 0 0 auto;
+  color: var(--color-muted);
+  transition: transform 0.15s ease;
+}
+
+.import__chevron--open {
+  transform: rotate(180deg);
+}
+
+.import__pasos {
+  margin: 0;
+  padding: 0 16px 0 36px;
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.import__paso {
+  margin-bottom: 8px;
+}
+
+.import__advertencia {
+  margin: 4px 16px 16px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.import__periodo {
+  padding: 0;
+  overflow: hidden;
+}
+
+.import__periodo-head {
+  padding: 14px 16px;
+}
+
+.import__periodo-nombre {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.import__periodo-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.import__asignaturas {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.import__asignatura {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.import__asignatura + .import__asignatura {
+  border-top: 1px solid var(--color-border);
+}
+
+/* Lo que no se va a guardar se ve apagado, pero se ve: callarlo sería peor. */
+.import__asignatura--fuera {
+  background: var(--color-background);
+}
+
+.import__asignatura--fuera .import__asignatura-nombre,
+.import__asignatura--fuera .import__asignatura-nota {
+  color: var(--color-muted);
+}
+
+.import__asignatura-texto {
+  min-width: 0;
+}
+
+.import__asignatura-nombre {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.import__asignatura-meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.import__asignatura-nota {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.import__asignatura-nota--sin {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-muted);
+}

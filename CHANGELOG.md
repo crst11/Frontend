@@ -5,6 +5,10 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Sin publicar]
 
 ### Agregado
+- Pantalla *Importar mi reporte* (SCRUM-23), enlazada desde Mi cuenta. Son dos pasos en una sola pantalla: primero explica de dónde se saca el archivo y lo recibe, y después muestra lo detectado para confirmar. **Nada toca el historial hasta que el estudiante confirme.** Lo que no está en su ruta de aprendizaje se muestra apagado y marcado como "no se guarda": callarlo sería peor que decirlo. Separa la cuenta de lo nuevo y lo que se actualiza, para que sepa qué va a pasar antes de aceptar. Si el reporte es de otro programa lo avisa pero no bloquea: puede haber cambiado de programa, y quién sabe cuál es el caso es él. Si el archivo no se puede leer, muestra el motivo que da el servidor y ofrece registrar las notas a mano.
+- Guía *¿Dónde consigo ese archivo?* dentro de la misma pantalla, con los seis pasos desde el portal de la universidad hasta *Imprimir → Guardar como PDF*, y las dos advertencias que más hacen falta: subirlo tal como se descargó, y que *Consultar Notas Actuales* no sirve porque no trae las notas definitivas. El texto también está en `docs/como-descargar-el-registro-extendido.md` para poder revisarlo como cualquier otro contenido.
+
+### Agregado
 - Pantalla *Mi historial* (SCRUM-22), enlazada desde Mi cuenta: el promedio acumulado, el avance en la carrera con su barra, y las asignaturas cursadas semestre por semestre con su nota, sus créditos y su estado. Los semestres van del más reciente al más antiguo y el actual se abre solo, porque es el que el estudiante viene a mirar. Una asignatura sin nota lo dice con palabras y no con un 0.0, que sería mentira. Cuando el promedio viene del reporte de la universidad se marca como *oficial*; cuando lo calculó la app, lo dice también. El frontend no calcula nada: los promedios, los créditos y el avance llegan hechos del backend. Sin programa elegido no se muestra un avance vacío sino un enlace para elegirlo, y sin asignaturas cargadas se explica que saldrán del Registro Académico Extendido.
 
 ### Agregado
