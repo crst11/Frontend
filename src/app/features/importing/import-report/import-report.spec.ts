@@ -49,9 +49,12 @@ describe('ImportReport', () => {
         { provide: NotifierService, useValue: notificador },
       ],
     });
+    // Sin esto, confirmar lanza una navegación real contra un router sin rutas y Vitest la cuenta
+    // como error no manejado aunque la prueba pase.
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(ImportReport);
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement, analizar, confirmar };
+    return { fixture, html: fixture.nativeElement as HTMLElement, analizar, confirmar, navegar };
   }
 
   function boton(html: HTMLElement, texto: string): HTMLButtonElement {
@@ -138,9 +141,7 @@ describe('ImportReport', () => {
   });
 
   it('al guardar lleva al historial', async () => {
-    const { fixture, html } = crear();
-    const router = TestBed.inject(Router);
-    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const { fixture, html, navegar } = crear();
     subir(fixture, html);
 
     boton(html, 'Confirmar y guardar').click();
