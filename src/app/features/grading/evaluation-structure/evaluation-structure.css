@@ -1,0 +1,119 @@
+.evaluacion__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.evaluacion__cabecera,
+.evaluacion__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* La suma vive arriba y fija: en el teléfono el árbol es largo y hay que verla sin subir. */
+.evaluacion__suma {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.evaluacion__suma--mal {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.evaluacion__categoria {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* El nombre se lleva el espacio que sobra; el peso solo necesita tres dígitos y una coma. */
+.evaluacion__nombre {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.evaluacion__peso {
+  flex: 0 0 104px;
+}
+
+.evaluacion__actividad {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--color-primary-soft);
+  border-radius: 8px;
+  background: var(--color-background);
+}
+
+.evaluacion__suma-interna {
+  margin: 0;
+}
+
+/*
+ * .button es de ancho completo para las acciones principales. Estos botones van en fila dentro de
+ * una tarjeta, así que se les devuelve su ancho natural.
+ */
+.evaluacion__acciones-categoria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evaluacion__acciones-categoria .button,
+.evaluacion__quitar {
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.evaluacion__quitar {
+  align-self: flex-start;
+}
+
+.evaluacion__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evaluacion__asignatura {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.evaluacion__asignatura:hover,
+.evaluacion__asignatura:focus-visible {
+  border-color: var(--color-primary);
+}
+
+.evaluacion__asignatura-nombre {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-ink);
+}
