@@ -50,6 +50,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/account/academic-record/academic-record').then((m) => m.AcademicRecord),
   },
   {
+    path: 'cuenta/importar-reporte',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/importing/import-report/import-report').then((m) => m.ImportReport),
+  },
+  {
     path: '',
     pathMatch: 'full',
     loadComponent: () => import('./features/entry/welcome/welcome').then((m) => m.Welcome),
