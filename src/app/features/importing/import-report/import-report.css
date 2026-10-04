@@ -230,3 +230,69 @@
   font-weight: 400;
   color: var(--color-muted);
 }
+
+.import__historial-titulo {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.import__cargas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.import__carga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Una carga deshecha se ve apagada, pero se ve: es parte de lo que el estudiante hizo. */
+.import__carga--deshecha .import__carga-fecha {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+/* Crece para quedarse con el ancho sobrante: sin esto la fecha se parte en una palabra por línea. */
+.import__carga-texto {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.import__carga-fecha {
+  font-size: 14px;
+  color: var(--color-ink);
+  text-wrap: balance;
+}
+
+.import__carga-meta {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* La clase .button es de ancho completo para las acciones principales; aquí va al lado del texto,
+   así que se le devuelve su ancho natural o se comería toda la fila. */
+.import__deshacer {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  min-height: 36px;
+  padding: 4px 14px;
+  font-size: 13px;
+}
+
+.import__historial-nota {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
