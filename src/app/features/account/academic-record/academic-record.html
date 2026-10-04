@@ -1,0 +1,107 @@
+<main class="screen record">
+  <header class="top-bar">
+    <a class="icon-button" routerLink="/cuenta/mi-cuenta" aria-label="Volver a mi cuenta">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Mi historial</span>
+  </header>
+
+  @if (cargando()) {
+    <p class="subtitle">Cargando tu historial…</p>
+  } @else if (error()) {
+    <p class="alert" role="alert">No pudimos cargar tu historial. Intenta de nuevo más tarde.</p>
+  } @else if (vacio()) {
+    <p class="notice">
+      Todavía no tienes asignaturas cargadas. Cuando subas tu Registro Académico Extendido verás aquí tus
+      notas, tus promedios y tu avance en la carrera.
+    </p>
+  } @else if (historial(); as datos) {
+    <section class="card record__resumen" aria-label="Resumen de mi carrera">
+      <div class="record__promedio">
+        <span class="field__label">Promedio acumulado</span>
+        <strong class="record__promedio-valor">{{ promedioVisible(datos.promedioAcumulado) }}</strong>
+        @if (esOficial(datos.fuenteDelAcumulado)) {
+          <span class="badge badge--ok">Según tu reporte oficial</span>
+        } @else if (datos.promedioAcumulado !== null) {
+          <span class="badge">Calculado con tus notas cargadas</span>
+        }
+      </div>
+
+      @if (datos.creditosDelPrograma !== null) {
+        <div class="record__avance">
+          <div class="record__avance-texto">
+            <span class="field__label">Avance en la carrera</span>
+            <span>{{ datos.creditosAprobados }} de {{ datos.creditosDelPrograma }} créditos</span>
+          </div>
+          <span class="record__avance-porcentaje">{{ datos.porcentajeDeAvance }}%</span>
+        </div>
+        <div
+          class="record__barra"
+          role="progressbar"
+          [attr.aria-valuenow]="datos.porcentajeDeAvance"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="'Avance en la carrera: ' + datos.porcentajeDeAvance + ' por ciento'"
+        >
+          <span class="record__barra-llena" [style.width.%]="datos.porcentajeDeAvance"></span>
+        </div>
+      } @else {
+        <p class="record__sin-programa">
+          Elige tu programa en <a routerLink="/cuenta/plan-de-estudios">Mi plan de estudios</a> para ver tu
+          porcentaje de avance.
+        </p>
+      }
+    </section>
+
+    <p class="subtitle">Toca un semestre para ver sus asignaturas.</p>
+
+    <ul class="record__periodos">
+      @for (periodo of periodosRecientesPrimero(); track periodo.codigo) {
+        <li class="card record__periodo">
+          <button
+            class="record__periodo-head"
+            type="button"
+            [attr.aria-expanded]="abierto(periodo.codigo)"
+            [attr.aria-controls]="'periodo-' + periodo.codigo"
+            (click)="alternar(periodo.codigo)"
+          >
+            <span class="record__periodo-titulos">
+              <span class="record__periodo-nombre">{{ nombreDelPeriodo(periodo.codigo) }}</span>
+              <span class="record__periodo-meta">
+                {{ totalDeAsignaturas(periodo) }} asignaturas · {{ etiquetaDeCreditos(periodo.creditosMatriculados) }}
+              </span>
+            </span>
+            <span class="record__periodo-promedio">
+              <span class="record__periodo-nota">{{ promedioVisible(periodo.promedio) }}</span>
+              @if (esOficial(periodo.fuenteDelPromedio)) {
+                <span class="record__periodo-fuente">oficial</span>
+              }
+            </span>
+            <svg class="record__chevron" [class.record__chevron--open]="abierto(periodo.codigo)" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+
+          @if (abierto(periodo.codigo)) {
+            <ul class="record__asignaturas" [attr.id]="'periodo-' + periodo.codigo">
+              @for (asignatura of periodo.asignaturas; track asignatura.codigo) {
+                <li class="record__asignatura">
+                  <div class="record__asignatura-texto">
+                    <h2 class="record__asignatura-nombre">{{ asignatura.nombre }}</h2>
+                    <p class="record__asignatura-meta">
+                      {{ etiquetaDeCreditos(asignatura.creditos) }} · {{ estadoVisible(asignatura) }}
+                      @if (!asignatura.pondera && asignatura.creditos === 0) {
+                        · no pondera
+                      }
+                    </p>
+                  </div>
+                  <span class="record__asignatura-nota" [class.record__asignatura-nota--sin]="asignatura.nota === null">
+                    {{ notaVisible(asignatura) }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+</main>
