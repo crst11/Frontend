@@ -55,7 +55,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/importing/import-report/import-report').then((m) => m.ImportReport),
   },
   {
-    path: 'calificaciones/como-me-evaluan',
+    path: 'calificaciones/mis-notas',
     canActivate: [sessionGuard],
     loadComponent: () =>
       import('./features/grading/evaluation-structure/evaluation-structure').then(
