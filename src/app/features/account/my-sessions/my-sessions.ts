@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { SessionService } from '../../../core/session/session.service';
@@ -32,7 +32,6 @@ export class MySessions {
   protected readonly cargando = signal(true);
   protected readonly error = signal(false);
   protected readonly cerrando = signal<number | null>(null);
-  protected readonly varias = computed(() => this.sesiones().length > 1);
 
   constructor() {
     this.cargar();
