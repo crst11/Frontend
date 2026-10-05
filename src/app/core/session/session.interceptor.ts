@@ -27,6 +27,9 @@ export const sessionInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
     return token ? original.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : original;
   };
 
+  // Con cuál sesión salió esta petición. Si al fallar ya hay otra, el fallo es de la vieja.
+  const tokenAlEnviar = sesion.token();
+
   return siguiente(conToken(peticion)).pipe(
     catchError((error: unknown) => {
       if (!(error instanceof HttpErrorResponse) || error.status !== 401) {
@@ -35,6 +38,15 @@ export const sessionInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
       return sesion.renovar().pipe(
         switchMap(() => siguiente(conToken(peticion))),
         catchError((falla: unknown) => {
+          /*
+           * Entre que salió la petición y que falló, el estudiante pudo volver a entrar. Cerrarle
+           * entonces la sesión le borraría el token recién guardado y lo devolvería a la pantalla
+           * de inicio de sesión justo después de haber entrado bien (SCRUM-72). El fallo se le
+           * entrega a quien llamó, que es a quien le importa, y la sesión nueva se queda quieta.
+           */
+          if (sesion.token() !== tokenAlEnviar) {
+            return throwError(() => falla);
+          }
           sesion.limpiar();
           void router.navigate(['/cuenta/entrar']);
           if (esFalloDelServidor(falla as { status?: number })) {
