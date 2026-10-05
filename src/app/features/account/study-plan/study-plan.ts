@@ -9,6 +9,13 @@ import {
   Programa,
 } from '../../../data-access/plan-de-estudios.repository';
 
+/** Uno de los campos de aprendizaje de la universidad: CADI, CAI o el nivelatorio (SCRUM-74). */
+interface CampoDeAprendizaje {
+  sigla: string;
+  nombre: string;
+  explicacion: string;
+}
+
 /**
  * Mi plan de estudios (RF02, SCRUM-21): elegir el programa y leer la ruta de aprendizaje
  * período por período. El agrupado y los créditos vienen hechos del backend; aquí solo se muestran.
@@ -29,6 +36,29 @@ export class StudyPlan {
   protected readonly error = signal(false);
   protected readonly guardando = signal<string | null>(null);
   protected readonly periodoAbierto = signal<number | null>(null);
+  protected readonly glosarioAbierto = signal(false);
+
+  /** Lo que significan los prefijos del plan, en el orden en que se explican (SCRUM-74). */
+  protected readonly campos: CampoDeAprendizaje[] = [
+    {
+      sigla: 'CADI',
+      nombre: 'Campo de Aprendizaje Disciplinar',
+      explicacion:
+        'Los saberes propios de tu carrera. En tu plan son la mayoría y sus códigos empiezan por CAD.',
+    },
+    {
+      sigla: 'CAI',
+      nombre: 'Campo de Aprendizaje Institucional',
+      explicacion:
+        'Las que ven todos los programas de la universidad: lectura crítica, razonamiento lógico, ciudadanía y lengua extranjera.',
+    },
+    {
+      sigla: 'DN',
+      nombre: 'Diagnóstico y Nivelatorio',
+      explicacion:
+        'No es un campo aparte: cada una acompaña a un CAI para medir y nivelar lo que hace falta antes de verlo. No suman créditos.',
+    },
+  ];
 
   protected readonly plan = computed(() => this.perfil()?.plan ?? null);
 
@@ -45,6 +75,31 @@ export class StudyPlan {
 
   constructor() {
     this.cargarPerfil();
+  }
+
+  /**
+   * Los campos de aprendizaje de la universidad, deducidos del prefijo del código (SCRUM-74).
+   *
+   * <p>El orden importa: los nivelatorios son «DN-» más el código del CAI al que acompañan, así que
+   * hay que mirarlos antes que al CAI. Y el campo disciplinar se llama CADI aunque los códigos del
+   * plan empiecen por CAD.
+   */
+  protected campo(asignatura: Asignatura): CampoDeAprendizaje | null {
+    const codigo = asignatura.codigo.toUpperCase();
+    if (codigo.startsWith('DN-')) {
+      return this.campos[2];
+    }
+    if (codigo.startsWith('CAI')) {
+      return this.campos[1];
+    }
+    if (codigo.startsWith('CAD')) {
+      return this.campos[0];
+    }
+    return null;
+  }
+
+  protected alternarGlosario(): void {
+    this.glosarioAbierto.update((abierto) => !abierto);
   }
 
   protected nombreDelRequisito(codigo: string): string {
