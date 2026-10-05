@@ -80,13 +80,11 @@
       }
     </ul>
 
-    @if (varias()) {
-      <div class="screen__footer">
-        <button class="button button--primary" type="button" (click)="cerrarTodas()">
-          Cerrar sesión en todos los dispositivos
-        </button>
-        <p class="sessions__warning">También se cerrará la de este dispositivo.</p>
-      </div>
-    }
+    <div class="screen__footer">
+      <button class="button button--primary" type="button" (click)="cerrarTodas()">
+        Cerrar sesión en todos los dispositivos
+      </button>
+      <p class="sessions__warning">También se cerrará la de este dispositivo, y saldrás de la app.</p>
+    </div>
   }
 </main>
