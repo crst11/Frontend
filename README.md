@@ -18,6 +18,12 @@ Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, 
 | Verificar el correo | `/cuenta/verificacion` | Hecho |
 | Iniciar sesión | `/cuenta/entrar` | Hecho, con contraseña o con el botón de Google |
 | Mi cuenta (protegida) | `/cuenta/mi-cuenta` | Hecho; ahí se vincula o se quita Google |
+| Recuperar la contraseña | `/cuenta/recuperar` y `/cuenta/nueva-contrasena` | Hecho |
+| Mis sesiones (protegida) | `/cuenta/mis-sesiones` | Hecho: desde qué dispositivos entraste, y cerrar una o todas |
+| Mi plan de estudios (protegida) | `/cuenta/plan-de-estudios` | Hecho: elegir programa y ver las asignaturas de cada semestre |
+| Mi historial y promedios (protegida) | `/cuenta/historial` | Hecho: notas por período, promedios y avance en la carrera |
+| Importar mi reporte (protegida) | `/cuenta/importar-reporte` | Hecho: subir el Registro Académico Extendido, confirmar lo detectado y deshacer la última carga |
+| Mis notas (protegida) | `/calificaciones/mis-notas` | Hecho: definir las categorías y actividades de cada asignatura con sus porcentajes |
 
 La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence, se renueva con la cookie de refresco que maneja el navegador.
 
