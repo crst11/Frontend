@@ -7,6 +7,9 @@ import {
   PeriodoCursado,
 } from '../../../data-access/historial.repository';
 
+/** Cómo se nombra cada semestre cursado. Más allá del doceavo, se cae a "13º", "14º"… */
+const ORDINALES = ['1er', '2do', '3er', '4to', '5to', '6to', '7mo', '8vo', '9no', '10mo', '11vo', '12vo'];
+
 /**
  * Mi historial y mis promedios (RF02, SCRUM-22). El frontend no calcula nada: los promedios, los
  * créditos y el avance llegan hechos del backend, donde viven en el dominio.
@@ -52,6 +55,24 @@ export class AcademicRecord {
   }
 
   /** "2024-2" se lee mejor como "2024-2 · segundo semestre". */
+  /** Los períodos tal como el estudiante los cursó, del primero al último. */
+  private readonly enOrden = computed(() => (this.historial()?.periodos ?? []).map((p) => p.codigo));
+
+  /**
+   * En qué semestre de su carrera va ese período (SCRUM-75).
+   *
+   * <p>Se cuenta lo que el estudiante cursó, no el calendario: si dejó de estudiar un semestre, su
+   * tercer semestre cursado sigue siendo el tercero. La pantalla lo advierte para que nadie crea
+   * que la cuenta está mal.
+   */
+  protected ordinalDelPeriodo(codigo: string): string {
+    const posicion = this.enOrden().indexOf(codigo);
+    if (posicion < 0) {
+      return codigo;
+    }
+    return `${ORDINALES[posicion] ?? `${posicion + 1}º`} semestre`;
+  }
+
   protected nombreDelPeriodo(codigo: string): string {
     const [anio, semestre] = codigo.split('-');
     if (!semestre) {
