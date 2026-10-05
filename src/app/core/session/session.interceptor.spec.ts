@@ -84,6 +84,23 @@ describe('sessionInterceptor', () => {
     expect(notificador.informar).toHaveBeenCalledWith('Tu sesión venció', expect.any(String));
   });
 
+  it('una petición vieja que falla no tumba la sesión que se abrió después', () => {
+    // SCRUM-72. El estudiante entra, se queda en la pantalla de inicio de sesión y vuelve a entrar.
+    // Lo que pasaba: una petición de la sesión anterior terminaba de fallar justo después, borraba
+    // el token recién guardado y navegaba a /cuenta/entrar, pisando la navegación del login.
+    sesion.renovar.mockImplementation(() => {
+      sesion.token.mockReturnValue('jwt-de-la-sesion-nueva');
+      return throwError(() => new Error('401'));
+    });
+    http.get(`${environment.apiUrl}/mis/cuenta`).subscribe({ error: () => undefined });
+
+    controlador.expectOne(`${environment.apiUrl}/mis/cuenta`).flush(null, { status: 401, statusText: 'No autorizado' });
+
+    expect(sesion.limpiar).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+    expect(notificador.informar).not.toHaveBeenCalled();
+  });
+
   it('si la renovación falla porque no hay conexión, no dice que la sesión venció', () => {
     sesion.renovar.mockReturnValue(throwError(() => ({ status: 0 })));
     http.get(`${environment.apiUrl}/mis/cuenta`).subscribe({ error: () => undefined });
