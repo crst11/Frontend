@@ -4,21 +4,23 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { SessionService } from '../../../core/session/session.service';
-import { EstudianteRepository, SesionAbierta } from '../../../data-access/estudiante.repository';
+import { EstudianteRepository, DispositivoConSesion } from '../../../data-access/estudiante.repository';
 import { MySessions } from './my-sessions';
 
 describe('MySessions', () => {
   const EN_UNA_SEMANA = new Date(Date.now() + 7 * 86_400_000).toISOString();
   const notificador = { confirmar: vi.fn(), aviso: vi.fn(), problema: vi.fn() };
 
-  function sesion(consecutivo: number, cambios: Partial<SesionAbierta> = {}): SesionAbierta {
+  function sesion(consecutivo: number, cambios: Partial<DispositivoConSesion> = {}): DispositivoConSesion {
     return {
       consecutivo,
       metodo: 'local',
-      fechaInicio: new Date().toISOString(),
+      primerAcceso: new Date().toISOString(),
+      ultimoAcceso: new Date().toISOString(),
       fechaExpiracion: EN_UNA_SEMANA,
       dispositivo: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/129.0 Safari/537.36',
       ip: '192.168.1.20',
+      esLaActual: false,
       ...cambios,
     };
   }
@@ -98,6 +100,53 @@ describe('MySessions', () => {
 
     expect(cerrarSesionEnDispositivo).toHaveBeenCalledWith(1);
     expect(html.querySelectorAll('.sessions__item')).toHaveLength(1);
+  });
+
+  it('marca cuál es la sesión de este dispositivo', () => {
+    const { html } = crear(vi.fn().mockReturnValue(of([sesion(1, { esLaActual: true }), sesion(2)])));
+
+    const etiquetas = Array.from(html.querySelectorAll('.badge')).map((b) => b.textContent?.trim());
+    expect(etiquetas[0]).toBe('Sesión actual');
+    expect(etiquetas[1]).not.toBe('Sesión actual');
+    expect(html.textContent).toContain('Cerrar sesión aquí');
+  });
+
+  it('muestra desde cuándo está dentro el dispositivo y cuándo fue su último acceso', () => {
+    // SCRUM-73: la cadena de renovaciones se lee como un solo dispositivo con dos fechas.
+    const { html } = crear(vi.fn().mockReturnValue(of([sesion(1)])));
+
+    const etiquetas = Array.from(html.querySelectorAll('.sessions__fact .field__label')).map((e) =>
+      e.textContent?.trim(),
+    );
+    expect(etiquetas).toContain('Dentro desde');
+    expect(etiquetas).toContain('Último acceso');
+  });
+
+  it('al cerrar la propia sesión sale de la app en vez de dejar la pantalla mintiendo', async () => {
+    const { fixture, html, limpiar } = crear(vi.fn().mockReturnValue(of([sesion(1, { esLaActual: true })])));
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    boton(html, 'Cerrar sesión aquí').click();
+    await fixture.whenStable();
+
+    expect(limpiar).toHaveBeenCalled();
+    expect(navegar).toHaveBeenCalledWith(['/cuenta/entrar']);
+  });
+
+  it('avisa que cerrar la propia saca de la app antes de hacerlo', async () => {
+    const { fixture, html } = crear(vi.fn().mockReturnValue(of([sesion(1, { esLaActual: true })])));
+    // Sin esto, la salida lanza una navegación real contra un router sin rutas y Vitest la cuenta
+    // como error no manejado aunque la prueba pase.
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    boton(html, 'Cerrar sesión aquí').click();
+    await fixture.whenStable();
+
+    expect(notificador.confirmar).toHaveBeenCalledWith(
+      '¿Cerrar la sesión de este dispositivo?',
+      expect.stringContaining('vas a salir de la app'),
+      'Cerrar sesión',
+    );
   });
 
   it('no cierra nada si la persona cancela la confirmación', async () => {

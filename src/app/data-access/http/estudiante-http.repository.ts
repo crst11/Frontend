@@ -7,7 +7,7 @@ import {
   CuentaRegistrada,
   DatosDeRegistro,
   EstudianteRepository,
-  SesionAbierta,
+  DispositivoConSesion,
   SesionIniciada,
   VinculoConGoogle,
 } from '../estudiante.repository';
@@ -67,8 +67,8 @@ export class EstudianteHttpRepository extends EstudianteRepository {
     return this.http.delete<void>(`${environment.apiUrl}/mis/cuenta`);
   }
 
-  override misSesiones(): Observable<SesionAbierta[]> {
-    return this.http.get<SesionAbierta[]>(`${environment.apiUrl}/mis/sesiones`);
+  override misSesiones(): Observable<DispositivoConSesion[]> {
+    return this.http.get<DispositivoConSesion[]>(`${environment.apiUrl}/mis/sesiones`);
   }
 
   override cerrarSesionEnDispositivo(consecutivo: number): Observable<void> {

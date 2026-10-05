@@ -40,13 +40,21 @@
                 <p class="sessions__system">{{ dispositivo(sesion).sistema }}</p>
               }
             </div>
-            <span class="badge">{{ vigenciaRestante(sesion.fechaExpiracion) }}</span>
+            @if (sesion.esLaActual) {
+              <span class="badge badge--ok">Sesión actual</span>
+            } @else {
+              <span class="badge">{{ vigenciaRestante(sesion.fechaExpiracion) }}</span>
+            }
           </div>
 
           <dl class="sessions__facts">
             <div class="sessions__fact">
-              <dt class="field__label">Inició</dt>
-              <dd>{{ desdeCuando(sesion.fechaInicio) }}</dd>
+              <dt class="field__label">Dentro desde</dt>
+              <dd>{{ desdeCuando(sesion.primerAcceso) }}</dd>
+            </div>
+            <div class="sessions__fact">
+              <dt class="field__label">Último acceso</dt>
+              <dd>{{ desdeCuando(sesion.ultimoAcceso) }}</dd>
             </div>
             <div class="sessions__fact">
               <dt class="field__label">Método</dt>
@@ -66,7 +74,7 @@
             [disabled]="cerrando() === sesion.consecutivo"
             (click)="cerrarUna(sesion)"
           >
-            {{ cerrando() === sesion.consecutivo ? 'Cerrando…' : 'Cerrar esta sesión' }}
+            {{ cerrando() === sesion.consecutivo ? 'Cerrando…' : etiquetaDeCerrar(sesion) }}
           </button>
         </li>
       }
