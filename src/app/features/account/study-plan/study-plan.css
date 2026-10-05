@@ -176,3 +176,50 @@
 .plan__option .button {
   margin-top: 10px;
 }
+
+/* Glosario de los campos de aprendizaje (SCRUM-74). */
+.plan__glosario-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.plan__campos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.plan__campo dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.plan__campo-nombre {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.plan__campo dd {
+  margin: 4px 0 0;
+}
+
+/* La sigla acompaña al nombre de la asignatura y no debe empujar la etiqueta de créditos. */
+.plan__subject-head .plan__campo-sigla {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
