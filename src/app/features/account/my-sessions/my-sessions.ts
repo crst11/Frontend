@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { SessionService } from '../../../core/session/session.service';
-import { EstudianteRepository, SesionAbierta } from '../../../data-access/estudiante.repository';
+import { EstudianteRepository, DispositivoConSesion } from '../../../data-access/estudiante.repository';
 
 /** Un dispositivo reconocible a partir del user agent, para no mostrarle al estudiante la cadena cruda. */
 interface Dispositivo {
@@ -28,7 +28,7 @@ export class MySessions {
   private readonly router = inject(Router);
   private readonly notificador = inject(NotifierService);
 
-  protected readonly sesiones = signal<SesionAbierta[]>([]);
+  protected readonly sesiones = signal<DispositivoConSesion[]>([]);
   protected readonly cargando = signal(true);
   protected readonly error = signal(false);
   protected readonly cerrando = signal<number | null>(null);
@@ -42,7 +42,7 @@ export class MySessions {
    * Del user agent solo se saca lo que el estudiante reconocería: el navegador y el sistema.
    * No se intenta adivinar el modelo del equipo; una etiqueta equivocada sería peor que ninguna.
    */
-  protected dispositivo(sesion: SesionAbierta): Dispositivo {
+  protected dispositivo(sesion: DispositivoConSesion): Dispositivo {
     const agente = sesion.dispositivo ?? '';
     if (!agente.trim()) {
       return { nombre: 'Dispositivo desconocido', sistema: null, esTelefono: false };
@@ -72,8 +72,13 @@ export class MySessions {
     };
   }
 
-  protected metodo(sesion: SesionAbierta): string {
+  protected metodo(sesion: DispositivoConSesion): string {
     return sesion.metodo === 'google' ? 'Entró con Google' : 'Entró con contraseña';
+  }
+
+  /** Cerrar la propia saca a la persona de la app, y el botón tiene que decirlo antes de tocarlo. */
+  protected etiquetaDeCerrar(sesion: DispositivoConSesion): string {
+    return sesion.esLaActual ? 'Cerrar sesión aquí' : 'Cerrar esta sesión';
   }
 
   /** "Hoy a las 14:30" o "28 de septiembre, 14:30": la fecha exacta importa para reconocer un acceso ajeno. */
@@ -106,12 +111,13 @@ export class MySessions {
     return dias === 1 ? 'Vence mañana' : `Vence en ${dias} días`;
   }
 
-  protected async cerrarUna(sesion: SesionAbierta): Promise<void> {
+  protected async cerrarUna(sesion: DispositivoConSesion): Promise<void> {
     const equipo = this.dispositivo(sesion);
     const confirmado = await this.notificador.confirmar(
-      '¿Cerrar esta sesión?',
-      `Se cerrará la sesión de ${equipo.nombre}${equipo.sistema ? ` en ${equipo.sistema}` : ''}. ` +
-        'Si es este dispositivo, tendrás que iniciar sesión de nuevo.',
+      sesion.esLaActual ? '¿Cerrar la sesión de este dispositivo?' : '¿Cerrar esta sesión?',
+      sesion.esLaActual
+        ? 'Es la sesión desde la que estás viendo esto: vas a salir de la app y tendrás que iniciar sesión de nuevo.'
+        : `Se cerrará la sesión de ${equipo.nombre}${equipo.sistema ? ` en ${equipo.sistema}` : ''}.`,
       'Cerrar sesión',
     );
     if (!confirmado) {
@@ -121,8 +127,15 @@ export class MySessions {
     this.cerrando.set(sesion.consecutivo);
     this.repositorio.cerrarSesionEnDispositivo(sesion.consecutivo).subscribe({
       next: () => {
-        this.sesiones.update((abiertas) => abiertas.filter((s) => s.consecutivo !== sesion.consecutivo));
         this.cerrando.set(null);
+        if (sesion.esLaActual) {
+          // El servidor ya revocó esta sesión: quedarse en la pantalla sería mentir sobre el estado.
+          this.sesion.limpiar();
+          void this.router.navigate(['/cuenta/entrar']);
+          void this.notificador.aviso('Cerraste la sesión de este dispositivo.');
+          return;
+        }
+        this.sesiones.update((abiertas) => abiertas.filter((s) => s.consecutivo !== sesion.consecutivo));
         void this.notificador.aviso('Sesión cerrada.');
       },
       error: () => {
