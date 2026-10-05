@@ -82,7 +82,22 @@ describe('AcademicRecord', () => {
     const { html } = crear(vi.fn().mockReturnValue(of(CON_HISTORIAL)));
 
     const nombres = Array.from(html.querySelectorAll('.record__periodo-nombre')).map((n) => n.textContent?.trim());
-    expect(nombres).toEqual(['2025 · primer semestre', '2024 · segundo semestre']);
+    expect(nombres).toEqual(['2do semestre', '1er semestre']);
+  });
+
+  it('numera los semestres por el orden en que se cursaron, no por el calendario', () => {
+    // SCRUM-75. El código del período sigue visible: es el que aparece en los documentos oficiales.
+    const { html } = crear(vi.fn().mockReturnValue(of(CON_HISTORIAL)));
+
+    const primero = html.querySelectorAll('.record__periodo')[0];
+    expect(primero.querySelector('.record__periodo-nombre')?.textContent?.trim()).toBe('2do semestre');
+    expect(primero.textContent).toContain('2025 · primer semestre');
+  });
+
+  it('avisa que la cuenta va por semestres cursados y no por calendario', () => {
+    const { html } = crear(vi.fn().mockReturnValue(of(CON_HISTORIAL)));
+
+    expect(html.querySelector('.record__aviso')?.textContent).toContain('no el calendario');
   });
 
   it('abre el período más reciente y deja cerrados los anteriores', () => {
