@@ -28,9 +28,10 @@ describe('StudyPlan', () => {
           periodo: 1,
           creditos: 16,
           asignaturas: [
-            { codigo: 'A1', nombre: 'Álgebra Lineal', creditos: 3, tipo: 'obligatoria', prerrequisitos: [] },
+            { codigo: 'CAD612021101', nombre: 'Álgebra Lineal', creditos: 3, tipo: 'obligatoria', prerrequisitos: [] },
+            { codigo: 'CAI1002020201', nombre: 'Razonamiento Lógico y Cuantitativo', creditos: 2, tipo: 'obligatoria', prerrequisitos: [] },
             {
-              codigo: 'DN-1',
+              codigo: 'DN-CAI1002020201',
               nombre: 'Diagnóstico y Nivelatorio Razonamiento Lógico',
               creditos: 0,
               tipo: 'obligatoria',
@@ -42,7 +43,7 @@ describe('StudyPlan', () => {
           periodo: 2,
           creditos: 18,
           asignaturas: [
-            { codigo: 'B1', nombre: 'Programación I', creditos: 4, tipo: 'obligatoria', prerrequisitos: ['A1'] },
+            { codigo: 'CAD612021106', nombre: 'Programación I', creditos: 4, tipo: 'obligatoria', prerrequisitos: ['CAD612021101'] },
           ],
         },
       ],
@@ -123,7 +124,38 @@ describe('StudyPlan', () => {
 
     const requisito = html.querySelector('.plan__requirement');
     expect(requisito?.textContent).toContain('Álgebra Lineal');
-    expect(requisito?.textContent).not.toContain('A1');
+    expect(requisito?.textContent).not.toContain('CAD612021101');
+  });
+
+  it('etiqueta cada asignatura con su campo de aprendizaje', () => {
+    // SCRUM-74. El campo disciplinar se llama CADI aunque los códigos empiecen por CAD.
+    const { html } = crear(vi.fn().mockReturnValue(of(CON_PLAN)));
+
+    const siglas = Array.from(html.querySelectorAll('.plan__campo-sigla')).map((e) => e.textContent?.trim());
+    expect(siglas).toEqual(['CADI', 'CAI', 'DN']);
+  });
+
+  it('el nivelatorio se reconoce antes que el CAI al que acompaña', () => {
+    // DN-CAI... empieza por DN- y por eso no puede leerse como un CAI.
+    const { html } = crear(vi.fn().mockReturnValue(of(CON_PLAN)));
+
+    const nivelatorio = Array.from(html.querySelectorAll('.plan__subject')).find((e) =>
+      e.textContent?.includes('Diagnóstico y Nivelatorio'),
+    );
+    expect(nivelatorio?.querySelector('.plan__campo-sigla')?.textContent?.trim()).toBe('DN');
+  });
+
+  it('explica qué son CADI, CAI y DN cuando se abre el glosario', () => {
+    const { fixture, html } = crear(vi.fn().mockReturnValue(of(CON_PLAN)));
+
+    expect(html.querySelectorAll('.plan__campo')).toHaveLength(0);
+    boton(html, '¿Qué son CADI, CAI y DN?').click();
+    fixture.detectChanges();
+
+    expect(html.querySelectorAll('.plan__campo')).toHaveLength(3);
+    expect(html.textContent).toContain('Campo de Aprendizaje Disciplinar');
+    expect(html.textContent).toContain('Campo de Aprendizaje Institucional');
+    expect(html.textContent).toContain('No suman créditos');
   });
 
   it('marca como "No pondera" la asignatura de 0 créditos', () => {

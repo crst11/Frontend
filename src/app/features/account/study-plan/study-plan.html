@@ -28,6 +28,33 @@
 
     <p class="subtitle">Toca un semestre para ver sus asignaturas y lo que hay que ver antes.</p>
 
+    <section class="card plan__glosario" aria-label="Qué significan las siglas">
+      <button
+        class="plan__glosario-head"
+        type="button"
+        [attr.aria-expanded]="glosarioAbierto()"
+        aria-controls="glosario-campos"
+        (click)="alternarGlosario()"
+      >
+        <span>¿Qué son CADI, CAI y DN?</span>
+        <svg class="plan__chevron" [class.plan__chevron--open]="glosarioAbierto()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+
+      @if (glosarioAbierto()) {
+        <dl class="plan__campos" id="glosario-campos">
+          @for (campo of campos; track campo.sigla) {
+            <div class="plan__campo">
+              <dt>
+                <span class="chip">{{ campo.sigla }}</span>
+                <span class="plan__campo-nombre">{{ campo.nombre }}</span>
+              </dt>
+              <dd class="field__hint">{{ campo.explicacion }}</dd>
+            </div>
+          }
+        </dl>
+      }
+    </section>
+
     <ul class="plan__periods">
       @for (periodo of miPlan.periodos; track periodo.periodo) {
         <li class="card plan__period">
@@ -54,6 +81,9 @@
                 <li class="plan__subject">
                   <div class="plan__subject-head">
                     <h2 class="plan__subject-name">{{ asignatura.nombre }}</h2>
+                    @if (campo(asignatura); as suCampo) {
+                      <span class="chip plan__campo-sigla" [attr.title]="suCampo.nombre">{{ suCampo.sigla }}</span>
+                    }
                     @if (noPondera(asignatura)) {
                       <span class="badge">No pondera</span>
                     } @else {
