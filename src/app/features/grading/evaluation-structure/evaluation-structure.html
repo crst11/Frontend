@@ -1,0 +1,218 @@
+<main class="screen evaluacion">
+  <header class="top-bar">
+    @if (seleccionada()) {
+      <button class="icon-button" type="button" (click)="volverALaLista()" aria-label="Volver a mis asignaturas">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+      </button>
+    } @else {
+      <a class="icon-button" routerLink="/cuenta/mi-cuenta" aria-label="Volver a mi cuenta">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+      </a>
+    }
+    <span class="top-bar__title">Mis notas</span>
+  </header>
+
+  @if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+  }
+
+  @if (seleccionada(); as asignatura) {
+    <!-- Paso 2: el árbol de la asignatura elegida. -->
+    <section class="screen__body evaluacion__editor" aria-label="Estructura de evaluación">
+      <div class="card evaluacion__cabecera">
+        <h1 class="evaluacion__titulo">{{ asignatura.nombre }}</h1>
+        <p class="subtitle">{{ asignatura.codigoPeriodo }} · {{ asignatura.creditos }} créditos</p>
+        @if (!guardada()) {
+          <p class="notice">
+            Estos son los cortes con los que trabaja la universidad por defecto. Ajústalos a lo que te dijo
+            tu docente y guarda; mientras no guardes, no hay nada registrado.
+          </p>
+        }
+      </div>
+
+      <p class="evaluacion__suma" [class.evaluacion__suma--mal]="!cuadra()" aria-live="polite">
+        @if (categorias().length === 0) {
+          Sin categorías: al guardar, la asignatura queda sin configurar.
+        } @else if (cuadra()) {
+          Las categorías suman 100 %.
+        } @else {
+          Las categorías suman {{ totalDeCategorias() }} %
+          @if (totalDeCategorias() < 100) {
+            · faltan {{ 100 - totalDeCategorias() }} %
+          } @else {
+            · se pasan {{ totalDeCategorias() - 100 }} %
+          }
+        }
+      </p>
+
+      @for (categoria of categorias(); track categoria.consecutivo) {
+        <article class="card evaluacion__categoria">
+          <div class="field-row">
+            <label class="field evaluacion__nombre">
+              <span class="field__label">Categoría</span>
+              <input
+                class="field__input"
+                type="text"
+                maxlength="80"
+                placeholder="Primer corte"
+                [value]="categoria.nombre"
+                (input)="escribirNombreDeCategoria(categoria.consecutivo, $any($event.target).value)"
+              />
+            </label>
+            <label class="field evaluacion__peso">
+              <span class="field__label">% de la nota</span>
+              <input
+                class="field__input"
+                type="number"
+                inputmode="decimal"
+                min="0.01"
+                max="100"
+                step="0.01"
+                [value]="categoria.porcentaje"
+                (input)="escribirPesoDeCategoria(categoria.consecutivo, $any($event.target).value)"
+              />
+            </label>
+          </div>
+
+          @for (actividad of categoria.actividades; track actividad.consecutivo) {
+            <div class="evaluacion__actividad">
+              <div class="field-row">
+                <label class="field evaluacion__nombre">
+                  <span class="field__label">Actividad</span>
+                  <input
+                    class="field__input"
+                    type="text"
+                    maxlength="120"
+                    placeholder="Parcial"
+                    [value]="actividad.nombre"
+                    (input)="escribirCampoDeActividad(categoria.consecutivo, actividad.consecutivo, 'nombre', $any($event.target).value)"
+                  />
+                </label>
+                <label class="field evaluacion__peso">
+                  <span class="field__label">% del corte</span>
+                  <input
+                    class="field__input"
+                    type="number"
+                    inputmode="decimal"
+                    min="0.01"
+                    max="100"
+                    step="0.01"
+                    [value]="actividad.porcentaje"
+                    (input)="escribirCampoDeActividad(categoria.consecutivo, actividad.consecutivo, 'porcentaje', $any($event.target).value)"
+                  />
+                </label>
+              </div>
+              <div class="field-row">
+                <label class="field">
+                  <span class="field__label">Tipo</span>
+                  <select
+                    class="field__input"
+                    [value]="actividad.tipo"
+                    (change)="escribirCampoDeActividad(categoria.consecutivo, actividad.consecutivo, 'tipo', $any($event.target).value)"
+                  >
+                    @for (tipo of tipos; track tipo.valor) {
+                      <option [value]="tipo.valor" [selected]="tipo.valor === actividad.tipo">{{ tipo.texto }}</option>
+                    }
+                  </select>
+                </label>
+                <label class="field">
+                  <span class="field__label">Fecha (opcional)</span>
+                  <input
+                    class="field__input"
+                    type="date"
+                    [value]="actividad.fechaProgramada"
+                    (input)="escribirCampoDeActividad(categoria.consecutivo, actividad.consecutivo, 'fechaProgramada', $any($event.target).value)"
+                  />
+                </label>
+              </div>
+              <button
+                class="button button--outline evaluacion__quitar"
+                type="button"
+                (click)="quitarActividad(categoria.consecutivo, actividad.consecutivo)"
+              >
+                Quitar actividad
+              </button>
+            </div>
+          }
+
+          @if (categoria.actividades.length > 0) {
+            <p class="field__hint evaluacion__suma-interna" [class.field__error]="totalDe(categoria) !== 100" aria-live="polite">
+              @if (totalDe(categoria) === 100) {
+                Sus actividades suman 100 %.
+              } @else {
+                Sus actividades suman {{ totalDe(categoria) }} % y tienen que sumar 100 %.
+              }
+            </p>
+          } @else {
+            <p class="field__hint">
+              Todavía sin desglosar. Puedes dejarlo así y agregar las actividades cuando las sepas.
+            </p>
+          }
+
+          <div class="evaluacion__acciones-categoria">
+            <button class="button button--soft" type="button" (click)="agregarActividad(categoria.consecutivo)">
+              Agregar actividad
+            </button>
+            <button class="button button--outline" type="button" (click)="quitarCategoria(categoria.consecutivo)">
+              Quitar categoría
+            </button>
+          </div>
+        </article>
+      }
+
+      <button class="button button--soft" type="button" (click)="agregarCategoria()">Agregar categoría</button>
+    </section>
+
+    <footer class="screen__footer">
+      <button
+        class="button button--primary"
+        type="button"
+        [disabled]="!sePuedeGuardar() || guardando()"
+        (click)="guardar()"
+      >
+        {{ guardando() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </footer>
+  } @else {
+    <!-- Paso 1: elegir la asignatura. -->
+    <section class="screen__body" aria-label="Mis asignaturas">
+      <h1 class="evaluacion__titulo">Elige la asignatura</h1>
+      <p class="subtitle">
+        Para cada una defines las categorías que suman 100 % y, dentro de cada categoría, sus actividades.
+      </p>
+
+      @if (cargando()) {
+        <p class="subtitle">Buscando tus asignaturas…</p>
+      } @else if (asignaturas().length === 0) {
+        <p class="notice">
+          Todavía no tienes asignaturas matriculadas en CundiApp. Importa tu Registro Académico Extendido y
+          aparecerán aquí.
+        </p>
+        <a class="button button--soft" routerLink="/cuenta/importar-reporte">Importar mi reporte</a>
+      } @else {
+        <ul class="evaluacion__lista">
+          @for (asignatura of asignaturas(); track asignatura.idMatricula) {
+            <li>
+              <button class="card evaluacion__asignatura" type="button" (click)="elegir(asignatura)">
+                <span class="evaluacion__asignatura-nombre">{{ asignatura.nombre }}</span>
+                <span class="field__hint">{{ asignatura.codigoPeriodo }} · {{ asignatura.creditos }} créditos</span>
+                @if (asignatura.tieneEstructura) {
+                  <span class="badge badge--ok">
+                    {{ asignatura.categorias }}
+                    {{ asignatura.categorias === 1 ? 'categoría' : 'categorías' }}
+                    @if (asignatura.actividades > 0) {
+                      · {{ asignatura.actividades }}
+                      {{ asignatura.actividades === 1 ? 'actividad' : 'actividades' }}
+                    }
+                  </span>
+                } @else {
+                  <span class="badge">Sin configurar</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</main>
