@@ -1,0 +1,52 @@
+# Servidor web del frontend dentro del contenedor (SCRUM-70). La imagen oficial renderiza este
+# archivo con las variables de entorno al arrancar (envsubst sobre /etc/nginx/templates).
+#
+# Solo se usa en Docker Compose y como alternativa en ECS. En AWS el frontend sale de S3 detras de
+# CloudFront (infra/aws/frontend.yml en el repo Backend), que hace lo mismo con otros medios.
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    # Un solo origen: el navegador habla con nginx y nginx reenvia /api al backend. Asi la cookie de
+    # refresco es del mismo sitio y no hay CORS de por medio, igual que detras de CloudFront.
+    location ^~ /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # El service worker y su lista de archivos NUNCA se cachean: si se cacheara, una version nueva
+    # no llegaria hasta que el navegador decidiera revisar, y la PWA se quedaria atras.
+    location ~* ^/(index\.html|ngsw\.json|ngsw-worker\.js|safety-worker\.js|worker-basic\.min\.js|manifest\.webmanifest)$ {
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        try_files $uri =404;
+    }
+
+    # Los demas archivos llevan un hash en el nombre: si cambian, cambia la URL, asi que se guardan un anio.
+    location ~* \.(?:js|css|woff2?|png|jpg|jpeg|svg|ico|webp)$ {
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    # Cualquier otra ruta es de Angular (/cuenta/entrar, /guia...): se responde index.html.
+    location / {
+        add_header Cache-Control "no-cache" always;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Sonda del contenedor.
+    location = /salud {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+}
