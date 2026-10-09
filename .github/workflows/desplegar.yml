@@ -1,0 +1,210 @@
+name: Desplegar
+
+# Un push (es decir, un merge) a una rama de ambiente publica el frontend de ese ambiente (SCRUM-71):
+#   desarrollo -> DEV · preproduccion -> PREPROD · produccion -> PROD (con aprobacion manual)
+# Los pull requests NO publican: solo corre ci.yml.
+#
+# El frontend sale de S3 detras de CloudFront. La infraestructura (bucket y distribucion) la crea una
+# persona una vez por ambiente con infra/aws/frontend.yml, en el repositorio Backend; este flujo solo
+# sube archivos y limpia el cache, por eso su rol de AWS no puede tocar nada mas.
+#
+# Volver atras: relanzar este flujo sobre el commit anterior (gh run rerun, o Run workflow en esa rama).
+
+on:
+  push:
+    branches: [desarrollo, preproduccion, produccion]
+  workflow_dispatch:
+
+concurrency:
+  group: desplegar-${{ github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  contexto:
+    name: Resolver ambiente
+    runs-on: ubuntu-latest
+    outputs:
+      entorno: ${{ steps.c.outputs.entorno }}
+      configuracion: ${{ steps.c.outputs.configuracion }}
+    steps:
+      - id: c
+        run: |
+          case "$GITHUB_REF_NAME" in
+            desarrollo)    entorno=dev;     configuracion=dev ;;
+            preproduccion) entorno=preprod; configuracion=pre ;;
+            produccion)    entorno=prod;    configuracion=production ;;
+            *) echo "Rama sin ambiente: $GITHUB_REF_NAME"; exit 1 ;;
+          esac
+          echo "entorno=$entorno" >> "$GITHUB_OUTPUT"
+          echo "configuracion=$configuracion" >> "$GITHUB_OUTPUT"
+
+  probar:
+    name: Pruebas (solo DEV)
+    needs: contexto
+    if: needs.contexto.outputs.entorno == 'dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test -- --watch=false
+
+  publicar:
+    name: Publicar en ${{ needs.contexto.outputs.entorno }}
+    needs: [contexto, probar]
+    if: ${{ !cancelled() && needs.contexto.result == 'success' && needs.probar.result != 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Este Environment activa la aprobacion manual en produccion y permite asumir el rol de AWS de ese ambiente.
+    environment: ${{ github.ref_name }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENTORNO: ${{ needs.contexto.outputs.entorno }}
+      CONFIGURACION: ${{ needs.contexto.outputs.configuracion }}
+      SALIDA: dist/cundiapp/browser
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compilar
+        run: npx ng build --configuration "$CONFIGURACION"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Buscar el bucket y la distribucion
+        id: destino
+        run: |
+          salida() {
+            aws cloudformation describe-stacks --stack-name "cundiapp-frontend-$ENTORNO" \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text
+          }
+          bucket="$(salida Bucket 2>/dev/null || true)"
+          if [ -z "$bucket" ] || [ "$bucket" = "None" ]; then
+            echo "No existe la pila cundiapp-frontend-$ENTORNO. Se crea una vez con infra/aws/frontend.yml (repo Backend, docs/despliegue.md)."
+            exit 1
+          fi
+          {
+            echo "bucket=$bucket"
+            echo "distribucion=$(salida IdDeDistribucion)"
+            echo "dominio=$(salida DominioDeCloudFront)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Subir los archivos
+        env:
+          BUCKET: ${{ steps.destino.outputs.bucket }}
+        run: |
+          # El orden importa. Si se subiera primero index.html, apuntaria a archivos que todavia no estan.
+          # 1) JS y CSS: llevan hash en el nombre, asi que son inmutables. Los workers de Angular tambien
+          #    son .js pero conservan su nombre, y se excluyen aqui.
+          aws s3 sync "$SALIDA" "s3://$BUCKET" --size-only --only-show-errors \
+            --exclude "*" --include "*.js" --include "*.css" \
+            --exclude ngsw-worker.js --exclude safety-worker.js --exclude worker-basic.min.js \
+            --cache-control "public,max-age=31536000,immutable"
+          # 2) Iconos y demas: conservan su nombre aunque cambien, un dia de cache y no un anio.
+          aws s3 sync "$SALIDA" "s3://$BUCKET" --size-only --only-show-errors \
+            --exclude "*.js" --exclude "*.css" --exclude index.html --exclude ngsw.json --exclude manifest.webmanifest \
+            --cache-control "public,max-age=86400"
+          # 3) Lo que nunca se cachea, AL FINAL: es lo que hace que el navegador vea la version nueva.
+          for archivo in ngsw-worker.js safety-worker.js worker-basic.min.js ngsw.json manifest.webmanifest index.html; do
+            [ -f "$SALIDA/$archivo" ] || continue
+            tipo=""
+            [ "$archivo" = "manifest.webmanifest" ] && tipo="application/manifest+json"
+            aws s3 cp "$SALIDA/$archivo" "s3://$BUCKET/$archivo" --only-show-errors \
+              --cache-control "no-cache, no-store, must-revalidate" ${tipo:+--content-type "$tipo"}
+          done
+          # 4) Borrar lo que ya no existe. Sin --cache-control y con --size-only: lo igual no se toca.
+          aws s3 sync "$SALIDA" "s3://$BUCKET" --size-only --delete --only-show-errors
+
+      - name: Limpiar el cache de CloudFront
+        env:
+          DISTRIBUCION: ${{ steps.destino.outputs.distribucion }}
+        run: |
+          id="$(aws cloudfront create-invalidation --distribution-id "$DISTRIBUCION" --paths '/*' --query 'Invalidation.Id' --output text)"
+          aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUCION" --id "$id"
+
+      - name: Comprobar que responde
+        env:
+          DOMINIO: ${{ steps.destino.outputs.dominio }}
+        run: |
+          verificar() { # ruta, tipo esperado
+            local cabeceras codigo tipo
+            cabeceras="$(curl --silent --show-error --max-time 20 --retry 5 --retry-delay 5 --retry-all-errors \
+              --dump-header - --output /dev/null "https://$DOMINIO$1")"
+            codigo="$(echo "$cabeceras" | head -n1 | awk '{print $2}')"
+            tipo="$(echo "$cabeceras" | tr -d '\r' | grep -i '^content-type' | head -n1)"
+            [ "$codigo" = "200" ] || { echo "$1 respondio $codigo"; exit 1; }
+            echo "$tipo" | grep -qi "$2" || { echo "$1 no es $2: $tipo"; exit 1; }
+            echo "OK $1 ($2)"
+          }
+          verificar / text/html
+          verificar /cuenta/entrar text/html     # ruta de Angular: la funcion de CloudFront debe devolver index.html
+          verificar /ngsw.json json
+          # Atraviesa CloudFront hasta el backend y la base de datos: prueba que /api llega a donde debe.
+          verificar /api/publico/guia/categorias json
+          # Un error real de la API no debe volverse index.html con 200.
+          codigo="$(curl --silent --output /dev/null --write-out '%{http_code}' "https://$DOMINIO/api/mis/cuenta")"
+          [ "$codigo" = "401" ] || { echo "/api/mis/cuenta devolvio $codigo y se esperaba 401"; exit 1; }
+          echo "OK /api/mis/cuenta conserva su 401"
+
+      - name: Avisar en Jira
+        if: success()
+        continue-on-error: true
+        env:
+          JIRA_URL: ${{ vars.JIRA_BASE_URL }}
+          JIRA_USUARIO: ${{ vars.JIRA_USER_EMAIL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_TRANSICION_PROD: ${{ vars.JIRA_TRANSICION_PROD || '41' }}
+          DOMINIO: ${{ steps.destino.outputs.dominio }}
+          ANTES: ${{ github.event.before }}
+        run: |
+          [ -n "$JIRA_URL" ] && [ -n "$JIRA_TOKEN" ] || { echo "Jira sin configurar: se omite."; exit 0; }
+          if [ -n "$ANTES" ] && [ "$ANTES" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$ANTES" 2>/dev/null; then
+            rango=("$ANTES..$GITHUB_SHA")
+          else
+            rango=(-1 "$GITHUB_SHA")
+          fi
+          claves="$(git log --format=%B "${rango[@]}" | grep -oE 'SCRUM-[0-9]+' | sort -u)"
+          [ -n "$claves" ] || { echo "Sin incidencias en el rango."; exit 0; }
+
+          api() { curl --silent --show-error --fail-with-body --user "$JIRA_USUARIO:$JIRA_TOKEN" --header "Content-Type: application/json" "$@"; }
+          texto="Frontend publicado en ${ENTORNO^^} (${GITHUB_SHA::7}). https://$DOMINIO"
+          cuerpo="$(jq -n --arg t "$texto" '{body:{type:"doc",version:1,content:[{type:"paragraph",content:[{type:"text",text:$t}]}]}}')"
+          for clave in $claves; do
+            if api --request POST "$JIRA_URL/rest/api/3/issue/$clave/comment" --data "$cuerpo" >/dev/null; then
+              echo "$clave: comentario agregado"
+            else
+              echo "$clave: no se pudo comentar"
+            fi
+            # Solo produccion cierra la incidencia, y nunca la mueve hacia atras si ya esta cerrada.
+            if [ "$ENTORNO" = "prod" ]; then
+              estado="$(api "$JIRA_URL/rest/api/3/issue/$clave?fields=status" | jq -r '.fields.status.statusCategory.key')"
+              if [ "$estado" != "done" ]; then
+                if api --request POST "$JIRA_URL/rest/api/3/issue/$clave/transitions" \
+                    --data "{\"transition\":{\"id\":\"$JIRA_TRANSICION_PROD\"}}" >/dev/null; then
+                  echo "$clave: cerrada"
+                else
+                  echo "$clave: no se pudo cerrar"
+                fi
+              fi
+            fi
+          done
