@@ -31,9 +31,16 @@ server {
         try_files $uri =404;
     }
 
-    # Los demas archivos llevan un hash en el nombre: si cambian, cambia la URL, asi que se guardan un anio.
-    location ~* \.(?:js|css|woff2?|png|jpg|jpeg|svg|ico|webp)$ {
+    # El JS y el CSS llevan un hash en el nombre: si cambian, cambia la URL, asi que se guardan un anio.
+    location ~* \.(?:js|css)$ {
         add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    # Los iconos y el favicon conservan su nombre aunque cambien: un anio inmutable dejaria una PWA
+    # instalada con el icono viejo para siempre. Un dia basta.
+    location ~* \.(?:png|jpg|jpeg|svg|ico|webp|woff2?)$ {
+        add_header Cache-Control "public, max-age=86400" always;
         try_files $uri =404;
     }
 
