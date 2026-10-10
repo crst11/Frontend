@@ -1,12 +1,14 @@
 name: Desplegar
 
-# Un push (es decir, un merge) a una rama de ambiente publica el frontend de ese ambiente (SCRUM-71):
-#   desarrollo -> DEV · preproduccion -> PREPROD · produccion -> PROD (con aprobacion manual)
+# Un push (es decir, un merge) a una rama de ambiente actua sobre ese ambiente (SCRUM-71):
+#   desarrollo     pruebas y una imagen local. NO sale a la nube: desarrollo vive en Docker Compose (ADR 0005).
+#   preproduccion  publica en S3 + CloudFront
+#   produccion     aprobacion manual y luego publica en S3 + CloudFront
 # Los pull requests NO publican: solo corre ci.yml.
 #
 # El frontend sale de S3 detras de CloudFront. La infraestructura (bucket y distribucion) la crea una
 # persona una vez por ambiente con infra/aws/frontend.yml, en el repositorio Backend; este flujo solo
-# sube archivos y limpia el cache, por eso su rol de AWS no puede tocar nada mas.
+# sube archivos y limpia el cache. Las llaves de AWS salen del Environment de GitHub de cada rama.
 #
 # Volver atras: relanzar este flujo sobre el commit anterior (gh run rerun, o Run workflow en esa rama).
 
@@ -42,7 +44,7 @@ jobs:
           echo "configuracion=$configuracion" >> "$GITHUB_OUTPUT"
 
   probar:
-    name: Pruebas (solo DEV)
+    name: Pruebas e imagen local (solo desarrollo)
     needs: contexto
     if: needs.contexto.outputs.entorno == 'dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -55,26 +57,52 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test -- --watch=false
+      - run: npm run build:dev
+      # Comprueba que el Dockerfile sigue construyendo. La imagen se queda en el ejecutor y se descarta:
+      # desarrollo no publica nada ni toca AWS.
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          build-args: CONFIGURACION=dev
+          tags: cundiapp-frontend:dev-${{ github.sha }}
+          cache-from: type=gha,scope=frontend-dev
+          cache-to: type=gha,scope=frontend-dev,mode=max
 
   publicar:
     name: Publicar en ${{ needs.contexto.outputs.entorno }}
     needs: [contexto, probar]
-    if: ${{ !cancelled() && needs.contexto.result == 'success' && needs.probar.result != 'failure' }}
+    # probar se salta en preproduccion y produccion, y un job que depende de uno saltado se saltaria tambien.
+    if: ${{ !cancelled() && needs.contexto.result == 'success' && needs.contexto.outputs.entorno != 'dev' && needs.probar.result != 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # Este Environment activa la aprobacion manual en produccion y permite asumir el rol de AWS de ese ambiente.
+    # Este Environment trae los secretos de AWS y, en produccion, la aprobacion manual (Required reviewers).
     environment: ${{ github.ref_name }}
-    permissions:
-      contents: read
-      id-token: write
     env:
       ENTORNO: ${{ needs.contexto.outputs.entorno }}
       CONFIGURACION: ${{ needs.contexto.outputs.configuracion }}
       SALIDA: dist/cundiapp/browser
+      S_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      S_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      S_AWS_REGION: ${{ secrets.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Verificar que estan los secretos del Environment
+        run: |
+          # Solo se dicen los NOMBRES que faltan, jamas un valor.
+          faltan=()
+          for nombre in $(env | grep -oE '^S_[A-Z_]+' | sort); do
+            [ -n "${!nombre}" ] || faltan+=("${nombre#S_}")
+          done
+          if [ "${#faltan[@]}" -gt 0 ]; then
+            echo "::error::Faltan secretos en el Environment '${GITHUB_REF_NAME}' de ${GITHUB_REPOSITORY}: ${faltan[*]}"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
@@ -88,8 +116,9 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Buscar el bucket y la distribucion
         id: destino
