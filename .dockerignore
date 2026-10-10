@@ -1,0 +1,25 @@
+# Lo que no debe entrar a la imagen ni invalidar su cache (SCRUM-70).
+
+# Dependencias y salida: se instalan y se generan dentro de la imagen
+node_modules/
+dist/
+.angular/
+
+# Secretos y configuracion local
+.env
+.env.*
+!.env.example
+
+# Git, documentacion y herramientas: no hacen falta para compilar
+.git/
+.github/
+docs/
+*.md
+CLAUDE.md
+.claude/
+.vscode/
+.idea/
+
+# Orquestacion
+Dockerfile
+.dockerignore
