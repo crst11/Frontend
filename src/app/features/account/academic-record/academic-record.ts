@@ -54,7 +54,6 @@ export class AcademicRecord {
     this.periodoAbierto.update((abierto) => (abierto === codigo ? null : codigo));
   }
 
-  /** "2024-2" se lee mejor como "2024-2 · segundo semestre". */
   /** Los períodos tal como el estudiante los cursó, del primero al último. */
   private readonly enOrden = computed(() => (this.historial()?.periodos ?? []).map((p) => p.codigo));
 
@@ -73,6 +72,7 @@ export class AcademicRecord {
     return `${ORDINALES[posicion] ?? `${posicion + 1}º`} semestre`;
   }
 
+  /** "2024-2" se lee mejor como "2024 · segundo semestre". */
   protected nombreDelPeriodo(codigo: string): string {
     const [anio, semestre] = codigo.split('-');
     if (!semestre) {

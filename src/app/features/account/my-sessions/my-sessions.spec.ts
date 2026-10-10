@@ -175,10 +175,13 @@ describe('MySessions', () => {
     expect(navegar).toHaveBeenCalledWith(['/cuenta/entrar']);
   });
 
-  it('con una sola sesión no ofrece cerrar todas', () => {
-    const { html } = crear(vi.fn().mockReturnValue(of([sesion(1)])));
+  it('ofrece cerrar todas aunque solo haya un dispositivo', () => {
+    // Antes se escondía con una sola línea. Con el agrupado por dispositivo (SCRUM-73) ese es el
+    // caso normal, y es justo cuando alguien quiere salirse de todas partes de una.
+    const { html } = crear(vi.fn().mockReturnValue(of([sesion(1, { esLaActual: true })])));
 
-    expect(boton(html, 'Cerrar sesión en todos los dispositivos')).toBeUndefined();
+    expect(boton(html, 'Cerrar sesión en todos los dispositivos')).toBeDefined();
+    expect(html.textContent).toContain('saldrás de la app');
   });
 
   it('avisa en pantalla cuando la lista no carga', () => {
