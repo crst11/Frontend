@@ -21,9 +21,46 @@ export const routes: Routes = [
       import('./features/account/login/login').then((m) => m.Login),
   },
   {
+    path: 'cuenta/recuperar',
+    loadComponent: () =>
+      import('./features/account/password-recovery/password-recovery').then((m) => m.PasswordRecovery),
+  },
+  {
+    path: 'cuenta/nueva-contrasena',
+    loadComponent: () => import('./features/account/password-reset/password-reset').then((m) => m.PasswordReset),
+  },
+  {
     path: 'cuenta/mi-cuenta',
     canActivate: [sessionGuard],
     loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
+  },
+  {
+    path: 'cuenta/mis-sesiones',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/account/my-sessions/my-sessions').then((m) => m.MySessions),
+  },
+  {
+    path: 'cuenta/plan-de-estudios',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/account/study-plan/study-plan').then((m) => m.StudyPlan),
+  },
+  {
+    path: 'cuenta/historial',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/account/academic-record/academic-record').then((m) => m.AcademicRecord),
+  },
+  {
+    path: 'cuenta/importar-reporte',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/importing/import-report/import-report').then((m) => m.ImportReport),
+  },
+  {
+    path: 'calificaciones/mis-notas',
+    canActivate: [sessionGuard],
+    loadComponent: () =>
+      import('./features/grading/evaluation-structure/evaluation-structure').then(
+        (m) => m.EvaluationStructure,
+      ),
   },
   {
     path: '',

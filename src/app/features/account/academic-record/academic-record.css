@@ -1,0 +1,191 @@
+.record__resumen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.record__promedio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.record__promedio-valor {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--color-primary-strong);
+}
+
+.record__avance {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.record__avance-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.record__avance-porcentaje {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.record__barra {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-background);
+  overflow: hidden;
+}
+
+.record__barra-llena {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.record__sin-programa {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.record__periodos,
+.record__asignaturas {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.record__periodos {
+  gap: 10px;
+}
+
+.record__periodo {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Toda la fila es el botón: en un teléfono tiene que ser tocable entera. */
+.record__periodo-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+  font-family: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+
+.record__periodo-titulos {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.record__periodo-nombre {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.record__periodo-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.record__periodo-promedio {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.record__periodo-nota {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+.record__periodo-fuente {
+  display: block;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.record__chevron {
+  flex: 0 0 auto;
+  color: var(--color-muted);
+  transition: transform 0.15s ease;
+}
+
+.record__chevron--open {
+  transform: rotate(180deg);
+}
+
+.record__asignaturas {
+  border-top: 1px solid var(--color-border);
+}
+
+.record__asignatura {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.record__asignatura + .record__asignatura {
+  border-top: 1px solid var(--color-border);
+}
+
+.record__asignatura-texto {
+  min-width: 0;
+}
+
+.record__asignatura-nombre {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.record__asignatura-meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.record__asignatura-nota {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+/* Sin nota todavía: se dice con palabras, no con un 0.0 que sería mentira. */
+.record__asignatura-nota--sin {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-muted);
+}

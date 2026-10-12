@@ -7,6 +7,7 @@ import {
   CuentaRegistrada,
   DatosDeRegistro,
   EstudianteRepository,
+  DispositivoConSesion,
   SesionIniciada,
   VinculoConGoogle,
 } from '../estudiante.repository';
@@ -34,6 +35,14 @@ export class EstudianteHttpRepository extends EstudianteRepository {
     return this.http.post<void>(`${this.publico}/verificacion/reenvio`, { correo });
   }
 
+  override solicitarRecuperacion(correo: string): Observable<void> {
+    return this.http.post<void>(`${this.publico}/recuperacion`, { correo });
+  }
+
+  override restablecerContrasena(correo: string, codigo: string, contrasenaNueva: string): Observable<void> {
+    return this.http.post<void>(`${this.publico}/recuperacion/confirmacion`, { correo, codigo, contrasenaNueva });
+  }
+
   override iniciarSesion(correo: string, contrasena: string): Observable<SesionIniciada> {
     return this.http.post<SesionIniciada>(`${this.publico}/login`, { correo, contrasena }, { withCredentials: true });
   }
@@ -56,6 +65,18 @@ export class EstudianteHttpRepository extends EstudianteRepository {
 
   override eliminarCuenta(): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/mis/cuenta`);
+  }
+
+  override misSesiones(): Observable<DispositivoConSesion[]> {
+    return this.http.get<DispositivoConSesion[]>(`${environment.apiUrl}/mis/sesiones`);
+  }
+
+  override cerrarSesionEnDispositivo(consecutivo: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/mis/sesiones/${consecutivo}`);
+  }
+
+  override cerrarTodasMisSesiones(): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/mis/sesiones`);
   }
 
   override vinculoConGoogle(): Observable<VinculoConGoogle> {

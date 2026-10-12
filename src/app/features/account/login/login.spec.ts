@@ -46,16 +46,29 @@ describe('Login', () => {
     return html;
   }
 
-  it('inicia sesión y lleva a la cuenta', () => {
+  it('inicia sesión y lleva a la cuenta', async () => {
     const iniciar = vi.fn().mockReturnValue(of({ id: 1 }));
     const fixture = crear(iniciar);
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     enviar(fixture, 'ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
+    await fixture.whenStable();
 
     expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
     expect(navegar).toHaveBeenCalledWith(['/cuenta/mi-cuenta']);
     expect(notificador.aviso).toHaveBeenCalledWith('Sesión iniciada.');
+  });
+
+  it('si la navegación no ocurre, no dice que la sesión se inició', async () => {
+    // SCRUM-72. Decir "Sesión iniciada." sobre la misma pantalla de inicio de sesión es lo que
+    // hacía creer que la app se había congelado.
+    const fixture = crear(vi.fn().mockReturnValue(of({ id: 1 })));
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(false);
+
+    enviar(fixture, 'ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
+    await fixture.whenStable();
+
+    expect(notificador.aviso).not.toHaveBeenCalled();
   });
 
   it('entra con solo el usuario: el dominio institucional ya está puesto', () => {
@@ -164,10 +177,11 @@ describe('Login con Google', () => {
 
   it('con la cuenta de Google vinculada entra a Mi cuenta con un toque', async () => {
     const iniciarConGoogle = vi.fn().mockReturnValue(of({ id: 1 }));
-    await crear(iniciarConGoogle);
+    const fixture = await crear(iniciarConGoogle);
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     alElegirCuenta('id-token-de-google');
+    await fixture.whenStable();
 
     expect(iniciarConGoogle).toHaveBeenCalledWith('id-token-de-google');
     expect(navegar).toHaveBeenCalledWith(['/cuenta/mi-cuenta']);
