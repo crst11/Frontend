@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, effect, inject, signal, viewChild } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { GoogleIdentityService } from '../../../core/google/google-identity.service';
@@ -10,7 +10,7 @@ import { Cuenta, EstudianteRepository, VinculoConGoogle } from '../../../data-ac
 /** Pantalla protegida: pide al backend los datos de la cuenta con el token; el estudiante sale del token. */
 @Component({
   selector: 'app-my-account',
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './my-account.html',
   styleUrl: './my-account.css',
 })
