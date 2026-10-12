@@ -14,6 +14,14 @@ import { sessionInterceptor } from './core/session/session.interceptor';
 import { EstudianteRepository } from './data-access/estudiante.repository';
 import { EstudianteHttpRepository } from './data-access/http/estudiante-http.repository';
 import { GuiaRepository } from './data-access/guia.repository';
+import { HistorialRepository } from './data-access/historial.repository';
+import { EvaluacionRepository } from './data-access/evaluacion.repository';
+import { EvaluacionHttpRepository } from './data-access/http/evaluacion-http.repository';
+import { ImportacionRepository } from './data-access/importacion.repository';
+import { ImportacionHttpRepository } from './data-access/http/importacion-http.repository';
+import { HistorialHttpRepository } from './data-access/http/historial-http.repository';
+import { PlanDeEstudiosRepository } from './data-access/plan-de-estudios.repository';
+import { PlanDeEstudiosHttpRepository } from './data-access/http/plan-de-estudios-http.repository';
 import { GuiaHttpRepository } from './data-access/http/guia-http.repository';
 
 export const appConfig: ApplicationConfig = {
@@ -23,6 +31,10 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([sessionInterceptor])),
     { provide: GuiaRepository, useClass: GuiaHttpRepository },
     { provide: EstudianteRepository, useClass: EstudianteHttpRepository },
+    { provide: PlanDeEstudiosRepository, useClass: PlanDeEstudiosHttpRepository },
+    { provide: HistorialRepository, useClass: HistorialHttpRepository },
+    { provide: ImportacionRepository, useClass: ImportacionHttpRepository },
+    { provide: EvaluacionRepository, useClass: EvaluacionHttpRepository },
     // Antes de mostrar la primera pantalla intenta recuperar la sesión con la cookie de refresco.
     provideAppInitializer(() => inject(SessionService).restaurar()),
     provideServiceWorker('ngsw-worker.js', {
