@@ -36,6 +36,14 @@ describe('EvaluationStructure', () => {
     actividades: 5,
   };
 
+  const SIN_NOTAS = {
+    puntos: 0,
+    porcentajeEvaluado: 0,
+    promedioDeLoEvaluado: null,
+    actividadesCalificadas: 0,
+    actividadesTotales: 0,
+  };
+
   /** Lo que devuelve el servidor para una asignatura sin configurar: la plantilla, sin guardar. */
   const PROPUESTA: EstructuraDeEvaluacion = {
     asignatura: ALGEBRA,
@@ -45,6 +53,48 @@ describe('EvaluationStructure', () => {
       { consecutivo: 2, nombre: 'Segundo corte', porcentaje: 30, origen: 'plantilla', actividades: [] },
       { consecutivo: 3, nombre: 'Tercer corte', porcentaje: 40, origen: 'plantilla', actividades: [] },
     ],
+    acumulado: SIN_NOTAS,
+  };
+
+  /** Una asignatura ya configurada, con un parcial calificado: lo que se usa a diario. */
+  const CON_NOTA: EstructuraDeEvaluacion = {
+    asignatura: { ...ALGEBRA, tieneEstructura: true, categorias: 1, actividades: 2 },
+    guardada: true,
+    categorias: [
+      {
+        consecutivo: 1,
+        nombre: 'Primer corte',
+        porcentaje: 100,
+        origen: 'estudiante',
+        actividades: [
+          {
+            consecutivo: 1,
+            nombre: 'Parcial',
+            porcentaje: 70,
+            fechaProgramada: null,
+            tipo: 'parcial',
+            estadoEntrega: 'calificada',
+            nota: 4,
+          },
+          {
+            consecutivo: 2,
+            nombre: 'Taller',
+            porcentaje: 30,
+            fechaProgramada: null,
+            tipo: 'taller',
+            estadoEntrega: 'no_entregada',
+            nota: null,
+          },
+        ],
+      },
+    ],
+    acumulado: {
+      puntos: 2.8,
+      porcentajeEvaluado: 70,
+      promedioDeLoEvaluado: 4,
+      actividadesCalificadas: 1,
+      actividadesTotales: 2,
+    },
   };
 
   beforeEach(() => {
@@ -70,7 +120,7 @@ describe('EvaluationStructure', () => {
       imports: [EvaluationStructure],
       providers: [
         provideRouter([]),
-        { provide: EvaluacionRepository, useValue: { misAsignaturas, estructuraDe, guardar } },
+        { provide: EvaluacionRepository, useValue: { misAsignaturas, estructuraDe, guardar, registrarNota: vi.fn(), quitarNota: vi.fn() } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
@@ -302,6 +352,64 @@ describe('EvaluationStructure', () => {
 
     expect(creado.html.querySelector('[role="alert"]')?.textContent).toContain('faltan 40');
     expect(notificador.problema).not.toHaveBeenCalled();
+  });
+
+  it('una asignatura ya configurada abre en Notas y la propuesta de la plantilla en Estructura', () => {
+    const conNota = crear(undefined, vi.fn().mockReturnValue(of(CON_NOTA)));
+    abrirAlgebra(conNota);
+
+    expect(conNota.html.querySelector('app-activity-grades')).not.toBeNull();
+    expect(conNota.html.querySelector('.chip--active')?.textContent).toContain('Notas');
+    expect(conNota.html.querySelector('.evaluacion__categoria')).toBeNull();
+  });
+
+  it('se puede pasar de Notas a Estructura y volver', () => {
+    const creado = crear(undefined, vi.fn().mockReturnValue(of(CON_NOTA)));
+    abrirAlgebra(creado);
+
+    boton(creado.html, 'Estructura').click();
+    creado.fixture.detectChanges();
+    expect(creado.html.querySelector('app-activity-grades')).toBeNull();
+    expect(creado.html.querySelectorAll('.evaluacion__categoria')).toHaveLength(1);
+
+    boton(creado.html, 'Notas').click();
+    creado.fixture.detectChanges();
+    expect(creado.html.querySelector('app-activity-grades')).not.toBeNull();
+  });
+
+  it('antes de quitar una actividad con nota pregunta, y si dice que no la conserva', async () => {
+    notificador.confirmar.mockResolvedValue(false);
+    const creado = crear(undefined, vi.fn().mockReturnValue(of(CON_NOTA)));
+    abrirAlgebra(creado);
+    boton(creado.html, 'Estructura').click();
+    creado.fixture.detectChanges();
+
+    boton(creado.html, 'Quitar actividad').click();
+    await creado.fixture.whenStable();
+    creado.fixture.detectChanges();
+
+    expect(notificador.confirmar).toHaveBeenCalledWith(
+      'Esta actividad tiene una nota',
+      expect.stringContaining('se borra su nota'),
+      expect.any(String),
+    );
+    expect(creado.html.querySelectorAll('.evaluacion__actividad')).toHaveLength(2);
+  });
+
+  it('una actividad sin nota se quita sin preguntar', async () => {
+    const creado = crear(undefined, vi.fn().mockReturnValue(of(CON_NOTA)));
+    abrirAlgebra(creado);
+    boton(creado.html, 'Estructura').click();
+    creado.fixture.detectChanges();
+
+    Array.from(creado.html.querySelectorAll<HTMLButtonElement>('button'))
+      .filter((b) => b.textContent?.includes('Quitar actividad'))[1]
+      .click();
+    await creado.fixture.whenStable();
+    creado.fixture.detectChanges();
+
+    expect(notificador.confirmar).not.toHaveBeenCalled();
+    expect(creado.html.querySelectorAll('.evaluacion__actividad')).toHaveLength(1);
   });
 
   it('si no se puede traer la lista lo dice y avisa de la falla del servidor', () => {
