@@ -63,6 +63,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'horario',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/schedule/my-schedule/my-schedule').then((m) => m.MySchedule),
+  },
+  {
     path: '',
     pathMatch: 'full',
     loadComponent: () => import('./features/entry/welcome/welcome').then((m) => m.Welcome),
