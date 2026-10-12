@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+### Agregado
+- Anotar mis notas (SCRUM-28), dentro de *Mis notas*. Al elegir una asignatura hay dos vistas: **Notas** y **Estructura**. Notas es la que abre cuando la asignatura ya tiene actividades, porque es la que se usa a diario; Estructura abre sola mientras no haya nada que calificar. Cada actividad lleva su campo de nota, que se guarda con Enter o al salir del campo, sin otro botón de por medio: desde Mi cuenta son **tres interacciones**, entrar a *Mis notas*, elegir la asignatura y escribir la nota con Enter. Arriba queda fijo lo que se lleva: los puntos ganados sobre 5.0, el porcentaje ya evaluado y el promedio de lo evaluado. **Nada de eso se calcula en el navegador:** llega listo del servidor con cada respuesta, y el mensaje de una nota fuera de escala también es el suyo. El campo acepta la coma decimal (`3,5`); si el servidor rechaza una nota, el campo vuelve a lo que de verdad está guardado en vez de dejar escrita una nota que no quedó registrada. Vaciar un campo con nota la quita. En *Estructura*, quitar una actividad (o un corte) que ya tiene notas pide confirmación antes, porque al guardar se llevaría las notas.
+
 ## [0.4.0] - 2026-10-12 · Despliegue en AWS
 
 ### Agregado
