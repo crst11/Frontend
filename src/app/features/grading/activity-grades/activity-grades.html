@@ -1,0 +1,83 @@
+@if (!estructura().guardada || !hayActividades()) {
+  <section class="screen__body notas" aria-label="Mis notas">
+    <p class="notice">
+      @if (!estructura().guardada) {
+        Primero cuéntanos cómo te evalúan en esta asignatura. Con eso sabremos cuánto vale cada nota.
+      } @else {
+        Tus categorías todavía no tienen actividades. Agrégalas para poder anotar tus notas.
+      }
+    </p>
+    <button class="button button--soft" type="button" (click)="irAEstructura.emit()">
+      Definir cómo me evalúan
+    </button>
+  </section>
+} @else {
+  <section class="screen__body notas" aria-label="Mis notas">
+    <div class="card notas__resumen" aria-live="polite">
+      <p class="notas__puntos">
+        <span class="notas__numero">{{ acumulado().puntos | number: '1.2-2' }}</span>
+        <span class="notas__de"> de 5.0 ganados</span>
+      </p>
+      <p class="subtitle">
+        Llevas evaluado el {{ acumulado().porcentajeEvaluado | number: '1.0-2' }} % de la materia
+        ({{ acumulado().actividadesCalificadas }} de {{ acumulado().actividadesTotales }}
+        {{ acumulado().actividadesTotales === 1 ? 'actividad' : 'actividades' }}).
+      </p>
+      @if (acumulado().promedioDeLoEvaluado !== null) {
+        <p class="field__hint">
+          Promedio de lo evaluado: {{ acumulado().promedioDeLoEvaluado | number: '1.2-2' }}
+        </p>
+      } @else {
+        <p class="field__hint">Todavía no has anotado ninguna nota.</p>
+      }
+    </div>
+
+    @if (error(); as mensaje) {
+      <p class="alert" role="alert">{{ mensaje }}</p>
+    }
+
+    @for (categoria of categorias(); track categoria.consecutivo) {
+      <article class="card notas__categoria">
+        <h2 class="notas__categoria-titulo">
+          {{ categoria.nombre }}
+          <span class="badge">{{ categoria.porcentaje }} %</span>
+        </h2>
+
+        @for (actividad of categoria.actividades; track actividad.consecutivo) {
+          <div class="notas__actividad">
+            <label class="field notas__campo">
+              <span class="field__label">
+                {{ actividad.nombre }}
+                <span class="field__hint">· {{ actividad.porcentaje }} % del corte</span>
+              </span>
+              <input
+                #campo
+                class="field__input"
+                type="text"
+                inputmode="decimal"
+                autocomplete="off"
+                maxlength="5"
+                placeholder="0.0 a 5.0"
+                [attr.aria-label]="'Nota de ' + actividad.nombre"
+                [value]="actividad.nota ?? ''"
+                [disabled]="guardando() === clave(categoria.consecutivo, actividad.consecutivo)"
+                (change)="confirmar(categoria.consecutivo, actividad.consecutivo, campo.value, campo)"
+              />
+            </label>
+            @if (actividad.nota !== null) {
+              <button
+                class="button button--outline notas__quitar"
+                type="button"
+                (click)="quitar(categoria.consecutivo, actividad.consecutivo)"
+              >
+                Quitar
+              </button>
+            }
+          </div>
+        } @empty {
+          <p class="field__hint">Este corte todavía no tiene actividades: agrégalas en Estructura.</p>
+        }
+      </article>
+    }
+  </section>
+}

@@ -28,6 +28,8 @@ export interface ActividadDeEvaluacion {
   fechaProgramada: string | null;
   tipo: string;
   estadoEntrega: string;
+  /** La nota que el estudiante registró; nula si todavía no tiene (SCRUM-28). */
+  nota: number | null;
 }
 
 export interface CategoriaDeEvaluacion {
@@ -39,6 +41,26 @@ export interface CategoriaDeEvaluacion {
 }
 
 /**
+ * Lo que el estudiante lleva en una asignatura con las notas que ya registró (SCRUM-28).
+ *
+ * Lo calcula el servidor: la pantalla solo lo muestra. `promedioDeLoEvaluado` es nulo mientras no
+ * haya ninguna nota, porque mostrar 0.0 sería inventar una nota que nadie puso.
+ */
+export interface AcumuladoDeNotas {
+  puntos: number;
+  porcentajeEvaluado: number;
+  promedioDeLoEvaluado: number | null;
+  actividadesCalificadas: number;
+  actividadesTotales: number;
+}
+
+/** La nota que quedó guardada y lo que el estudiante lleva ya con ella. */
+export interface NotaRegistrada {
+  nota: number;
+  acumulado: AcumuladoDeNotas;
+}
+
+/**
  * `guardada` en falso significa que esto es la propuesta de la plantilla 30/30/40 y que todavía no
  * hay nada escrito: la pantalla lo dice en vez de hacerle creer que ya configuró la asignatura.
  */
@@ -46,6 +68,7 @@ export interface EstructuraDeEvaluacion {
   asignatura: AsignaturaMatriculada;
   guardada: boolean;
   categorias: CategoriaDeEvaluacion[];
+  acumulado: AcumuladoDeNotas;
 }
 
 /** Lo que se manda al guardar: el árbol completo, que reemplaza el anterior. */
@@ -74,4 +97,17 @@ export abstract class EvaluacionRepository {
     idMatricula: number,
     categorias: CategoriaPorGuardar[],
   ): Observable<EstructuraDeEvaluacion>;
+  /** Anota o corrige la nota de una actividad (SCRUM-28). */
+  abstract registrarNota(
+    idMatricula: number,
+    consecCategoria: number,
+    consecActividad: number,
+    nota: number,
+  ): Observable<NotaRegistrada>;
+  /** Quita la nota de una actividad y devuelve lo que se lleva sin ella. */
+  abstract quitarNota(
+    idMatricula: number,
+    consecCategoria: number,
+    consecActividad: number,
+  ): Observable<AcumuladoDeNotas>;
 }
