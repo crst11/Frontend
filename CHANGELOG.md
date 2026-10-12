@@ -4,6 +4,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+## [0.4.0] - 2026-10-12 · Despliegue en AWS
+
+### Agregado
+- Publicación en AWS (SCRUM-71): `desplegar.yml` sube el frontend a un bucket privado de S3 y limpia el caché de CloudFront en `preproduccion` y `produccion` (esta con aprobación manual). El navegador habla con un solo origen: `apiUrl: '/api'`, sin CORS ni dominio fijo. `desarrollo` solo prueba y construye. Los archivos con hash se suben primero y `index.html` al final.
+- Imagen de producción del frontend (nginx sin root, caché inmutable solo para JS y CSS) y configuración `dev` para el perfil `app` de Compose (SCRUM-70).
+
+### Corregido
+- Cerrar sesión (SCRUM-77): ofrece cerrar todas las sesiones aunque haya un solo dispositivo.
+
+
 ### Agregado
 - Historial de cargas y deshacer, dentro de la pantalla de importar (SCRUM-24). Debajo del área para subir el archivo aparecen las cargas anteriores con su fecha y cuántas asignaturas dejó cada una. **Deshacer no es borrar**, y el aviso lo dice: lo que la carga agregó se quita y lo que cambió vuelve a la nota que tenía. Solo la última carga confirmada trae el botón, y eso lo decide el servidor (`sePuedeDeshacer`), no la pantalla; al deshacerla, la anterior vuelve a poder deshacerse. Una carga ya deshecha se muestra tachada: sigue siendo parte de lo que el estudiante hizo. Si el historial de cargas no carga, la pantalla sigue sirviendo para importar.
 
