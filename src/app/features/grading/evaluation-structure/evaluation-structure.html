@@ -17,11 +17,43 @@
   }
 
   @if (seleccionada(); as asignatura) {
-    <!-- Paso 2: el árbol de la asignatura elegida. -->
+    <!-- Paso 2: la asignatura elegida, con dos vistas. -->
+    <div class="evaluacion__cabecera-vistas">
+      <h1 class="evaluacion__titulo">{{ asignatura.nombre }}</h1>
+      <p class="subtitle">{{ asignatura.codigoPeriodo }} · {{ asignatura.creditos }} créditos</p>
+      <div class="chips" role="group" aria-label="Qué quieres hacer">
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="vista() === 'notas'"
+          [attr.aria-pressed]="vista() === 'notas'"
+          (click)="cambiarVista('notas')"
+        >
+          Notas
+        </button>
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="vista() === 'estructura'"
+          [attr.aria-pressed]="vista() === 'estructura'"
+          (click)="cambiarVista('estructura')"
+        >
+          Estructura
+        </button>
+      </div>
+    </div>
+
+    @if (vista() === 'notas') {
+      @if (detalle(); as estructura) {
+        <app-activity-grades
+          [estructura]="estructura"
+          (cambiaronLasNotas)="alCambiarLasNotas($event)"
+          (irAEstructura)="cambiarVista('estructura')"
+        />
+      }
+    } @else {
     <section class="screen__body evaluacion__editor" aria-label="Estructura de evaluación">
       <div class="card evaluacion__cabecera">
-        <h1 class="evaluacion__titulo">{{ asignatura.nombre }}</h1>
-        <p class="subtitle">{{ asignatura.codigoPeriodo }} · {{ asignatura.creditos }} créditos</p>
         @if (!guardada()) {
           <p class="notice">
             Estos son los cortes con los que trabaja la universidad por defecto. Ajústalos a lo que te dijo
@@ -173,6 +205,7 @@
         {{ guardando() ? 'Guardando…' : 'Guardar' }}
       </button>
     </footer>
+    }
   } @else {
     <!-- Paso 1: elegir la asignatura. -->
     <section class="screen__body" aria-label="Mis asignaturas">

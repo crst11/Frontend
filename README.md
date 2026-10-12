@@ -23,7 +23,7 @@ Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, 
 | Mi plan de estudios (protegida) | `/cuenta/plan-de-estudios` | Hecho: elegir programa y ver las asignaturas de cada semestre |
 | Mi historial y promedios (protegida) | `/cuenta/historial` | Hecho: notas por período, promedios y avance en la carrera |
 | Importar mi reporte (protegida) | `/cuenta/importar-reporte` | Hecho: subir el Registro Académico Extendido, confirmar lo detectado y deshacer la última carga |
-| Mis notas (protegida) | `/calificaciones/mis-notas` | Hecho: definir las categorías y actividades de cada asignatura con sus porcentajes |
+| Mis notas (protegida) | `/calificaciones/mis-notas` | Hecho: definir las categorías y actividades de cada asignatura con sus porcentajes, y anotar la nota de cada actividad con lo que se lleva acumulado |
 
 La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence, se renueva con la cookie de refresco que maneja el navegador.
 
