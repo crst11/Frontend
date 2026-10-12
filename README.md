@@ -25,6 +25,7 @@ Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, 
 | Importar mi reporte (protegida) | `/cuenta/importar-reporte` | Hecho: subir el Registro Académico Extendido, confirmar lo detectado y deshacer la última carga |
 | Mi horario (protegida) | `/horario` | Hecho: ver las clases por día y por semana con salón, bloque, sede y docente, y agregarlas a mano |
 | Mis notas (protegida) | `/calificaciones/mis-notas` | Hecho: definir las categorías y actividades de cada asignatura con sus porcentajes |
+| Mis notas (protegida) | `/calificaciones/mis-notas` | Hecho: definir las categorías y actividades de cada asignatura con sus porcentajes, y anotar la nota de cada actividad con lo que se lleva acumulado |
 
 La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence, se renueva con la cookie de refresco que maneja el navegador.
 
