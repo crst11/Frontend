@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+### Agregado
+- Mi horario (SCRUM-25), en `/horario` y enlazado desde Mi cuenta. Dos vistas del mismo dato: **Día** (abre en el de hoy, con los siete días a un toque) y **Semana**. Cada clase muestra su hora y duración, la asignatura, el salón con el bloque y la sede, y el docente; si todavía no hay salón lo dice en vez de inventarlo. Las clases se **agregan a mano**, una por bloque, a las asignaturas que se están cursando: el lugar y el docente son opcionales, y el formulario manda solo lo que el estudiante escribió. Quitar una clase pide confirmación. **La pantalla no ordena ni agrupa nada:** el servidor entrega los días con clases de lunes a domingo y las clases en orden de hora, y la pantalla solo rellena con «sin clases» los días que no vienen. Si el estudiante no tiene asignaturas en curso, la pantalla lo manda a importar su reporte en vez de mostrar un formulario que no tiene a quién agregarle clases. Los rechazos del servidor (horas al revés, un salón sin sede) se muestran dentro del formulario y no lo cierran.
+
 ## [0.4.0] - 2026-10-12 · Despliegue en AWS
 
 ### Agregado
