@@ -162,12 +162,20 @@ describe('MySchedule', () => {
     expect(html.textContent?.match(/Sin clases\./g)).toHaveLength(5);
   });
 
-  it('sin asignaturas en curso manda a importar el reporte en vez de ofrecer agregar', () => {
+  it('sin asignaturas en curso manda a importar el horario, no el reporte de notas, en vez de ofrecer agregar', () => {
     const { html } = crear(vi.fn().mockReturnValue(of(VACIO)), [TERMINADA]);
 
     expect(html.textContent).toContain('necesitas tener asignaturas en curso');
-    expect(html.querySelector('a[href="/cuenta/importar-reporte"]')).not.toBeNull();
+    expect(html.textContent).toContain('Reporte de Horario');
+    expect(html.querySelector('a[href="/cuenta/importar-horario"]')).not.toBeNull();
+    expect(html.querySelector('a[href="/cuenta/importar-reporte"]')).toBeNull();
     expect(boton(html, 'Agregar una clase')).toBeUndefined();
+  });
+
+  it('con asignaturas en curso sigue ofreciendo importar el horario desde el reporte', () => {
+    const { html } = crear();
+
+    expect(html.querySelector('a[href="/cuenta/importar-horario"]')?.textContent).toContain('Importar mi horario');
   });
 
   it('un horario vacío con asignaturas en curso invita a agregar la primera clase', () => {

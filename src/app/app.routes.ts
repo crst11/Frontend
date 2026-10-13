@@ -55,6 +55,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/importing/import-report/import-report').then((m) => m.ImportReport),
   },
   {
+    path: 'cuenta/importar-horario',
+    canActivate: [sessionGuard],
+    loadComponent: () =>
+      import('./features/importing/import-schedule/import-schedule').then((m) => m.ImportSchedule),
+  },
+  {
     path: 'calificaciones/mis-notas',
     canActivate: [sessionGuard],
     loadComponent: () =>
