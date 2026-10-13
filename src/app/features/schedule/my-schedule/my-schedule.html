@@ -45,6 +45,48 @@
         <button class="chip" type="button" [class.chip--active]="vista() === 'semana'" [attr.aria-pressed]="vista() === 'semana'" (click)="cambiarVista('semana')">Semana</button>
       </div>
 
+      <!-- Organizar: el servidor filtra y ordena; aquí solo se elige. Las opciones salen del horario completo. -->
+      @if ((horario()?.asignaturas?.length ?? 0) > 0) {
+        <section class="card horario__filtros" aria-label="Organizar mi horario" [attr.aria-busy]="actualizando()">
+          <div class="field-row">
+            <label class="field">
+              <span class="field__label">Asignatura</span>
+              <select class="field__input" (change)="elegirAsignatura($any($event.target).value)">
+                <option value="" [selected]="asignaturaElegida() === ''">Todas</option>
+                @for (asignatura of horario()?.asignaturas; track asignatura.codigo) {
+                  <option [value]="asignatura.codigo" [selected]="asignatura.codigo === asignaturaElegida()">{{ asignatura.nombre }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">Sede</span>
+              <select class="field__input" (change)="elegirSede($any($event.target).value)">
+                <option value="" [selected]="sedeElegida() === ''">Todas</option>
+                @for (sede of sedesParaElegir(); track sede) {
+                  <option [value]="sede" [selected]="sede === sedeElegida()">{{ sede }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Ordenar por</span>
+            <select class="field__input" (change)="elegirOrden($any($event.target).value)">
+              <option value="hora" [selected]="ordenElegido() === 'hora'">Hora</option>
+              <option value="asignatura" [selected]="ordenElegido() === 'asignatura'">Asignatura</option>
+            </select>
+          </label>
+          <div class="horario__acciones-filtros">
+            @if (hayFiltro()) {
+              <button class="button button--outline horario__chico" type="button" (click)="quitarFiltros()">Quitar filtros</button>
+            }
+            <button class="button button--soft horario__chico" type="button" [disabled]="yaEsMiVista() || guardandoMiVista()" (click)="guardarMiVista()">
+              {{ yaEsMiVista() ? 'Esta es tu vista guardada' : guardandoMiVista() ? 'Guardando…' : 'Guardar como mi vista' }}
+            </button>
+          </div>
+          <p class="field__hint">Se guarda la vista, la sede y el orden. La asignatura no: cambia cada período.</p>
+        </section>
+      }
+
       @if (agregando()) {
         <form class="card horario__formulario" [formGroup]="formulario" (ngSubmit)="agregar()" aria-label="Agregar una clase">
           <h2 class="horario__titulo-formulario">Agregar una clase</h2>
@@ -146,9 +188,13 @@
           <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
         } @empty {
           <p class="notice">
-            No tienes clases este día.
-            @if (horario()?.totalDeClases === 0) {
-              Cuando agregues una, la verás aquí.
+            @if (hayFiltro() && horario()?.totalDeClases === 0) {
+              Ninguna clase coincide con tus filtros. Quítalos para ver todo tu horario.
+            } @else {
+              No tienes clases este día.
+              @if (horario()?.totalDeClases === 0) {
+                Cuando agregues una, la verás aquí.
+              }
             }
           </p>
         }
