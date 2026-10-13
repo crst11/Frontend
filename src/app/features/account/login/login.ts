@@ -105,7 +105,7 @@ export class Login {
     this.enviando.set(false);
     // El aviso espera a que la navegación ocurra: decir "Sesión iniciada." sobre la misma pantalla
     // de inicio de sesión es lo que más confunde cuando algo sale mal (SCRUM-72).
-    void this.router.navigate(['/cuenta/mi-cuenta']).then((llego) => {
+    void this.router.navigate(['/inicio']).then((llego) => {
       if (llego) {
         void this.notificador.aviso('Sesión iniciada.');
       }

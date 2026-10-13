@@ -55,7 +55,7 @@ describe('Login', () => {
     await fixture.whenStable();
 
     expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
-    expect(navegar).toHaveBeenCalledWith(['/cuenta/mi-cuenta']);
+    expect(navegar).toHaveBeenCalledWith(['/inicio']);
     expect(notificador.aviso).toHaveBeenCalledWith('Sesión iniciada.');
   });
 
@@ -175,7 +175,7 @@ describe('Login con Google', () => {
     expect(google.dibujarBoton).toHaveBeenCalledWith(html.querySelector('.login__google'), 'continue_with', expect.any(Function));
   });
 
-  it('con la cuenta de Google vinculada entra a Mi cuenta con un toque', async () => {
+  it('con la cuenta de Google vinculada entra al inicio con un toque', async () => {
     const iniciarConGoogle = vi.fn().mockReturnValue(of({ id: 1 }));
     const fixture = await crear(iniciarConGoogle);
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -184,7 +184,7 @@ describe('Login con Google', () => {
     await fixture.whenStable();
 
     expect(iniciarConGoogle).toHaveBeenCalledWith('id-token-de-google');
-    expect(navegar).toHaveBeenCalledWith(['/cuenta/mi-cuenta']);
+    expect(navegar).toHaveBeenCalledWith(['/inicio']);
     expect(notificador.aviso).toHaveBeenCalledWith('Sesión iniciada.');
   });
 

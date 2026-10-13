@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import {
@@ -57,6 +57,7 @@ interface CategoriaEnEdicion {
 export class EvaluationStructure {
   private readonly repositorio = inject(EvaluacionRepository);
   private readonly notificador = inject(NotifierService);
+  private readonly ruta = inject(ActivatedRoute);
 
   protected readonly tipos = [
     { valor: 'parcial', texto: 'Parcial' },
@@ -104,6 +105,12 @@ export class EvaluationStructure {
       next: (asignaturas) => {
         this.asignaturas.set(asignaturas);
         this.cargando.set(false);
+        // Quien llega desde la pantalla del día trae la asignatura que tocó (SCRUM-31).
+        const pedida = Number(this.ruta.snapshot.queryParamMap.get('matricula'));
+        const asignatura = asignaturas.find((a) => a.idMatricula === pedida);
+        if (asignatura) {
+          this.elegir(asignatura);
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.cargando.set(false);
