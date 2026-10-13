@@ -120,7 +120,7 @@
           Para armar tu horario necesitas tener asignaturas en curso. Importa tu Registro Académico Extendido y
           aparecerán aquí.
         </p>
-        <a class="button button--soft" routerLink="/cuenta/importar-reporte">Importar mi reporte</a>
+        <a class="button button--soft" routerLink="/cuenta/importar-reporte" [state]="{ origen: '/horario' }">Importar mi reporte</a>
       } @else {
         <button class="button button--soft" type="button" (click)="abrirFormulario()">Agregar una clase</button>
       }
