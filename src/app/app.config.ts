@@ -21,6 +21,8 @@ import { HorarioRepository } from './data-access/horario.repository';
 import { HorarioHttpRepository } from './data-access/http/horario-http.repository';
 import { ImportacionRepository } from './data-access/importacion.repository';
 import { ImportacionHttpRepository } from './data-access/http/importacion-http.repository';
+import { ImportacionDeHorarioRepository } from './data-access/importacion-de-horario.repository';
+import { ImportacionDeHorarioHttpRepository } from './data-access/http/importacion-de-horario-http.repository';
 import { HistorialHttpRepository } from './data-access/http/historial-http.repository';
 import { PlanDeEstudiosRepository } from './data-access/plan-de-estudios.repository';
 import { PlanDeEstudiosHttpRepository } from './data-access/http/plan-de-estudios-http.repository';
@@ -36,6 +38,7 @@ export const appConfig: ApplicationConfig = {
     { provide: PlanDeEstudiosRepository, useClass: PlanDeEstudiosHttpRepository },
     { provide: HistorialRepository, useClass: HistorialHttpRepository },
     { provide: ImportacionRepository, useClass: ImportacionHttpRepository },
+    { provide: ImportacionDeHorarioRepository, useClass: ImportacionDeHorarioHttpRepository },
     { provide: EvaluacionRepository, useClass: EvaluacionHttpRepository },
     { provide: HorarioRepository, useClass: HorarioHttpRepository },
     // Antes de mostrar la primera pantalla intenta recuperar la sesión con la cookie de refresco.

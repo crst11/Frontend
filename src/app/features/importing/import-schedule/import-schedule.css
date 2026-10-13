@@ -1,0 +1,32 @@
+/* Lo demás sale de import-report.css: la zona de carga, la guía y las tarjetas son las mismas. */
+.horario-import__clases {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.horario-import__clase {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.horario-import__dia {
+  font-weight: 600;
+  min-width: 84px;
+}
+
+.horario-import__detalle {
+  color: var(--color-ink-soft);
+}
+
+.horario-import__sin-clases {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-ink-soft);
+}

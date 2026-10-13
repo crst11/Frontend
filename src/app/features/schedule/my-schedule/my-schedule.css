@@ -64,6 +64,14 @@
   font-size: 13px;
 }
 
+.horario__importar {
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary-strong);
+  text-decoration: underline;
+}
+
 .horario__filtros {
   display: flex;
   flex-direction: column;
