@@ -211,17 +211,18 @@
     <section class="screen__body" aria-label="Mis asignaturas">
       <h1 class="evaluacion__titulo">Elige la asignatura</h1>
       <p class="subtitle">
-        Para cada una defines las categorías que suman 100 % y, dentro de cada categoría, sus actividades.
+        Son las del semestre que cursas ahora. Para cada una defines las categorías que suman 100 % y,
+        dentro de cada categoría, sus actividades.
       </p>
 
       @if (cargando()) {
         <p class="subtitle">Buscando tus asignaturas…</p>
       } @else if (asignaturas().length === 0) {
         <p class="notice">
-          Todavía no tienes asignaturas matriculadas en CundiApp. Importa tu Registro Académico Extendido y
-          aparecerán aquí.
+          No tienes asignaturas en curso en CundiApp. Importa tu Reporte de Horario y las del semestre
+          aparecerán aquí; las de semestres anteriores están en Mi historial.
         </p>
-        <a class="button button--soft" routerLink="/cuenta/importar-reporte" [state]="{ origen: '/calificaciones/mis-notas' }">Importar mi reporte</a>
+        <a class="button button--soft" routerLink="/cuenta/importar-horario" [state]="{ origen: '/calificaciones/mis-notas' }">Importar mi horario</a>
       } @else {
         <ul class="evaluacion__lista">
           @for (asignatura of asignaturas(); track asignatura.idMatricula) {
