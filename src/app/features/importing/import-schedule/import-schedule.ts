@@ -21,6 +21,12 @@ const DIAS: Record<string, string> = {
   domingo: 'Domingo',
 };
 
+/** Dónde está el reporte dentro de la plataforma de la universidad. */
+interface PasoDeLaGuia {
+  texto: string;
+  resaltado: string;
+}
+
 /**
  * Importar el Reporte de Horario (RF04, SCRUM-81).
  *
@@ -39,6 +45,16 @@ export class ImportSchedule {
   private readonly notificador = inject(NotifierService);
   private readonly router = inject(Router);
 
+  /** Lo mismo que docs/como-descargar-el-reporte-de-horario.md, para que no se desincronicen. */
+  protected readonly pasos: PasoDeLaGuia[] = [
+    { texto: 'En ucundinamarca.edu.co entra a Servicios y luego a Plataforma Institucional, y toca', resaltado: 'ACCESO A PLATAFORMA' },
+    { texto: 'Inicia sesión con tu usuario y contraseña, o con', resaltado: 'Iniciar Sesión con Office 365' },
+    { texto: 'Ya dentro del Campus TI, en el panel Gestión, abre', resaltado: 'Académico Estudiante' },
+    { texto: 'En el menú de la izquierda abre', resaltado: 'Horario' },
+    { texto: 'Elige tu programa en la lista y toca', resaltado: 'Continuar' },
+    { texto: 'Baja hasta el final de la tabla y toca', resaltado: 'Imprimir' },
+  ];
+
   /** A dónde vuelve la flecha: la pantalla de la que se llegó (SCRUM-82). */
   protected readonly origen = origenDeLaImportacion(inject(Location));
 
@@ -46,6 +62,7 @@ export class ImportSchedule {
   protected readonly analizando = signal(false);
   protected readonly guardando = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly guiaAbierta = signal(false);
 
   protected readonly fueraDelPlan = computed(
     () => this.analisis()?.asignaturas.filter((asignatura) => !asignatura.enElPlan) ?? [],
@@ -55,6 +72,10 @@ export class ImportSchedule {
       .filter((asignatura) => asignatura.enElPlan)
       .reduce((total, asignatura) => total + asignatura.clasesQueTiene, 0),
   );
+
+  protected alternarGuia(): void {
+    this.guiaAbierta.update((abierta) => !abierta);
+  }
 
   protected archivoElegido(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;

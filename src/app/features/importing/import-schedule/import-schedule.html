@@ -99,12 +99,24 @@
       que tengas que digitarlos.
     </p>
 
-    <section class="card import__guia">
-      <h2 class="import__guia-titulo">¿Cuál es el archivo?</h2>
-      <p class="import__advertencia">
-        Es el PDF que dice <b>Horario - Campo de aprendizaje</b> y trae una tabla con los días de la semana.
-        Guárdalo como PDF tal como lo descargaste.
-      </p>
+    <section class="card import__guia" aria-labelledby="titulo-guia">
+      <button class="import__guia-head" type="button" [attr.aria-expanded]="guiaAbierta()" aria-controls="pasos-guia" (click)="alternarGuia()">
+        <span id="titulo-guia" class="import__guia-titulo">¿Dónde consigo ese archivo?</span>
+        <svg class="import__chevron" [class.import__chevron--open]="guiaAbierta()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+
+      @if (guiaAbierta()) {
+        <ol class="import__pasos" id="pasos-guia">
+          @for (paso of pasos; track paso.resaltado) {
+            <li class="import__paso">{{ paso.texto }} <b>{{ paso.resaltado }}</b>.</li>
+          }
+        </ol>
+        <p class="import__advertencia">
+          Se descarga un PDF; si en cambio se abre la ventana de impresión, en Destino elige
+          <b>Guardar como PDF</b>. Súbelo tal como lo descargaste: debe decir <b>Horario - Campo de aprendizaje</b>
+          y traer una tabla con los días de la semana.
+        </p>
+      }
       <p class="import__advertencia">
         Tu documento y los de tus docentes salen en el archivo, pero CundiApp no los lee ni los guarda.
         Para tus notas se usa otro archivo: el Registro Académico Extendido, desde

@@ -93,13 +93,27 @@ describe('ImportSchedule', () => {
     fixture.detectChanges();
   }
 
-  it('empieza pidiendo el Reporte de Horario y dice cuál es, sin confundirlo con el de notas', () => {
+  it('empieza pidiendo el Reporte de Horario y aclara que el de notas es otro', () => {
     const { html } = crear();
 
     expect(html.querySelector('input[type="file"]')).not.toBeNull();
-    expect(html.textContent).toContain('Horario - Campo de aprendizaje');
+    expect(html.textContent).toContain('¿Dónde consigo ese archivo?');
     expect(html.textContent).toContain('Registro Académico Extendido');
     expect(html.querySelector('.alert')).toBeNull();
+  });
+
+  it('la guía explica el camino hasta el reporte, paso a paso, y se abre con un toque', () => {
+    const { fixture, html } = crear();
+    expect(html.querySelector('.import__pasos')).toBeNull();
+
+    html.querySelector<HTMLButtonElement>('.import__guia-head')!.click();
+    fixture.detectChanges();
+
+    const pasos = Array.from(html.querySelectorAll('.import__paso')).map((p) => p.textContent);
+    expect(pasos).toHaveLength(6);
+    expect(pasos[2]).toContain('Académico Estudiante');
+    expect(pasos[3]).toContain('Horario');
+    expect(pasos[5]).toContain('Imprimir');
   });
 
   it('lee el archivo y muestra lo detectado sin guardar nada', () => {
