@@ -4,7 +4,12 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
-import { ClaseDelHorario, Horario, HorarioRepository } from '../../../data-access/horario.repository';
+import {
+  ClaseDelHorario,
+  Horario,
+  HorarioRepository,
+  PreferenciaDeHorario,
+} from '../../../data-access/horario.repository';
 import { MySchedule } from './my-schedule';
 
 describe('MySchedule', () => {
@@ -46,14 +51,22 @@ describe('MySchedule', () => {
   const LUNES_TARDE = clase({ consecutivo: 2, asignatura: 'Física I', horaInicio: '14:00', horaFin: '16:30', duracionEnMinutos: 150, salon: null, bloque: null, sede: null, docente: null });
   const VIERNES = clase({ consecutivo: 3, dia: 'viernes', asignatura: 'Electrónica' });
 
+  const SIN_FILTRO = { asignatura: null, sede: null, orden: 'hora' as const };
   const HORARIO: Horario = {
     totalDeClases: 3,
     dias: [
       { dia: 'lunes', clases: [LUNES, LUNES_TARDE] },
       { dia: 'viernes', clases: [VIERNES] },
     ],
+    sedes: ['Fusagasugá', 'Soacha'],
+    asignaturas: [
+      { codigo: 'CAD612021101', nombre: 'Álgebra Lineal' },
+      { codigo: 'CAD612021106', nombre: 'Electrónica' },
+    ],
+    aplicado: SIN_FILTRO,
   };
-  const VACIO: Horario = { totalDeClases: 0, dias: [] };
+  const VACIO: Horario = { totalDeClases: 0, dias: [], sedes: [], asignaturas: [], aplicado: SIN_FILTRO };
+  const PREDETERMINADA: PreferenciaDeHorario = { vista: 'dia', sede: null, orden: 'hora' };
 
   beforeEach(() => {
     // Miércoles 14 de octubre de 2026: abre en el día de hoy.
@@ -71,19 +84,21 @@ describe('MySchedule', () => {
     asignaturas: AsignaturaMatriculada[] = [ALGEBRA, TERMINADA],
     agregar = vi.fn().mockReturnValue(of(LUNES)),
     quitar = vi.fn().mockReturnValue(of(undefined)),
+    miPreferencia = vi.fn().mockReturnValue(of(PREDETERMINADA)),
+    guardarPreferencia = vi.fn().mockImplementation((p: PreferenciaDeHorario) => of(p)),
   ) {
     TestBed.configureTestingModule({
       imports: [MySchedule],
       providers: [
         provideRouter([]),
-        { provide: HorarioRepository, useValue: { miHorario, agregar, quitar } },
+        { provide: HorarioRepository, useValue: { miHorario, agregar, quitar, miPreferencia, guardarPreferencia } },
         { provide: EvaluacionRepository, useValue: { misAsignaturas: vi.fn().mockReturnValue(of(asignaturas)) } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
     const fixture = TestBed.createComponent(MySchedule);
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement, miHorario, agregar, quitar };
+    return { fixture, html: fixture.nativeElement as HTMLElement, miHorario, agregar, quitar, miPreferencia, guardarPreferencia };
   }
 
   function boton(html: HTMLElement, texto: string): HTMLButtonElement {
@@ -296,6 +311,128 @@ describe('MySchedule', () => {
     await fixture.whenStable();
 
     expect(quitar).not.toHaveBeenCalled();
+  });
+
+  function elegir(html: HTMLElement, etiqueta: string, valor: string): void {
+    const campo = Array.from(html.querySelectorAll<HTMLLabelElement>('.horario__filtros label')).find((l) =>
+      l.textContent?.includes(etiqueta),
+    )!.querySelector('select')!;
+    campo.value = valor;
+    campo.dispatchEvent(new Event('change'));
+  }
+
+  describe('organizar el horario (SCRUM-26)', () => {
+    it('ofrece elegir asignatura, sede y orden con las opciones que trae el servidor', () => {
+      const { html } = crear();
+
+      const asignaturas = Array.from(html.querySelectorAll('.horario__filtros label')[0].querySelectorAll('option')).map((o) => o.textContent?.trim());
+      const sedes = Array.from(html.querySelectorAll('.horario__filtros label')[1].querySelectorAll('option')).map((o) => o.textContent?.trim());
+      expect(asignaturas).toEqual(['Todas', 'Álgebra Lineal', 'Electrónica']);
+      expect(sedes).toEqual(['Todas', 'Fusagasugá', 'Soacha']);
+    });
+
+    it('sin clases en el horario no muestra filtros que no tendrían nada que filtrar', () => {
+      const { html } = crear(vi.fn().mockReturnValue(of(VACIO)));
+
+      expect(html.querySelector('.horario__filtros')).toBeNull();
+    });
+
+    it('abre con la vista, la sede y el orden guardados y se los pide al servidor', () => {
+      const guardada: PreferenciaDeHorario = { vista: 'semana', sede: 'Soacha', orden: 'asignatura' };
+      const { html, miHorario } = crear(undefined, undefined, undefined, undefined, vi.fn().mockReturnValue(of(guardada)));
+
+      expect(miHorario).toHaveBeenCalledWith({ asignatura: undefined, sede: 'Soacha', orden: 'asignatura' });
+      expect(html.querySelectorAll('.horario__dia-semana')).toHaveLength(7);
+      expect(html.textContent).toContain('Esta es tu vista guardada');
+    });
+
+    it('si no se puede leer la preferencia abre con lo predeterminado sin decirle nada a nadie', () => {
+      const { html, miHorario } = crear(undefined, undefined, undefined, undefined, vi.fn().mockReturnValue(throwError(() => ({ status: 500 }))));
+
+      expect(miHorario).toHaveBeenCalledWith({ asignatura: undefined, sede: undefined, orden: 'hora' });
+      expect(notificador.problema).not.toHaveBeenCalled();
+      expect(html.querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it('elegir una sede vuelve a pedir el horario con ese filtro y no filtra en el navegador', () => {
+      const { fixture, html, miHorario } = crear();
+
+      elegir(html, 'Sede', 'Soacha');
+      fixture.detectChanges();
+
+      expect(miHorario).toHaveBeenLastCalledWith({ asignatura: undefined, sede: 'Soacha', orden: 'hora' });
+      expect(html.textContent).toContain('Quitar filtros');
+    });
+
+    it('elegir una asignatura y un orden también los manda al servidor', () => {
+      const { fixture, html, miHorario } = crear();
+
+      elegir(html, 'Asignatura', 'CAD612021101');
+      fixture.detectChanges();
+      elegir(html, 'Ordenar por', 'asignatura');
+      fixture.detectChanges();
+
+      expect(miHorario).toHaveBeenLastCalledWith({ asignatura: 'CAD612021101', sede: undefined, orden: 'asignatura' });
+    });
+
+    it('quitar los filtros vuelve a pedir todo, pero conserva el orden', () => {
+      const { fixture, html, miHorario } = crear();
+      elegir(html, 'Sede', 'Soacha');
+      elegir(html, 'Ordenar por', 'asignatura');
+      fixture.detectChanges();
+
+      boton(html, 'Quitar filtros').click();
+      fixture.detectChanges();
+
+      expect(miHorario).toHaveBeenLastCalledWith({ asignatura: undefined, sede: undefined, orden: 'asignatura' });
+      expect(html.textContent).not.toContain('Quitar filtros');
+    });
+
+    it('un filtro sin coincidencias dice que ninguna clase coincide y deja las opciones para quitarlo', () => {
+      const sinCoincidencias: Horario = { ...VACIO, sedes: HORARIO.sedes, asignaturas: HORARIO.asignaturas, aplicado: { asignatura: null, sede: 'Soacha', orden: 'hora' } };
+      const miHorario = vi.fn().mockReturnValueOnce(of(HORARIO)).mockReturnValue(of(sinCoincidencias));
+      const { fixture, html } = crear(miHorario);
+
+      elegir(html, 'Sede', 'Soacha');
+      fixture.detectChanges();
+
+      expect(html.textContent).toContain('Ninguna clase coincide con tus filtros');
+      expect(html.querySelector('.horario__filtros')).not.toBeNull();
+    });
+
+    it('guardar como mi vista manda la vista, la sede y el orden, pero no la asignatura', () => {
+      const { fixture, html, guardarPreferencia } = crear();
+      elegir(html, 'Asignatura', 'CAD612021101');
+      elegir(html, 'Sede', 'Fusagasugá');
+      elegir(html, 'Ordenar por', 'asignatura');
+      boton(html, 'Semana').click();
+      fixture.detectChanges();
+
+      boton(html, 'Guardar como mi vista').click();
+      fixture.detectChanges();
+
+      expect(guardarPreferencia).toHaveBeenCalledWith({ vista: 'semana', sede: 'Fusagasugá', orden: 'asignatura' });
+      expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Guardamos tu vista'));
+      expect(html.textContent).toContain('Esta es tu vista guardada');
+    });
+
+    it('no deja guardar lo que ya está guardado', () => {
+      const { html } = crear();
+
+      expect(boton(html, 'Esta es tu vista guardada').disabled).toBe(true);
+    });
+
+    it('si no se puede guardar la vista lo dice en la pantalla', () => {
+      const guardarPreferencia = vi.fn().mockReturnValue(throwError(() => ({ status: 422, error: { detail: 'La sede no puede pasar de 60 caracteres' } })));
+      const { fixture, html } = crear(undefined, undefined, undefined, undefined, undefined, guardarPreferencia);
+      boton(html, 'Semana').click();
+      fixture.detectChanges();
+
+      boton(html, 'Guardar como mi vista').click();
+      fixture.detectChanges();
+
+      expect(html.querySelector('[role="alert"]')?.textContent).toContain('60 caracteres');
+    });
   });
 
   it('si no se puede traer el horario lo dice y avisa de la falla del servidor', () => {

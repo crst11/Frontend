@@ -9,8 +9,12 @@ import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-acces
 import {
   ClaseDelHorario,
   ClasePorAgregar,
+  ConsultaDelHorario,
   Horario,
   HorarioRepository,
+  OrdenDelHorario,
+  PreferenciaDeHorario,
+  VistaDelHorario,
 } from '../../../data-access/horario.repository';
 
 /** Los días como los guarda el servidor (sin tildes) y como se leen en pantalla. */
@@ -30,9 +34,13 @@ const DIAS = [
  * <p>Dos vistas del mismo dato: por día (la que se consulta en el momento: ¿dónde es mi próxima
  * clase?) y por semana. Abre en el día de hoy.
  *
- * <p>Aquí no se ordena ni se agrupa nada: el servidor entrega los días con clases de lunes a
- * domingo y, dentro de cada uno, las clases en orden de hora. La pantalla solo las dibuja y
- * rellena con «sin clases» los días que no vienen.
+ * <p>Aquí no se ordena, no se agrupa ni se filtra nada (SCRUM-26): el servidor entrega los días con
+ * clases de lunes a domingo y, dentro de cada uno, las clases en el orden y con el filtro que se le
+ * pidieron. La pantalla solo las dibuja y rellena con «sin clases» los días que no vienen. Elegir una
+ * asignatura, una sede o un orden vuelve a pedir el horario.
+ *
+ * <p>La vista, la sede y el orden se pueden guardar como «mi vista» y la próxima vez abre con ellos. El
+ * filtro por asignatura no se guarda: cambia cada período.
  *
  * <p>Las clases se agregan a mano, una por bloque, a las asignaturas que se están cursando. El
  * lugar y el docente son opcionales: se puede saber la hora antes que el salón.
@@ -55,7 +63,14 @@ export class MySchedule {
   protected readonly asignaturas = signal<AsignaturaMatriculada[]>([]);
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
-  protected readonly vista = signal<'dia' | 'semana'>('dia');
+  protected readonly vista = signal<VistaDelHorario>('dia');
+  protected readonly asignaturaElegida = signal('');
+  protected readonly sedeElegida = signal('');
+  protected readonly ordenElegido = signal<OrdenDelHorario>('hora');
+  /** Lo que hay guardado como «mi vista»; sirve para saber si lo que se ve ya es eso. */
+  protected readonly guardadaComoMiVista = signal<PreferenciaDeHorario | null>(null);
+  protected readonly guardandoMiVista = signal(false);
+  protected readonly actualizando = signal(false);
   protected readonly diaElegido = signal<string>(diaDeHoy());
   protected readonly agregando = signal(false);
   protected readonly guardando = signal(false);
@@ -63,6 +78,26 @@ export class MySchedule {
 
   protected readonly clasesDelDia = computed(() => this.clasesDe(this.diaElegido()));
   protected readonly sinAsignaturas = computed(() => this.asignaturas().length === 0);
+
+  protected readonly hayFiltro = computed(() => !!this.asignaturaElegida() || !!this.sedeElegida());
+
+  /** Las sedes que se pueden elegir, más la elegida si el horario ya no la trae (se puede quitar). */
+  protected readonly sedesParaElegir = computed(() => {
+    const sedes = this.horario()?.sedes ?? [];
+    const elegida = this.sedeElegida();
+    return elegida && !sedes.includes(elegida) ? [...sedes, elegida] : sedes;
+  });
+
+  /** Verdadero si lo que se ve ya es lo que está guardado: no hay nada nuevo que guardar. */
+  protected readonly yaEsMiVista = computed(() => {
+    const guardada = this.guardadaComoMiVista();
+    return (
+      !!guardada &&
+      guardada.vista === this.vista() &&
+      (guardada.sede ?? '') === this.sedeElegida() &&
+      guardada.orden === this.ordenElegido()
+    );
+  });
 
   protected readonly formulario = this.fb.group({
     idMatricula: [0, [Validators.min(1)]],
@@ -98,8 +133,50 @@ export class MySchedule {
     return clase.docente ? `${clase.docente.nombres} ${clase.docente.apellidos}` : null;
   }
 
-  protected cambiarVista(vista: 'dia' | 'semana'): void {
+  protected cambiarVista(vista: VistaDelHorario): void {
     this.vista.set(vista);
+  }
+
+  protected elegirAsignatura(codigo: string): void {
+    this.asignaturaElegida.set(codigo);
+    this.pedirElHorario();
+  }
+
+  protected elegirSede(sede: string): void {
+    this.sedeElegida.set(sede);
+    this.pedirElHorario();
+  }
+
+  protected elegirOrden(orden: string): void {
+    this.ordenElegido.set(orden === 'asignatura' ? 'asignatura' : 'hora');
+    this.pedirElHorario();
+  }
+
+  protected quitarFiltros(): void {
+    this.asignaturaElegida.set('');
+    this.sedeElegida.set('');
+    this.pedirElHorario();
+  }
+
+  /** Guarda la vista, la sede y el orden de ahora. El filtro por asignatura no se guarda. */
+  protected guardarMiVista(): void {
+    if (this.guardandoMiVista() || this.yaEsMiVista()) {
+      return;
+    }
+    this.guardandoMiVista.set(true);
+    this.repositorio
+      .guardarPreferencia({ vista: this.vista(), sede: this.sedeElegida() || null, orden: this.ordenElegido() })
+      .subscribe({
+        next: (guardada) => {
+          this.guardandoMiVista.set(false);
+          this.guardadaComoMiVista.set(guardada);
+          void this.notificador.aviso('Guardamos tu vista: la próxima vez abre así.');
+        },
+        error: (err: HttpErrorResponse) => {
+          this.guardandoMiVista.set(false);
+          this.mostrarEnLaPantalla(err);
+        },
+      });
   }
 
   protected elegirDia(dia: string): void {
@@ -165,8 +242,42 @@ export class MySchedule {
     });
   }
 
+  /**
+   * Abre con la preferencia guardada. Si no se puede leer, no es motivo para no mostrar el horario:
+   * se abre con lo predeterminado y no se le dice nada a quien no pidió nada.
+   */
   private cargar(): void {
-    this.repositorio.miHorario().subscribe({
+    this.repositorio.miPreferencia().subscribe({
+      next: (preferencia) => {
+        this.guardadaComoMiVista.set(preferencia);
+        this.vista.set(preferencia.vista);
+        this.sedeElegida.set(preferencia.sede ?? '');
+        this.ordenElegido.set(preferencia.orden);
+        this.cargarElHorario();
+      },
+      error: () => this.cargarElHorario(),
+    });
+    this.cargarLasAsignaturas();
+  }
+
+  /** Para poder agregar: solo las asignaturas que se están cursando tienen horario. */
+  private cargarLasAsignaturas(): void {
+    this.evaluaciones.misAsignaturas().subscribe({
+      next: (asignaturas) => this.asignaturas.set(asignaturas.filter((a) => a.enCurso)),
+      error: () => this.asignaturas.set([]),
+    });
+  }
+
+  private consulta(): ConsultaDelHorario {
+    return {
+      asignatura: this.asignaturaElegida() || undefined,
+      sede: this.sedeElegida() || undefined,
+      orden: this.ordenElegido(),
+    };
+  }
+
+  private cargarElHorario(): void {
+    this.repositorio.miHorario(this.consulta()).subscribe({
       next: (horario) => {
         this.horario.set(horario);
         this.cargando.set(false);
@@ -182,21 +293,26 @@ export class MySchedule {
         }
       },
     });
-    // Para poder agregar: solo las asignaturas que se están cursando tienen horario.
-    this.evaluaciones.misAsignaturas().subscribe({
-      next: (asignaturas) => this.asignaturas.set(asignaturas.filter((a) => a.enCurso)),
-      error: () => this.asignaturas.set([]),
+  }
+
+  /** Un filtro o un orden nuevos: se vuelve a pedir y la pantalla sigue mostrando lo anterior mientras tanto. */
+  private pedirElHorario(): void {
+    this.actualizando.set(true);
+    this.repositorio.miHorario(this.consulta()).subscribe({
+      next: (horario) => {
+        this.horario.set(horario);
+        this.error.set(null);
+        this.actualizando.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.actualizando.set(false);
+        this.mostrarEnLaPantalla(err);
+      },
     });
   }
 
   private recargarElHorario(): void {
-    this.repositorio.miHorario().subscribe({
-      next: (horario) => {
-        this.horario.set(horario);
-        this.error.set(null);
-      },
-      error: (err: HttpErrorResponse) => this.mostrarEnLaPantalla(err),
-    });
+    this.pedirElHorario();
   }
 
   /** Lo que el estudiante puede corregir va junto al formulario; una caída del servidor, a la ventana. */
