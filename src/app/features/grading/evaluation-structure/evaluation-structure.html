@@ -221,7 +221,7 @@
           Todavía no tienes asignaturas matriculadas en CundiApp. Importa tu Registro Académico Extendido y
           aparecerán aquí.
         </p>
-        <a class="button button--soft" routerLink="/cuenta/importar-reporte">Importar mi reporte</a>
+        <a class="button button--soft" routerLink="/cuenta/importar-reporte" [state]="{ origen: '/calificaciones/mis-notas' }">Importar mi reporte</a>
       } @else {
         <ul class="evaluacion__lista">
           @for (asignatura of asignaturas(); track asignatura.idMatricula) {
