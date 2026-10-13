@@ -100,7 +100,7 @@ export class EvaluationStructure {
   }
 
   private cargarAsignaturas(): void {
-    this.repositorio.misAsignaturas().subscribe({
+    this.repositorio.misAsignaturas('actual').subscribe({
       next: (asignaturas) => {
         this.asignaturas.set(asignaturas);
         this.cargando.set(false);

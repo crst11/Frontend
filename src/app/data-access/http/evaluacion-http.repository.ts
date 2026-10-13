@@ -16,8 +16,8 @@ export class EvaluacionHttpRepository extends EvaluacionRepository {
   private readonly http = inject(HttpClient);
   private readonly ruta = `${environment.apiUrl}/mis/matriculas`;
 
-  override misAsignaturas(): Observable<AsignaturaMatriculada[]> {
-    return this.http.get<AsignaturaMatriculada[]>(this.ruta);
+  override misAsignaturas(semestre?: 'actual'): Observable<AsignaturaMatriculada[]> {
+    return this.http.get<AsignaturaMatriculada[]>(this.ruta, semestre ? { params: { semestre } } : {});
   }
 
   override estructuraDe(idMatricula: number): Observable<EstructuraDeEvaluacion> {
