@@ -11,20 +11,13 @@ import {
   ImportacionRepository,
   PeriodoDetectado,
 } from '../../../data-access/importacion.repository';
+import { origenDeLaImportacion } from '../origen-de-la-importacion';
 
 /** Dónde está el reporte dentro de la plataforma de la universidad. */
 interface PasoDeLaGuia {
   texto: string;
   resaltado: string;
 }
-
-/** Pantallas desde las que se llega a importar y a las que volver (SCRUM-82); lo demás cae en Mi cuenta. */
-const ORIGENES: Record<string, string> = {
-  '/cuenta/mi-cuenta': 'Volver a mi cuenta',
-  '/horario': 'Volver a mi horario',
-  '/calificaciones/mis-notas': 'Volver a mis notas',
-};
-const ORIGEN_PREDETERMINADO = '/cuenta/mi-cuenta';
 
 /**
  * Importar el Registro Académico Extendido (RF03, SCRUM-23).
@@ -42,14 +35,9 @@ export class ImportReport {
   private readonly repositorio = inject(ImportacionRepository);
   private readonly notificador = inject(NotifierService);
   private readonly router = inject(Router);
-  private readonly ubicacion = inject(Location);
 
-  /**
-   * La pantalla desde la que se llegó, que viaja en el estado del historial del navegador (sobrevive a
-   * recargar). Solo se aceptan las pantallas conocidas: nada que venga de fuera decide a dónde se vuelve.
-   */
-  protected readonly origen = this.origenDeLaNavegacion();
-  protected readonly textoDeVolver = ORIGENES[this.origen];
+  /** A dónde vuelve la flecha: la pantalla de la que se llegó (SCRUM-82). */
+  protected readonly origen = origenDeLaImportacion(inject(Location));
 
   /** Lo mismo que docs/como-descargar-el-registro-extendido.md, para que no se desincronicen. */
   protected readonly pasos: PasoDeLaGuia[] = [
@@ -82,11 +70,6 @@ export class ImportReport {
 
   constructor() {
     this.cargarHistorial();
-  }
-
-  private origenDeLaNavegacion(): string {
-    const origen = (this.ubicacion.getState() as { origen?: unknown } | null)?.origen;
-    return typeof origen === 'string' && origen in ORIGENES ? origen : ORIGEN_PREDETERMINADO;
   }
 
   protected alternarGuia(): void {

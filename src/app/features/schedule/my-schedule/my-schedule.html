@@ -159,12 +159,15 @@
         </form>
       } @else if (sinAsignaturas()) {
         <p class="notice">
-          Para armar tu horario necesitas tener asignaturas en curso. Importa tu Registro Académico Extendido y
-          aparecerán aquí.
+          Para armar tu horario necesitas tener asignaturas en curso. Importa tu Reporte de Horario y tus
+          asignaturas y sus clases aparecerán aquí.
         </p>
-        <a class="button button--soft" routerLink="/cuenta/importar-reporte" [state]="{ origen: '/horario' }">Importar mi reporte</a>
+        <a class="button button--soft" routerLink="/cuenta/importar-horario" [state]="{ origen: '/horario' }">Importar mi horario</a>
       } @else {
         <button class="button button--soft" type="button" (click)="abrirFormulario()">Agregar una clase</button>
+        <a class="horario__importar" routerLink="/cuenta/importar-horario" [state]="{ origen: '/horario' }">
+          Importar mi horario desde el reporte
+        </a>
       }
 
       @if (vista() === 'dia') {
