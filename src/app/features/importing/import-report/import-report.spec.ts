@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -71,6 +72,7 @@ describe('ImportReport', () => {
     confirmar = vi.fn().mockReturnValue(of({ idImportacion: 1, guardadas: 2, actualizadas: 0, omitidas: 1 })),
     misImportaciones = vi.fn().mockReturnValue(of(CARGAS)),
     deshacer = vi.fn().mockReturnValue(of({ idImportacion: 2, eliminadas: 12, restauradas: 8 })),
+    estadoDeLaNavegacion: unknown = {},
   ) {
     TestBed.configureTestingModule({
       imports: [ImportReport],
@@ -83,6 +85,7 @@ describe('ImportReport', () => {
     // Sin esto, confirmar lanza una navegación real contra un router sin rutas y Vitest la cuenta
     // como error no manejado aunque la prueba pase.
     const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vi.spyOn(TestBed.inject(Location), 'getState').mockReturnValue(estadoDeLaNavegacion);
     const fixture = TestBed.createComponent(ImportReport);
     fixture.detectChanges();
     return { fixture, html: fixture.nativeElement as HTMLElement, analizar, confirmar, deshacer, navegar };
@@ -101,6 +104,39 @@ describe('ImportReport', () => {
     entrada.dispatchEvent(new Event('change'));
     fixture.detectChanges();
   }
+
+  describe('volver (SCRUM-82)', () => {
+    function volver(html: HTMLElement): HTMLAnchorElement {
+      return html.querySelector<HTMLAnchorElement>('.top-bar a.icon-button')!;
+    }
+
+    it('sin saber de dónde se vino, vuelve a mi cuenta', () => {
+      const { html } = crear();
+
+      expect(volver(html).getAttribute('href')).toBe('/cuenta/mi-cuenta');
+      expect(volver(html).getAttribute('aria-label')).toBe('Volver a mi cuenta');
+    });
+
+    it('vuelve a mi horario si se llegó desde mi horario', () => {
+      const { html } = crear(undefined, undefined, undefined, undefined, { origen: '/horario' });
+
+      expect(volver(html).getAttribute('href')).toBe('/horario');
+      expect(volver(html).getAttribute('aria-label')).toBe('Volver a mi horario');
+    });
+
+    it('vuelve a mis notas si se llegó desde mis notas', () => {
+      const { html } = crear(undefined, undefined, undefined, undefined, { origen: '/calificaciones/mis-notas' });
+
+      expect(volver(html).getAttribute('href')).toBe('/calificaciones/mis-notas');
+      expect(volver(html).getAttribute('aria-label')).toBe('Volver a mis notas');
+    });
+
+    it('ignora un origen que no es una pantalla de la app', () => {
+      const { html } = crear(undefined, undefined, undefined, undefined, { origen: 'https://otro.sitio/robo' });
+
+      expect(volver(html).getAttribute('href')).toBe('/cuenta/mi-cuenta');
+    });
+  });
 
   it('empieza pidiendo el archivo y explicando de dónde sale', () => {
     const { html } = crear();
