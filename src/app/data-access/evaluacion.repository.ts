@@ -91,7 +91,11 @@ export interface ActividadPorGuardar {
 /** Puerto del frontend hacia la estructura de evaluación y las calificaciones (RF05). */
 @Injectable()
 export abstract class EvaluacionRepository {
-  abstract misAsignaturas(): Observable<AsignaturaMatriculada[]>;
+  /**
+   * Las asignaturas matriculadas. Sin criterio vienen todas (las necesitan el horario y el historial);
+   * con `'actual'` solo las del semestre en curso (SCRUM-86), que es lo que ofrece *Mis notas*.
+   */
+  abstract misAsignaturas(semestre?: 'actual'): Observable<AsignaturaMatriculada[]>;
   abstract estructuraDe(idMatricula: number): Observable<EstructuraDeEvaluacion>;
   abstract guardar(
     idMatricula: number,
