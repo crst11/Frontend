@@ -126,7 +126,7 @@ describe('EvaluationStructure', () => {
     });
     const fixture = TestBed.createComponent(EvaluationStructure);
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement, estructuraDe, guardar };
+    return { fixture, html: fixture.nativeElement as HTMLElement, estructuraDe, guardar, misAsignaturas };
   }
 
   function boton(html: HTMLElement, texto: string): HTMLButtonElement {
@@ -166,11 +166,20 @@ describe('EvaluationStructure', () => {
     expect(etiquetas[1]).toContain('5 actividades');
   });
 
-  it('si no hay asignaturas ofrece importar el reporte en vez de dejar la pantalla vacía', () => {
+  it('pide solo las asignaturas del semestre actual (SCRUM-86)', () => {
+    const { misAsignaturas, html } = crear();
+
+    expect(misAsignaturas).toHaveBeenCalledWith('actual');
+    expect(html.textContent).toContain('del semestre que cursas ahora');
+  });
+
+  it('si no hay asignaturas en curso ofrece importar el horario, no el reporte de notas', () => {
     const { html } = crear(vi.fn().mockReturnValue(of([])));
 
-    expect(html.textContent).toContain('Importa tu Registro Académico Extendido');
-    expect(html.querySelector('a[href="/cuenta/importar-reporte"]')).not.toBeNull();
+    expect(html.textContent).toContain('No tienes asignaturas en curso');
+    expect(html.textContent).toContain('Mi historial');
+    expect(html.querySelector('a[href="/cuenta/importar-horario"]')).not.toBeNull();
+    expect(html.querySelector('a[href="/cuenta/importar-reporte"]')).toBeNull();
   });
 
   it('una asignatura sin configurar se abre con la plantilla y avisa que no hay nada guardado', () => {
