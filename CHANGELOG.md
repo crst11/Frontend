@@ -5,6 +5,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Sin publicar]
 
 ### Cambiado
+- Navegación nueva (SCRUM-83). Dentro de la app hay **una barra con tres cosas**: el **menú de tres barritas** a la izquierda, que lleva a Hoy, Mi horario, Mis notas, Mi historial y promedios y Mi plan de estudios (marca en cuál estás y se cierra con Escape, al tocar fuera o al ir a una sección); el **título** de la pantalla en el centro; y a la derecha el **avatar con tus iniciales**, que despliega tu información personal (nombre y correo) con Mi cuenta, Mis sesiones y cerrar sesión. Las pantallas dejan de repetir su flecha de volver y su lista de enlaces: Mi cuenta ya no es un menú de secciones, solo tu cuenta y su seguridad. **Importar mi reporte vive ahora dentro de Mi historial y promedios**, con su flecha de vuelta a esa pantalla. No hay barra de navegación inferior. El cierre de sesión con confirmación es el mismo para Mi cuenta y el avatar.
+
+### Cambiado
 - *Mis notas* (SCRUM-86) solo ofrece las asignaturas del semestre actual; las de semestres anteriores siguen en *Mi historial*. Sin ninguna en curso, la pantalla manda a importar el horario (antes mandaba a importar el Registro Académico Extendido, que no trae las asignaturas del semestre que apenas empieza).
 
 ### Agregado
