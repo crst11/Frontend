@@ -30,6 +30,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/account/password-reset/password-reset').then((m) => m.PasswordReset),
   },
   {
+    path: 'inicio',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/today/today-screen/today-screen').then((m) => m.TodayScreen),
+  },
+  {
     path: 'cuenta/mi-cuenta',
     canActivate: [sessionGuard],
     loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),

@@ -2,6 +2,7 @@ import { Location } from '@angular/common';
 
 /** Pantallas desde las que se llega a importar y a las que se vuelve (SCRUM-82); lo demás cae en Mi cuenta. */
 const ORIGENES: Record<string, string> = {
+  '/inicio': 'Volver al inicio',
   '/cuenta/mi-cuenta': 'Volver a mi cuenta',
   '/horario': 'Volver a mi horario',
   '/calificaciones/mis-notas': 'Volver a mis notas',

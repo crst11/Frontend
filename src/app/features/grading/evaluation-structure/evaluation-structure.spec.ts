@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
@@ -115,11 +115,13 @@ describe('EvaluationStructure', () => {
         categorias: PROPUESTA.categorias.map((c) => ({ ...c, origen: 'estudiante' })),
       } satisfies EstructuraDeEvaluacion),
     ),
+    consulta: Record<string, string> = {},
   ) {
     TestBed.configureTestingModule({
       imports: [EvaluationStructure],
       providers: [
         provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(consulta) } } },
         { provide: EvaluacionRepository, useValue: { misAsignaturas, estructuraDe, guardar, registrarNota: vi.fn(), quitarNota: vi.fn() } },
         { provide: NotifierService, useValue: notificador },
       ],
@@ -155,6 +157,20 @@ describe('EvaluationStructure', () => {
     expect(html.textContent).toContain('Elige la asignatura');
     expect(html.querySelectorAll('.evaluacion__asignatura')).toHaveLength(2);
     expect(html.textContent).toContain('Álgebra Lineal');
+  });
+
+  it('si llega con la asignatura pedida (desde la pantalla del día) la abre sin pasar por la lista (SCRUM-31)', () => {
+    const { estructuraDe, html } = crear(undefined, undefined, undefined, { matricula: '7' });
+
+    expect(estructuraDe).toHaveBeenCalledWith(7);
+    expect(html.querySelector('.evaluacion__lista')).toBeNull();
+  });
+
+  it('una asignatura pedida que no es del estudiante deja la lista como siempre', () => {
+    const { estructuraDe, html } = crear(undefined, undefined, undefined, { matricula: '999' });
+
+    expect(estructuraDe).not.toHaveBeenCalled();
+    expect(html.querySelector('.evaluacion__lista')).not.toBeNull();
   });
 
   it('distingue las asignaturas sin configurar de las que ya tienen estructura', () => {
