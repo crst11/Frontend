@@ -1,10 +1,13 @@
 <main class="screen record">
-  <header class="top-bar">
-    <a class="icon-button" routerLink="/cuenta/mi-cuenta" aria-label="Volver a mi cuenta">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-    </a>
-    <span class="top-bar__title">Mi historial</span>
-  </header>
+  @if (!cargando() && !error()) {
+    <section class="card record__importar" aria-labelledby="titulo-importar">
+      <div>
+        <h2 id="titulo-importar" class="record__importar-titulo">Importar mi reporte</h2>
+        <p class="subtitle">Sube tu Registro Académico Extendido y carga tus notas sin digitarlas.</p>
+      </div>
+      <a class="button button--soft" routerLink="/cuenta/importar-reporte" [state]="{ origen: '/cuenta/historial' }">Subir mi reporte</a>
+    </section>
+  }
 
   @if (cargando()) {
     <p class="subtitle">Cargando tu historial…</p>
