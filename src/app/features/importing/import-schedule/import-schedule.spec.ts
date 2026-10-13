@@ -142,6 +142,22 @@ describe('ImportSchedule', () => {
     expect(html.textContent).toContain('Miércoles');
   });
 
+  it('el estado es una etiqueta y cada clase una fila dentro de la tarjeta, no texto suelto en su borde (SCRUM-87)', () => {
+    const { fixture, html } = crear();
+
+    subir(fixture, html);
+
+    const tarjeta = html.querySelector('.import__periodo')!;
+    expect(tarjeta.querySelector('.horario-import__estado')?.textContent).toContain('Nueva');
+    const filas = tarjeta.querySelectorAll('.import__asignaturas > .import__asignatura');
+    expect(filas).toHaveLength(2);
+    // Lo único que cuelga directo de la tarjeta es la cabecera y la lista: nada sin relleno.
+    expect(Array.from(tarjeta.children).map((hijo) => hijo.tagName + (hijo.className ? '.' + hijo.classList[0] : '')))
+      .toEqual(['HEADER.import__periodo-head', 'UL.import__asignaturas']);
+    const sinClases = html.querySelectorAll('.import__periodo')[2];
+    expect(sinClases.querySelector('.horario-import__sin-clases')).not.toBeNull();
+  });
+
   it('dice cuál es nueva y cuántas clases reemplaza la que ya tenía', () => {
     const { fixture, html } = crear();
 
