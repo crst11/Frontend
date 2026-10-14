@@ -69,6 +69,11 @@ export const routes: Routes = [
       loadComponent: () => import('./features/schedule/my-schedule/my-schedule').then((m) => m.MySchedule),
       },
       {
+        path: 'importar',
+        data: { titulo: 'Importar mis archivos' },
+      loadComponent: () => import('./features/importing/import-all/import-all').then((m) => m.ImportAll),
+      },
+      {
         path: 'inicio',
         data: { titulo: 'Hoy' },
       loadComponent: () => import('./features/today/today-screen/today-screen').then((m) => m.TodayScreen),
