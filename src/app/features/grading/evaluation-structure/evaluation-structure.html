@@ -59,6 +59,14 @@
             Estos son los cortes con los que trabaja la universidad por defecto. Ajústalos a lo que te dijo
             tu docente y guarda; mientras no guardes, no hay nada registrado.
           </p>
+          <a
+            class="button button--soft"
+            routerLink="/calificaciones/importar-cmad"
+            [queryParams]="{ matricula: seleccionada()?.idMatricula }"
+            [state]="{ origen: '/calificaciones/mis-notas' }"
+          >
+            Importar mis actividades del CMAD
+          </a>
         }
       </div>
 
