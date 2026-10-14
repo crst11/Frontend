@@ -62,6 +62,26 @@
           {{ asignatura()?.nombre }} ya tiene actividades configuradas: al guardar se reemplazan por estas.
         </p>
       }
+      @if (comparacion(); as cambio) {
+        <section class="card import__comparacion" aria-label="Qué cambia respecto a lo que ya tienes">
+          <h2 class="import__periodo-nombre">Qué cambia</h2>
+          @if (cambio.sinCambios) {
+            <p class="field__hint">Es igual a lo que ya tienes: no cambia nada.</p>
+          } @else {
+            <ul class="import__cambios">
+              @for (c of cambio.cambian; track c.nombre) {
+                <li><strong>{{ c.nombre }}</strong>: {{ c.antes ?? 'sin nota' }} → {{ c.ahora ?? 'sin nota' }}</li>
+              }
+              @for (nombre of cambio.nuevas; track nombre) {
+                <li>Nueva: <strong>{{ nombre }}</strong></li>
+              }
+              @for (g of cambio.seQuitan; track g.nombre) {
+                <li>Se quita: <strong>{{ g.nombre }}</strong>{{ g.nota !== null ? ' (tenía ' + g.nota + ')' : '' }}</li>
+              }
+            </ul>
+          }
+        </section>
+      }
       <p class="notice">
         Los cortes salen del prefijo del nombre (R1, R2…) y es solo una sugerencia: puedes quitar o renombrar
         actividades abajo, y cambiar los cortes después en Mis notas. La retroalimentación del docente no se lee.

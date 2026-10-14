@@ -74,3 +74,49 @@
   padding: 6px 14px;
   font-size: 13px;
 }
+
+.notas__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notas__nombre {
+  min-width: 0;
+  font-weight: 600;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.notas__nota {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.notas__nota--vacia {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+/* Acciones chicas junto a la actividad, como Quitar: el botón compartido ocupa todo el ancho. */
+.notas__editar,
+.notas__guardar,
+.notas__cancelar {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  min-height: 40px;
+  padding: 6px 16px;
+  font-size: 14px;
+}
+
+.notas__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

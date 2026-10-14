@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, input, linkedSignal, output, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import {
@@ -29,7 +30,7 @@ export interface NotasCambiadas {
  */
 @Component({
   selector: 'app-activity-grades',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, RouterLink],
   templateUrl: './activity-grades.html',
   styleUrl: './activity-grades.css',
 })
@@ -40,6 +41,8 @@ export class ActivityGrades {
   readonly estructura = input.required<EstructuraDeEvaluacion>();
   readonly cambiaronLasNotas = output<NotasCambiadas>();
   readonly irAEstructura = output<void>();
+  /** Borra las actividades y notas de la asignatura; la pantalla pide la confirmación y lo hace. */
+  readonly quitarLoSubido = output<void>();
 
   /**
    * Copia de trabajo de la estructura. Se vuelve a armar cuando la pantalla le pasa otra (por
@@ -51,11 +54,37 @@ export class ActivityGrades {
   /** La actividad que se está guardando, para no dejar escribir encima mientras tanto. */
   protected readonly guardando = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
+  /** La actividad que se está editando: las notas se ven de solo lectura hasta tocar Editar. */
+  protected readonly editando = signal<string | null>(null);
 
   protected readonly hayActividades = () => this.acumulado().actividadesTotales > 0;
 
   protected clave(consecCategoria: number, consecActividad: number): string {
     return `${consecCategoria}-${consecActividad}`;
+  }
+
+  protected editar(consecCategoria: number, consecActividad: number): void {
+    this.error.set(null);
+    this.editando.set(this.clave(consecCategoria, consecActividad));
+    setTimeout(() => document.querySelector<HTMLInputElement>('.notas__actividad--editando input')?.focus());
+  }
+
+  protected cancelar(): void {
+    this.error.set(null);
+    this.editando.set(null);
+  }
+
+  /** Guarda lo escrito; la edición se cierra sola cuando el servidor lo acepta (o no había nada que cambiar). */
+  protected guardar(
+    consecCategoria: number,
+    consecActividad: number,
+    valor: string,
+    campo: HTMLInputElement,
+  ): void {
+    this.confirmar(consecCategoria, consecActividad, valor, campo);
+    if (this.error() === null && this.guardando() === null) {
+      this.editando.set(null);
+    }
   }
 
   /**
@@ -131,6 +160,7 @@ export class ActivityGrades {
     acumulado: AcumuladoDeNotas,
   ): void {
     this.guardando.set(null);
+    this.editando.set(null);
     const categorias = this.categorias().map((categoria) =>
       categoria.consecutivo !== consecCategoria
         ? categoria
