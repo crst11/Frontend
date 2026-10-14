@@ -1,0 +1,215 @@
+<main class="screen import">
+  <header class="top-bar">
+    <a class="icon-button" [routerLink]="origen.ruta" [attr.aria-label]="origen.texto">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Importar del CMAD</span>
+  </header>
+
+  @if (resultado(); as listo) {
+    <!-- Paso 3: lo que quedó guardado y si cuadra con el CMAD. -->
+    <section class="card import__resumen" aria-label="Listo">
+      <h1 class="import__titulo">Listo, cargamos tus actividades</h1>
+      <p class="subtitle">
+        {{ textoDeLasActividades(listo.actividades) }} y {{ listo.conNota }}
+        {{ listo.conNota === 1 ? 'nota' : 'notas' }} en {{ asignatura()?.nombre }}.
+      </p>
+      @if (comprobacion(listo); as comparacion) {
+        <p [class]="comparacion.coincide ? 'notice' : 'alert'" [attr.role]="comparacion.coincide ? null : 'alert'">
+          {{ comparacion.texto }}
+        </p>
+      }
+    </section>
+    <div class="screen__footer">
+      <button class="button button--primary" type="button" (click)="verMisNotas()">Ver mis notas</button>
+    </div>
+  } @else if (tabla()) {
+    <!-- Paso 2: lo detectado, para revisar antes de guardar nada. -->
+    <section class="card import__resumen" aria-label="Lo que detectamos">
+      <h1 class="import__titulo">Esto encontramos en el CMAD</h1>
+      <p class="subtitle">Revísalo antes de guardar. Nada se guarda hasta que confirmes.</p>
+      <dl class="import__cuentas">
+        <div>
+          <dt class="field__label">Actividades</dt>
+          <dd>{{ seleccionadas().length }}</dd>
+        </div>
+        <div>
+          <dt class="field__label">Cortes</dt>
+          <dd>{{ cortes().length }}</dd>
+        </div>
+        @if (tabla()?.totalDelCurso !== null) {
+          <div>
+            <dt class="field__label">Total del CMAD</dt>
+            <dd>{{ tabla()?.totalDelCurso }}</dd>
+          </div>
+        }
+      </dl>
+
+      <label class="field">
+        <span class="field__label">Asignatura</span>
+        <select class="field__input" (change)="elegirAsignatura($event)">
+          @for (opcion of asignaturas(); track opcion.idMatricula) {
+            <option [value]="opcion.idMatricula" [selected]="opcion.idMatricula === idElegido()">{{ opcion.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      @if (avisoDeCurso(); as aviso) {
+        <p class="alert" role="alert">{{ aviso }}</p>
+      }
+      @if (asignatura()?.tieneEstructura) {
+        <p class="notice">
+          {{ asignatura()?.nombre }} ya tiene actividades configuradas: al guardar se reemplazan por estas.
+        </p>
+      }
+      <p class="notice">
+        Los cortes salen del prefijo del nombre (R1, R2…) y es solo una sugerencia: puedes quitar o renombrar
+        actividades abajo, y cambiar los cortes después en Mis notas. La retroalimentación del docente no se lee.
+      </p>
+    </section>
+
+    @for (corte of cortes(); track corte.nombre) {
+      <section class="card import__periodo" [attr.aria-label]="'Corte ' + corte.nombre">
+        <header class="import__periodo-head">
+          <h2 class="import__periodo-nombre">{{ corte.nombre }}</h2>
+          <span class="import__periodo-meta">{{ corte.porcentaje }} % de la nota · {{ textoDeLasActividades(corte.actividades.length) }}</span>
+        </header>
+      </section>
+    }
+
+    <section class="card import__periodo" aria-label="Actividades detectadas">
+      <header class="import__periodo-head">
+        <h2 class="import__periodo-nombre">Actividades</h2>
+        <span class="import__periodo-meta">Nombre, nota de 0 a 5 y si se incluye</span>
+      </header>
+      <ul class="import__asignaturas">
+        @for (fila of filas(); track $index; let i = $index) {
+          <li class="import__asignatura cmad__fila" [class.import__asignatura--fuera]="!fila.incluir">
+            <input
+              class="cmad__incluir"
+              type="checkbox"
+              [checked]="fila.incluir"
+              [attr.aria-label]="'Incluir ' + fila.nombre"
+              (change)="alternarIncluir(i)"
+            />
+            <div class="cmad__campos">
+              <input
+                class="field__input"
+                type="text"
+                maxlength="120"
+                [value]="fila.nombre"
+                [disabled]="!fila.incluir"
+                [attr.aria-label]="'Nombre de la actividad ' + (i + 1)"
+                (input)="cambiarNombre(i, $event)"
+              />
+              <span class="field__hint">Pesa {{ fila.ponderacion }} % del curso</span>
+            </div>
+            <input
+              class="field__input cmad__nota"
+              type="text"
+              inputmode="decimal"
+              placeholder="Sin nota"
+              [value]="fila.nota"
+              [disabled]="!fila.incluir"
+              [class.field__input--error]="fila.incluir && notaEscrita(fila) === 'invalida'"
+              [attr.aria-label]="'Nota de ' + fila.nombre"
+              [attr.aria-invalid]="fila.incluir && notaEscrita(fila) === 'invalida'"
+              (input)="cambiarNota(i, $event)"
+            />
+          </li>
+        }
+      </ul>
+    </section>
+
+    @if (notasInvalidas().length > 0) {
+      <p class="alert" role="alert">Hay notas que no son un número entre 0 y 5. Corrígelas o déjalas vacías.</p>
+    }
+
+    <div class="screen__footer">
+      <button class="button button--primary" type="button" [disabled]="!sePuedeGuardar()" (click)="confirmar()">
+        {{ guardando() ? 'Guardando…' : 'Confirmar y guardar' }}
+      </button>
+      <button class="button button--outline" type="button" [disabled]="guardando()" (click)="volverAEmpezar()">
+        Empezar de nuevo
+      </button>
+    </div>
+  } @else {
+    <!-- Paso 1: de dónde sale la tabla y cómo traerla. -->
+    <p class="subtitle">
+      Trae las actividades y las notas de una asignatura desde el <b>CMAD</b>. La tabla se lee en tu
+      dispositivo: el archivo no se sube a ningún servidor.
+    </p>
+
+    @if (cargando()) {
+      <p class="subtitle">Buscando tus asignaturas…</p>
+    } @else if (asignaturas().length === 0) {
+      <p class="notice">
+        No tienes asignaturas en curso en CundiApp. Importa tu Reporte de Horario y las del semestre aparecerán aquí.
+      </p>
+      <a class="button button--soft" routerLink="/cuenta/importar-horario" [state]="{ origen: '/calificaciones/mis-notas' }">Importar mi horario</a>
+    } @else {
+      <label class="field">
+        <span class="field__label">¿De qué asignatura?</span>
+        <select class="field__input" (change)="elegirAsignatura($event)">
+          @for (opcion of asignaturas(); track opcion.idMatricula) {
+            <option [value]="opcion.idMatricula" [selected]="opcion.idMatricula === idElegido()">{{ opcion.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <section class="card import__guia" aria-labelledby="titulo-guia">
+        <button class="import__guia-head" type="button" [attr.aria-expanded]="guiaAbierta()" aria-controls="pasos-guia" (click)="alternarGuia()">
+          <span id="titulo-guia" class="import__guia-titulo">¿Cómo consigo la tabla?</span>
+          <svg class="import__chevron" [class.import__chevron--open]="guiaAbierta()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+        </button>
+        @if (guiaAbierta()) {
+          <div id="pasos-guia">
+            <p class="import__advertencia">
+              En el CMAD entra a tu curso y abre <b>Valoraciones</b>: es la tabla con cada actividad, su
+              ponderación y tu nota. Después, de dos maneras:
+            </p>
+            <ol class="import__pasos">
+              <li class="import__paso"><b>Guardar la página</b> (en el computador): <b>Ctrl+S</b>, guárdala y elígela abajo.</li>
+              <li class="import__paso"><b>Copiar la tabla</b> (sirve en el celular): selecciónala, cópiala y pégala abajo.</li>
+            </ol>
+            <p class="import__advertencia">
+              La página guardada trae datos de tu sesión del CMAD y los comentarios de tus docentes; por eso se
+              lee aquí y no sale de tu dispositivo, y los comentarios se descartan.
+            </p>
+          </div>
+        }
+      </section>
+
+      @if (error(); as mensaje) {
+        <p class="alert" role="alert">{{ mensaje }}</p>
+      }
+
+      <label class="import__zona">
+        <input class="import__archivo" type="file" accept=".html,.htm,text/html" (change)="archivoElegido($event)" />
+        <span class="import__zona-icono" aria-hidden="true">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+            <path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3" />
+          </svg>
+        </span>
+        <span class="import__zona-texto">Toca aquí para elegir la página guardada</span>
+        <span class="import__zona-ayuda">Archivo .html del CMAD</span>
+      </label>
+
+      <p class="cmad__o">o pega la tabla</p>
+      <label class="field">
+        <span class="field__label">Tabla copiada</span>
+        <textarea
+          class="field__input cmad__texto"
+          rows="6"
+          placeholder="Pega aquí la tabla de Valoraciones"
+          [value]="textoPegado()"
+          (input)="escribirTexto($event)"
+        ></textarea>
+      </label>
+      <button class="button button--soft" type="button" [disabled]="textoPegado().trim() === ''" (click)="leerLoPegado()">
+        Leer lo pegado
+      </button>
+    }
+  }
+</main>
