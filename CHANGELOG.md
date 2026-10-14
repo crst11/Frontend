@@ -4,6 +4,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 
 ## [Sin publicar]
 
+### Agregado
+- Importar mis actividades y notas del CMAD (SCRUM-76), en `/calificaciones/importar-cmad`, con un enlace desde la estructura de cada asignatura. El CMAD no genera un reporte de actividades ni de notas, pero su tabla de *Valoraciones* se puede **guardar como página (`Ctrl+S`)** o **copiar y pegar**; las dos vías muestran lo detectado antes de guardar. **La tabla se lee en el navegador y el archivo nunca se sube**: la página guardada trae la llave de la sesión de Moodle y comentarios que nombran a otros estudiantes, así que solo se leen nombre, ponderación, nota y rango, y **la retroalimentación del docente no se toca**. Los cortes se arman con el prefijo del nombre (R1, R2, R3) como sugerencia: se puede quitar o renombrar actividades y corregir notas. Al guardar se manda el árbol y las notas por la API de siempre, y el servidor las valida; después se compara el acumulado que calcula el servidor con el «Total del curso» del CMAD y se avisa si no coinciden. Probado con una página real: 12 actividades en 3 cortes y 1.47 contra el 1.5 del CMAD. Guía en `docs/como-importar-del-cmad.md`. La lectura de una imagen con OCR queda para después, solo si el celular lo exige.
+
 ### Cambiado
 - *Mis notas* (SCRUM-86) solo ofrece las asignaturas del semestre actual; las de semestres anteriores siguen en *Mi historial*. Sin ninguna en curso, la pantalla manda a importar el horario (antes mandaba a importar el Registro Académico Extendido, que no trae las asignaturas del semestre que apenas empieza).
 
