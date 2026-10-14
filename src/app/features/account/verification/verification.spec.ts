@@ -26,6 +26,8 @@ describe('Verification', () => {
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(parametros) } } },
       ],
     });
+    // Verificar lleva a iniciar sesión, y esa ruta no existe en la prueba: sin esto el router rechaza la navegación.
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(Verification);
     fixture.detectChanges();
     return fixture;
