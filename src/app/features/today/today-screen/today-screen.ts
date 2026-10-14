@@ -140,7 +140,7 @@ export class TodayScreen {
 
   /** Tocar una clase abre las actividades de su asignatura si ya están, y si no, ofrece subirlas. */
   protected abrirAsignatura(clase: ClaseDelDia): void {
-    void this.router.navigate(['/calificaciones/mis-notas'], { queryParams: { matricula: clase.idMatricula } });
+    void this.router.navigate(['/calificaciones/mis-notas'], { queryParams: { matricula: clase.idMatricula }, state: { origen: '/inicio' } });
   }
 }
 
