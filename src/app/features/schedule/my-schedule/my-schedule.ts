@@ -239,6 +239,8 @@ export class MySchedule {
   }
 
   protected abrirFormulario(): void {
+    // El formulario está al final de la pantalla: se lleva a la vista para que no pase desapercibido.
+    setTimeout(() => document.querySelector('.horario__formulario')?.scrollIntoView({ block: 'start' }));
     const primera = this.asignaturas()[0];
     this.formulario.reset({
       idMatricula: primera?.idMatricula ?? 0,
