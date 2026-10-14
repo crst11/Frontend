@@ -21,6 +21,8 @@ import { HorarioRepository } from './data-access/horario.repository';
 import { HorarioHttpRepository } from './data-access/http/horario-http.repository';
 import { ImportacionRepository } from './data-access/importacion.repository';
 import { ImportacionHttpRepository } from './data-access/http/importacion-http.repository';
+import { AvanceRepository } from './data-access/avance.repository';
+import { AvanceHttpRepository } from './data-access/http/avance-http.repository';
 import { DiaRepository } from './data-access/dia.repository';
 import { DiaHttpRepository } from './data-access/http/dia-http.repository';
 import { ImportacionDeHorarioRepository } from './data-access/importacion-de-horario.repository';
@@ -41,6 +43,7 @@ export const appConfig: ApplicationConfig = {
     { provide: HistorialRepository, useClass: HistorialHttpRepository },
     { provide: ImportacionRepository, useClass: ImportacionHttpRepository },
     { provide: DiaRepository, useClass: DiaHttpRepository },
+    { provide: AvanceRepository, useClass: AvanceHttpRepository },
     { provide: ImportacionDeHorarioRepository, useClass: ImportacionDeHorarioHttpRepository },
     { provide: EvaluacionRepository, useClass: EvaluacionHttpRepository },
     { provide: HorarioRepository, useClass: HorarioHttpRepository },
