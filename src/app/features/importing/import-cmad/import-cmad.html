@@ -54,6 +54,11 @@
         </select>
       </label>
 
+      @if (vieneDeImagen()) {
+        <p class="notice" role="status">
+          Leímos la tabla de una imagen. Revisa cada nombre y cada nota: la lectura puede equivocarse con los números.
+        </p>
+      }
       @if (avisoDeCurso(); as aviso) {
         <p class="alert" role="alert">{{ aviso }}</p>
       }
@@ -204,16 +209,25 @@
         <p class="alert" role="alert">{{ mensaje }}</p>
       }
 
-      <label class="import__zona">
-        <input class="import__archivo" type="file" accept=".html,.htm,text/html" (change)="archivoElegido($event)" />
+      @if (leyendoImagen() !== null) {
+        <p class="notice" role="status">Leyendo la imagen… {{ leyendoImagen() }} %. La primera vez tarda un poco más.</p>
+      }
+      <label
+        class="import__zona"
+        [class.import__zona--ocupada]="leyendoImagen() !== null"
+        appSoltarArchivo
+        [desactivado]="leyendoImagen() !== null"
+        (archivoSoltado)="soltado($event)"
+      >
+        <input class="import__archivo" type="file" accept=".html,.htm,text/html,image/*" [disabled]="leyendoImagen() !== null" (change)="archivoElegido($event)" />
         <span class="import__zona-icono" aria-hidden="true">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
             <path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3" />
           </svg>
         </span>
-        <span class="import__zona-texto">Toca aquí para elegir la página guardada</span>
-        <span class="import__zona-ayuda">Archivo .html del CMAD</span>
+        <span class="import__zona-texto">Toca aquí o suelta un archivo</span>
+        <span class="import__zona-ayuda">La página guardada del CMAD (.html) o una foto o captura de la tabla</span>
       </label>
 
       <p class="cmad__o">o pega la tabla</p>

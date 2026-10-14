@@ -137,7 +137,13 @@
       </p>
     }
 
-    <label class="import__zona" [class.import__zona--ocupada]="analizando()">
+    <label
+      class="import__zona"
+      [class.import__zona--ocupada]="analizando()"
+      appSoltarArchivo
+      [desactivado]="analizando()"
+      (archivoSoltado)="soltado($event)"
+    >
       <input
         class="import__archivo"
         type="file"

@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
 import { ImportCmad } from './import-cmad';
+import { LectorDeImagen } from './lector-de-imagen';
 
 describe('ImportCmad', () => {
   const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn(), confirmar: vi.fn() };
@@ -260,6 +261,56 @@ describe('ImportCmad', () => {
       boton(html, 'Ver mis notas').click();
 
       expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], { queryParams: { matricula: 7 } });
+    });
+  });
+
+  describe('con una imagen soltada', () => {
+    const TEXTO = 'Tarea R1-A1-S1 ABOUT\t50.00 %\t4.0\t0–5\nTarea R1-A2-S2 BROCHURE\t50.00 %\t-\t0–5';
+
+    function soltar(html: HTMLElement, archivo: File): void {
+      const evento = new Event('drop', { cancelable: true, bubbles: true });
+      Object.defineProperty(evento, 'dataTransfer', { value: { files: [archivo] } });
+      html.querySelector('.import__zona')!.dispatchEvent(evento);
+    }
+
+    it('se lee con OCR en el navegador y avisa que se revise lo detectado', async () => {
+      const leer = vi.fn().mockResolvedValue(TEXTO);
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(leer).toHaveBeenCalled();
+      expect(html.textContent).toContain('Esto encontramos en el CMAD');
+      expect(html.textContent).toContain('Leímos la tabla de una imagen');
+    });
+
+    it('una nota a la que el OCR le perdió la coma («41») se corrige a 4.1 y se deja revisar', async () => {
+      const leer = vi.fn().mockResolvedValue('Tarea R1-A1-S1 ABOUT\t50.00 %\t41\t0–5\nTarea R1-A2-S2 BROCHURE\t50.00 %\t4.7\t0–5');
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const notas = Array.from(html.querySelectorAll<HTMLInputElement>('input[aria-label^="Nota de"]')).map((i) => i.value);
+      expect(notas).toEqual(['4.1', '4.7']);
+      expect(html.textContent).toContain('Leímos la tabla de una imagen');
+    });
+
+    it('si el OCR falla lo dice y no avanza', async () => {
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer: vi.fn().mockRejectedValue(new Error('sin red')) } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(html.querySelector('[role="alert"]')?.textContent).toContain('No pudimos leer la imagen');
+      expect(html.textContent).not.toContain('Esto encontramos en el CMAD');
     });
   });
 
