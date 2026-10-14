@@ -41,13 +41,14 @@ describe('ImportCmad', () => {
     registrarNota = vi.fn().mockImplementation(() => of({ nota: 4, acumulado: { puntos: 2.0, porcentajeEvaluado: 50, promedioDeLoEvaluado: 4, actividadesCalificadas: 1, actividadesTotales: 2 } })),
     guardar = vi.fn().mockReturnValue(of({})),
     misAsignaturas = vi.fn().mockReturnValue(of([INGLES, SISTEMAS])),
+    estructuraDe = vi.fn().mockReturnValue(of({ categorias: [] })),
   ) {
     TestBed.configureTestingModule({
       imports: [ImportCmad],
       providers: [
         provideRouter([]),
         { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(matricula ? { matricula } : {}) } } },
-        { provide: EvaluacionRepository, useValue: { misAsignaturas, guardar, registrarNota } },
+        { provide: EvaluacionRepository, useValue: { misAsignaturas, guardar, registrarNota, estructuraDe } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
@@ -211,6 +212,21 @@ describe('ImportCmad', () => {
       await subirPagina(fixture, html);
 
       expect(html.textContent).toContain('se reemplazan por estas');
+    });
+
+    it('si ya tenía actividades dice qué cambia: lo que se quita y lo nuevo', async () => {
+      const conEstructura = vi.fn().mockReturnValue(of([{ ...INGLES, tieneEstructura: true }, SISTEMAS]));
+      const estructuraDe = vi.fn().mockReturnValue(
+        of({ categorias: [{ consecutivo: 1, nombre: 'R1', porcentaje: 100, origen: 'estudiante', actividades: [{ consecutivo: 1, nombre: 'Actividad vieja', porcentaje: 100, nota: 3 }] }] }),
+      );
+      const { fixture, html } = crear('7', undefined, undefined, conEstructura, estructuraDe);
+
+      await subirPagina(fixture, html);
+
+      const cambio = html.querySelector('.import__comparacion')!;
+      expect(estructuraDe).toHaveBeenCalledWith(7);
+      expect(cambio.textContent).toContain('Se quita: Actividad vieja (tenía 3)');
+      expect(cambio.textContent).toContain('Nueva:');
     });
 
     it('un archivo que no es la tabla muestra el motivo y no avanza', async () => {

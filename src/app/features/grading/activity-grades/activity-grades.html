@@ -44,12 +44,24 @@
         </h2>
 
         @for (actividad of categoria.actividades; track actividad.consecutivo) {
-          <div class="notas__actividad">
-            <label class="field notas__campo">
-              <span class="field__label">
+          <div class="notas__actividad" [class.notas__actividad--editando]="editando() === clave(categoria.consecutivo, actividad.consecutivo)">
+            <div class="notas__encabezado">
+              <span class="notas__nombre">
                 {{ actividad.nombre }}
                 <span class="field__hint">· {{ actividad.porcentaje }} % del corte</span>
               </span>
+              @if (editando() !== clave(categoria.consecutivo, actividad.consecutivo)) {
+                <button
+                  class="button button--soft notas__editar"
+                  type="button"
+                  [attr.aria-label]="'Editar la nota de ' + actividad.nombre"
+                  (click)="editar(categoria.consecutivo, actividad.consecutivo)"
+                >
+                  Editar
+                </button>
+              }
+            </div>
+            @if (editando() === clave(categoria.consecutivo, actividad.consecutivo)) {
               <input
                 #campo
                 class="field__input"
@@ -61,17 +73,33 @@
                 [attr.aria-label]="'Nota de ' + actividad.nombre"
                 [value]="actividad.nota ?? ''"
                 [disabled]="guardando() === clave(categoria.consecutivo, actividad.consecutivo)"
-                (change)="confirmar(categoria.consecutivo, actividad.consecutivo, campo.value, campo)"
+                (keydown.enter)="guardar(categoria.consecutivo, actividad.consecutivo, campo.value, campo)"
+                (keydown.escape)="cancelar()"
               />
-            </label>
-            @if (actividad.nota !== null) {
-              <button
-                class="button button--outline notas__quitar"
-                type="button"
-                (click)="quitar(categoria.consecutivo, actividad.consecutivo)"
-              >
-                Quitar
-              </button>
+              <div class="notas__acciones">
+                <button
+                  class="button button--primary notas__guardar"
+                  type="button"
+                  [disabled]="guardando() === clave(categoria.consecutivo, actividad.consecutivo)"
+                  (click)="guardar(categoria.consecutivo, actividad.consecutivo, campo.value, campo)"
+                >
+                  Guardar
+                </button>
+                <button class="button button--outline notas__cancelar" type="button" (click)="cancelar()">Cancelar</button>
+                @if (actividad.nota !== null) {
+                  <button
+                    class="button button--outline notas__quitar"
+                    type="button"
+                    (click)="quitar(categoria.consecutivo, actividad.consecutivo)"
+                  >
+                    Quitar nota
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="notas__nota" [class.notas__nota--vacia]="actividad.nota === null">
+                {{ actividad.nota ?? 'Sin nota' }}
+              </p>
             }
           </div>
         } @empty {
@@ -79,5 +107,25 @@
         }
       </article>
     }
+
+    <section class="card notas__subida" aria-label="Lo que subiste">
+      <h2 class="notas__categoria-titulo">Lo que subiste</h2>
+      <p class="field__hint">
+        Para actualizar tus notas sube de nuevo la tabla del CMAD: antes de guardar te mostramos qué cambia.
+      </p>
+      <div class="notas__acciones">
+        <a
+          class="button button--soft notas__editar"
+          routerLink="/calificaciones/importar-cmad"
+          [queryParams]="{ matricula: estructura().asignatura.idMatricula }"
+          [state]="{ origen: '/calificaciones/mis-notas' }"
+        >
+          Subir de nuevo
+        </a>
+        <button class="button button--outline notas__editar" type="button" (click)="quitarLoSubido.emit()">
+          Quitar lo subido
+        </button>
+      </div>
+    </section>
   </section>
 }
