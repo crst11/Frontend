@@ -1,0 +1,183 @@
+:host {
+  display: block;
+}
+
+/* La barra se queda arriba al bajar: el menú y el avatar siempre están a un toque. */
+.shell__barra {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 440px;
+  min-height: 56px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.shell__boton {
+  flex: 0 0 auto;
+  margin-left: -8px;
+}
+
+.shell__titulo {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.shell__avatar {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shell__avatar--grande {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+  cursor: default;
+}
+
+.shell__fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(17, 24, 39, 0.45);
+}
+
+.shell__fondo--suave {
+  background: transparent;
+}
+
+/* El menú sale desde la izquierda; el panel del perfil cuelga bajo el avatar, a la derecha. */
+.shell__menu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(320px, 85vw);
+  padding: 20px 12px;
+  background: var(--color-surface);
+  box-shadow: 4px 0 24px rgba(17, 24, 39, 0.18);
+  overflow-y: auto;
+}
+
+.shell__menu-titulo {
+  margin: 0 12px 8px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary-strong);
+}
+
+.shell__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shell__enlace {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.shell__enlace:hover {
+  background: var(--color-primary-soft);
+}
+
+.shell__enlace--activo {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.shell__enlace--boton {
+  color: var(--color-danger);
+}
+
+.shell__cerrar {
+  margin-top: auto;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.shell__perfil {
+  position: fixed;
+  top: 60px;
+  right: 12px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(320px, calc(100vw - 24px));
+  padding: 16px 12px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 32px rgba(17, 24, 39, 0.18);
+}
+
+.shell__perfil-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 4px 8px;
+}
+
+.shell__perfil-datos {
+  min-width: 0;
+}
+
+.shell__perfil-nombre {
+  margin: 0;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.shell__perfil-correo {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}

@@ -30,29 +30,50 @@ export const routes: Routes = [
     loadComponent: () => import('./features/account/password-reset/password-reset').then((m) => m.PasswordReset),
   },
   {
-    path: 'inicio',
+    // Las pantallas de dentro de la app comparten el marco: menú, título y avatar (SCRUM-83).
+    path: '',
     canActivate: [sessionGuard],
-    loadComponent: () => import('./features/today/today-screen/today-screen').then((m) => m.TodayScreen),
-  },
-  {
-    path: 'cuenta/mi-cuenta',
-    canActivate: [sessionGuard],
-    loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
-  },
-  {
-    path: 'cuenta/mis-sesiones',
-    canActivate: [sessionGuard],
-    loadComponent: () => import('./features/account/my-sessions/my-sessions').then((m) => m.MySessions),
-  },
-  {
-    path: 'cuenta/plan-de-estudios',
-    canActivate: [sessionGuard],
-    loadComponent: () => import('./features/account/study-plan/study-plan').then((m) => m.StudyPlan),
-  },
-  {
-    path: 'cuenta/historial',
-    canActivate: [sessionGuard],
-    loadComponent: () => import('./features/account/academic-record/academic-record').then((m) => m.AcademicRecord),
+    loadComponent: () => import('./features/shell/app-shell/app-shell').then((m) => m.AppShell),
+    children: [
+      {
+        path: 'cuenta/mi-cuenta',
+        data: { titulo: 'Mi cuenta' },
+      loadComponent: () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
+      },
+      {
+        path: 'cuenta/mis-sesiones',
+        data: { titulo: 'Mis sesiones' },
+      loadComponent: () => import('./features/account/my-sessions/my-sessions').then((m) => m.MySessions),
+      },
+      {
+        path: 'cuenta/plan-de-estudios',
+        data: { titulo: 'Mi plan de estudios' },
+      loadComponent: () => import('./features/account/study-plan/study-plan').then((m) => m.StudyPlan),
+      },
+      {
+        path: 'cuenta/historial',
+        data: { titulo: 'Mi historial y promedios' },
+      loadComponent: () => import('./features/account/academic-record/academic-record').then((m) => m.AcademicRecord),
+      },
+      {
+        path: 'calificaciones/mis-notas',
+        data: { titulo: 'Mis notas' },
+      loadComponent: () =>
+        import('./features/grading/evaluation-structure/evaluation-structure').then(
+          (m) => m.EvaluationStructure,
+        ),
+      },
+      {
+        path: 'horario',
+        data: { titulo: 'Mi horario' },
+      loadComponent: () => import('./features/schedule/my-schedule/my-schedule').then((m) => m.MySchedule),
+      },
+      {
+        path: 'inicio',
+        data: { titulo: 'Hoy' },
+      loadComponent: () => import('./features/today/today-screen/today-screen').then((m) => m.TodayScreen),
+      },
+    ],
   },
   {
     path: 'cuenta/importar-reporte',
@@ -64,19 +85,6 @@ export const routes: Routes = [
     canActivate: [sessionGuard],
     loadComponent: () =>
       import('./features/importing/import-schedule/import-schedule').then((m) => m.ImportSchedule),
-  },
-  {
-    path: 'calificaciones/mis-notas',
-    canActivate: [sessionGuard],
-    loadComponent: () =>
-      import('./features/grading/evaluation-structure/evaluation-structure').then(
-        (m) => m.EvaluationStructure,
-      ),
-  },
-  {
-    path: 'horario',
-    canActivate: [sessionGuard],
-    loadComponent: () => import('./features/schedule/my-schedule/my-schedule').then((m) => m.MySchedule),
   },
   {
     path: '',
