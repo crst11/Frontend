@@ -76,7 +76,13 @@
 
       <!-- Organizar: el servidor filtra y ordena; aquí solo se elige. Las opciones salen del horario completo. -->
       @if ((horario()?.asignaturas?.length ?? 0) > 0) {
-        <section class="card horario__filtros" aria-label="Organizar mi horario" [attr.aria-busy]="actualizando()">
+        <details class="card horario__filtros" [open]="hayFiltro()" [attr.aria-busy]="actualizando()">
+          <summary class="horario__resumen">
+            Organizar mi horario
+            @if (hayFiltro()) {
+              <span class="badge badge--ok">Con filtros</span>
+            }
+          </summary>
           <div class="field-row">
             <label class="field">
               <span class="field__label">Asignatura</span>
@@ -113,9 +119,62 @@
             </button>
           </div>
           <p class="field__hint">Se guarda la vista, la sede y el orden. La asignatura no: cambia cada período.</p>
-        </section>
+        </details>
       }
 
+      @if (sinAsignaturas() && !agregando()) {
+        <p class="notice">
+          Para armar tu horario necesitas tener asignaturas en curso. Importa tu Reporte de Horario y tus
+          asignaturas y sus clases aparecerán aquí.
+        </p>
+        <a class="button button--soft" routerLink="/cuenta/importar-horario" [state]="{ origen: '/horario' }">Importar mi horario</a>
+      }
+
+      @if (vista() === 'dia') {
+        <div class="chips horario__dias" role="group" aria-label="Elige el día">
+          @for (dia of dias; track dia.valor) {
+            <button
+              class="chip"
+              type="button"
+              [class.chip--active]="diaElegido() === dia.valor"
+              [attr.aria-pressed]="diaElegido() === dia.valor"
+              [attr.aria-label]="dia.texto"
+              (click)="elegirDia(dia.valor)"
+            >
+              {{ dia.corto }}
+            </button>
+          }
+        </div>
+
+        <h2 class="horario__titulo-dia">{{ textoDelDia(diaElegido()) }}</h2>
+        @for (clase of clasesDelDia(); track clase.idMatricula + '-' + clase.consecutivo) {
+          <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
+        } @empty {
+          <p class="notice">
+            @if (hayFiltro() && horario()?.totalDeClases === 0) {
+              Ninguna clase coincide con tus filtros. Quítalos para ver todo tu horario.
+            } @else {
+              No tienes clases este día.
+              @if (horario()?.totalDeClases === 0) {
+                Cuando agregues una, la verás aquí.
+              }
+            }
+          </p>
+        }
+      } @else {
+        @for (dia of dias; track dia.valor) {
+          <section class="horario__dia-semana" [attr.aria-label]="dia.texto">
+            <h2 class="horario__titulo-dia">{{ dia.texto }}</h2>
+            @for (clase of clasesDe(dia.valor); track clase.idMatricula + '-' + clase.consecutivo) {
+              <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
+            } @empty {
+              <p class="field__hint">Sin clases.</p>
+            }
+          </section>
+        }
+      }
+
+      <!-- Agregar una clase a mano va al final: lo que se consulta a diario son las clases. -->
       @if (agregando()) {
         <form class="card horario__formulario" [formGroup]="formulario" (ngSubmit)="agregar()" aria-label="Agregar una clase">
           <h2 class="horario__titulo-formulario">Agregar una clase</h2>
@@ -186,61 +245,11 @@
             <button class="button button--outline" type="button" (click)="cerrarFormulario()">Cancelar</button>
           </div>
         </form>
-      } @else if (sinAsignaturas()) {
-        <p class="notice">
-          Para armar tu horario necesitas tener asignaturas en curso. Importa tu Reporte de Horario y tus
-          asignaturas y sus clases aparecerán aquí.
-        </p>
-        <a class="button button--soft" routerLink="/cuenta/importar-horario" [state]="{ origen: '/horario' }">Importar mi horario</a>
-      } @else {
+      } @else if (!sinAsignaturas()) {
         <button class="button button--soft" type="button" (click)="abrirFormulario()">Agregar una clase</button>
         <a class="horario__importar" routerLink="/cuenta/importar-horario" [state]="{ origen: '/horario' }">
           Importar mi horario desde el reporte
         </a>
-      }
-
-      @if (vista() === 'dia') {
-        <div class="chips horario__dias" role="group" aria-label="Elige el día">
-          @for (dia of dias; track dia.valor) {
-            <button
-              class="chip"
-              type="button"
-              [class.chip--active]="diaElegido() === dia.valor"
-              [attr.aria-pressed]="diaElegido() === dia.valor"
-              [attr.aria-label]="dia.texto"
-              (click)="elegirDia(dia.valor)"
-            >
-              {{ dia.corto }}
-            </button>
-          }
-        </div>
-
-        <h2 class="horario__titulo-dia">{{ textoDelDia(diaElegido()) }}</h2>
-        @for (clase of clasesDelDia(); track clase.idMatricula + '-' + clase.consecutivo) {
-          <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
-        } @empty {
-          <p class="notice">
-            @if (hayFiltro() && horario()?.totalDeClases === 0) {
-              Ninguna clase coincide con tus filtros. Quítalos para ver todo tu horario.
-            } @else {
-              No tienes clases este día.
-              @if (horario()?.totalDeClases === 0) {
-                Cuando agregues una, la verás aquí.
-              }
-            }
-          </p>
-        }
-      } @else {
-        @for (dia of dias; track dia.valor) {
-          <section class="horario__dia-semana" [attr.aria-label]="dia.texto">
-            <h2 class="horario__titulo-dia">{{ dia.texto }}</h2>
-            @for (clase of clasesDe(dia.valor); track clase.idMatricula + '-' + clase.consecutivo) {
-              <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
-            } @empty {
-              <p class="field__hint">Sin clases.</p>
-            }
-          </section>
-        }
       }
     }
   </section>
