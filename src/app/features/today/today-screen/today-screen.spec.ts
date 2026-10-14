@@ -3,6 +3,7 @@ import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
+import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 import { TodayScreen } from './today-screen';
 
@@ -63,12 +64,15 @@ describe('TodayScreen', () => {
     vi.useRealTimers();
   });
 
-  function crear(miDia = vi.fn().mockReturnValue(of(MARTES))) {
+  const AVANCE_A_MEDIAS: AvanceDeInformacion = { porcentaje: 50, hechos: 2, total: 4, pasos: [] };
+
+  function crear(miDia = vi.fn().mockReturnValue(of(MARTES)), avance: AvanceDeInformacion = AVANCE_A_MEDIAS) {
     TestBed.configureTestingModule({
       imports: [TodayScreen],
       providers: [
         provideRouter([]),
         { provide: DiaRepository, useValue: { miDia } },
+        { provide: AvanceRepository, useValue: { miAvance: vi.fn().mockReturnValue(of(avance)) } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
@@ -157,6 +161,21 @@ describe('TodayScreen', () => {
     const clases = html.querySelectorAll('.hoy__clases:not(.hoy__clases--siguiente) .hoy__clase');
     expect(clases[0].querySelector('.hoy__actividades')?.textContent).toContain('12 actividades');
     expect(clases[1].querySelector('.hoy__actividades')?.textContent).toContain('Aún no has subido sus actividades');
+  });
+
+  it('avisa cuánta información falta y lleva a subirla', () => {
+    const { html } = crear();
+
+    const tarjeta = html.querySelector<HTMLAnchorElement>('.hoy__avance')!;
+    expect(tarjeta.textContent).toContain('Tu información está al 50 %');
+    expect(tarjeta.getAttribute('href')).toBe('/importar');
+    expect(html.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('50');
+  });
+
+  it('con toda la información subida no muestra el aviso', () => {
+    const { html } = crear(undefined, { porcentaje: 100, hechos: 4, total: 4, pasos: [] });
+
+    expect(html.querySelector('.hoy__avance')).toBeNull();
   });
 
   it('tocar una clase abre las actividades de esa asignatura', () => {
