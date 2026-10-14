@@ -1,4 +1,5 @@
 import { Location } from '@angular/common';
+import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
@@ -36,7 +37,7 @@ interface PasoDeLaGuia {
  */
 @Component({
   selector: 'app-import-schedule',
-  imports: [RouterLink],
+  imports: [RouterLink, SoltarArchivo],
   templateUrl: './import-schedule.html',
   styleUrls: ['../import-report/import-report.css', './import-schedule.css'],
 })
@@ -86,6 +87,15 @@ export class ImportSchedule {
     this.analizar(archivo);
     // Se limpia para que elegir el mismo archivo otra vez vuelva a disparar el evento.
     entrada.value = '';
+  }
+
+  /** Soltar un archivo sobre la zona: es lo mismo que elegirlo, pero solo se aceptan PDF. */
+  protected soltado(archivo: File): void {
+    if (archivo.type !== 'application/pdf' && !/\.pdf$/i.test(archivo.name)) {
+      this.error.set('Ese archivo no es un PDF. Suelta el reporte tal como lo descargaste.');
+      return;
+    }
+    this.analizar(archivo);
   }
 
   protected analizar(archivo: File): void {
