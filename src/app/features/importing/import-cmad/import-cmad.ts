@@ -10,7 +10,9 @@ import {
   CategoriaPorGuardar,
   EvaluacionRepository,
 } from '../../../data-access/evaluacion.repository';
+import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { origenDeLaImportacion } from '../origen-de-la-importacion';
+import { LectorDeImagen } from './lector-de-imagen';
 import {
   TablaDelCmad,
   TablaDelCmadNoLegible,
@@ -59,13 +61,14 @@ const TOLERANCIA_DEL_TOTAL = 0.06;
  */
 @Component({
   selector: 'app-import-cmad',
-  imports: [RouterLink],
+  imports: [RouterLink, SoltarArchivo],
   templateUrl: './import-cmad.html',
   styleUrls: ['../import-report/import-report.css', './import-cmad.css'],
 })
 export class ImportCmad {
   private readonly repositorio = inject(EvaluacionRepository);
   private readonly notificador = inject(NotifierService);
+  private readonly lectorDeImagen = inject(LectorDeImagen);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
 
@@ -83,6 +86,10 @@ export class ImportCmad {
   protected readonly guardando = signal(false);
   protected readonly resultado = signal<Resultado | null>(null);
   protected readonly guiaAbierta = signal(false);
+  /** Avance (0 a 100) mientras se lee una imagen con OCR; nulo si no se está leyendo ninguna. */
+  protected readonly leyendoImagen = signal<number | null>(null);
+  /** Lo detectado salió de una imagen: el OCR puede equivocarse, así que se avisa que se revise. */
+  protected readonly vieneDeImagen = signal(false);
   /** Lo que la asignatura ya tiene guardado, para decir qué cambia al subir de nuevo. */
   private readonly guardadas = signal<{ nombre: string; nota: number | null }[]>([]);
 
@@ -144,17 +151,50 @@ export class ImportCmad {
     this.textoPegado.set((evento.target as HTMLTextAreaElement).value);
   }
 
-  /** La página guardada se lee en el navegador con FileReader: no se manda a ningún servidor. */
+  /** Elegir un archivo con el selector. */
   protected async archivoElegido(evento: Event): Promise<void> {
     const entrada = evento.target as HTMLInputElement;
     const archivo = entrada.files?.[0];
-    if (!archivo) {
+    // Se limpia para que elegir el mismo archivo otra vez vuelva a disparar el evento.
+    entrada.value = '';
+    if (archivo) {
+      await this.procesar(archivo);
+    }
+  }
+
+  /** Soltar un archivo sobre la zona: es lo mismo que elegirlo. */
+  protected soltado(archivo: File): Promise<void> {
+    return this.procesar(archivo);
+  }
+
+  /** Una imagen se lee con OCR y lo demás es la página guardada; todo en el navegador, nada se sube. */
+  private async procesar(archivo: File): Promise<void> {
+    if (this.leyendoImagen() !== null) {
+      return;
+    }
+    if (archivo.type.startsWith('image/')) {
+      await this.leerImagen(archivo);
       return;
     }
     const contenido = await archivo.text();
-    // Se limpia para que elegir el mismo archivo otra vez vuelva a disparar el evento.
-    entrada.value = '';
+    this.vieneDeImagen.set(false);
     this.leer(() => leerHtmlDelCmad(contenido), contenido);
+  }
+
+  private async leerImagen(imagen: File): Promise<void> {
+    this.error.set(null);
+    this.leyendoImagen.set(0);
+    try {
+      const texto = await this.lectorDeImagen.leer(imagen, (avance) => this.leyendoImagen.set(Math.round(avance * 100)));
+      this.leer(() => leerTextoDelCmad(texto), texto);
+      this.vieneDeImagen.set(this.tabla() !== null);
+      // El OCR suele perder la coma decimal: «41» no es una nota válida y casi seguro era «4,1».
+      this.filas.update((filas) => filas.map((f) => ({ ...f, nota: f.nota.replace(/^([0-5])(\d)$/, '$1.$2') })));
+    } catch {
+      this.error.set('No pudimos leer la imagen. Prueba con una captura más nítida o pega la tabla.');
+    } finally {
+      this.leyendoImagen.set(null);
+    }
   }
 
   protected leerLoPegado(): void {
@@ -217,6 +257,7 @@ export class ImportCmad {
     this.filas.set([]);
     this.error.set(null);
     this.avisoDeCurso.set(null);
+    this.vieneDeImagen.set(false);
     this.guardadas.set([]);
     this.resultado.set(null);
   }
