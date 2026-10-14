@@ -81,6 +81,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/importing/import-report/import-report').then((m) => m.ImportReport),
   },
   {
+    path: 'calificaciones/importar-cmad',
+    canActivate: [sessionGuard],
+    loadComponent: () => import('./features/importing/import-cmad/import-cmad').then((m) => m.ImportCmad),
+  },
+  {
     path: 'cuenta/importar-horario',
     canActivate: [sessionGuard],
     loadComponent: () =>
