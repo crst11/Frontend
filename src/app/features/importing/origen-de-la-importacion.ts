@@ -16,6 +16,12 @@ export interface OrigenDeLaImportacion {
   texto: string;
 }
 
+/** La pantalla desde la que se llegó solo si venía en el estado; nulo si se entró directo. */
+export function origenGuardado(ubicacion: Location): OrigenDeLaImportacion | null {
+  const origen = (ubicacion.getState() as { origen?: unknown } | null)?.origen;
+  return typeof origen === 'string' && origen in ORIGENES ? { ruta: origen, texto: ORIGENES[origen] } : null;
+}
+
 /**
  * La pantalla desde la que se llegó, que viaja en el estado del historial del navegador (sobrevive a
  * recargar). Solo se aceptan las pantallas conocidas: nada que venga de fuera decide a dónde se vuelve.

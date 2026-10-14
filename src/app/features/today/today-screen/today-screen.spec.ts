@@ -164,7 +164,10 @@ describe('TodayScreen', () => {
 
     html.querySelectorAll<HTMLButtonElement>('.hoy__clase')[0].click();
 
-    expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], { queryParams: { matricula: 7 } });
+    expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], {
+      queryParams: { matricula: 7 },
+      state: { origen: '/inicio' },
+    });
   });
 
   it('se actualiza solo cada minuto, que es lo que cambia la clase que sigue y el día a la medianoche', () => {
