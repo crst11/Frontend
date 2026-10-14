@@ -30,6 +30,12 @@ export const routes: Routes = [
     loadComponent: () => import('./features/account/password-reset/password-reset').then((m) => m.PasswordReset),
   },
   {
+    // La raiz va antes que el marco: si no, el marco (path vacio) la captura y queda en blanco.
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./features/entry/welcome/welcome').then((m) => m.Welcome),
+  },
+  {
     // Las pantallas de dentro de la app comparten el marco: menú, título y avatar (SCRUM-83).
     path: '',
     canActivate: [sessionGuard],
@@ -95,11 +101,6 @@ export const routes: Routes = [
     canActivate: [sessionGuard],
     loadComponent: () =>
       import('./features/importing/import-schedule/import-schedule').then((m) => m.ImportSchedule),
-  },
-  {
-    path: '',
-    pathMatch: 'full',
-    loadComponent: () => import('./features/entry/welcome/welcome').then((m) => m.Welcome),
   },
   { path: '**', redirectTo: '' },
 ];
