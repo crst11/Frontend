@@ -39,6 +39,7 @@ export class AppShell {
     { ruta: '/calificaciones/mis-notas', texto: 'Mis notas' },
     { ruta: '/cuenta/historial', texto: 'Mi historial y promedios' },
     { ruta: '/cuenta/plan-de-estudios', texto: 'Mi plan de estudios' },
+    { ruta: '/importar', texto: 'Importar mis archivos' },
   ];
 
   protected readonly menuAbierto = signal(false);

@@ -88,7 +88,14 @@ describe('AppShell', () => {
       arnes.detectChanges();
 
       const enlaces = Array.from(menu(html)!.querySelectorAll('a')).map((a) => a.textContent?.trim());
-      expect(enlaces).toEqual(['Hoy', 'Mi horario', 'Mis notas', 'Mi historial y promedios', 'Mi plan de estudios']);
+      expect(enlaces).toEqual([
+        'Hoy',
+        'Mi horario',
+        'Mis notas',
+        'Mi historial y promedios',
+        'Mi plan de estudios',
+        'Importar mis archivos',
+      ]);
     });
 
     it('marca la sección en la que estás', async () => {
