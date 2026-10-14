@@ -7,6 +7,25 @@
   } @else if (dia(); as hoy) {
     <h1 class="hoy__fecha">{{ fechaLarga(hoy.fecha, hoy.dia) }}</h1>
 
+    @if (avance(); as progreso) {
+      @if (progreso.porcentaje < 100) {
+        <a class="card hoy__avance" routerLink="/importar" [state]="{ origen: '/inicio' }">
+          <span class="hoy__avance-titulo">Tu información está al {{ progreso.porcentaje }} %</span>
+          <span
+            class="hoy__avance-barra"
+            role="progressbar"
+            aria-label="Avance de tu información"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="progreso.porcentaje"
+          >
+            <span class="hoy__avance-relleno" [style.width.%]="progreso.porcentaje"></span>
+          </span>
+          <span class="hoy__avance-ayuda">Sube lo que falta y aquí verás tus clases, actividades y notas.</span>
+        </a>
+      }
+    }
+
     @if (sinHorario()) {
       <section class="card hoy__vacio" aria-label="Todavía no hay información">
         <h2 class="hoy__titulo">Aquí se verá tu información después de subirla</h2>

@@ -4,6 +4,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
+import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 
 /** Cada cuánto se vuelve a preguntar: es lo que mantiene la próxima clase y el cambio de día al día. */
@@ -37,11 +38,14 @@ const DIAS: Record<string, string> = {
 })
 export class TodayScreen {
   private readonly repositorio = inject(DiaRepository);
+  private readonly avances = inject(AvanceRepository);
   private readonly notificador = inject(NotifierService);
   private readonly router = inject(Router);
   private readonly documento = inject(DOCUMENT);
 
   protected readonly dia = signal<MiDia | null>(null);
+  /** Cuánta información lleva subida; es una ayuda, así que si no llega la pantalla sigue sin ella. */
+  protected readonly avance = signal<AvanceDeInformacion | null>(null);
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
 
@@ -53,6 +57,7 @@ export class TodayScreen {
 
   constructor() {
     this.cargar();
+    this.avances.miAvance().subscribe({ next: (avance) => this.avance.set(avance), error: () => undefined });
     const intervalo = setInterval(() => this.cargar(), CADA_CUANTO_SE_ACTUALIZA_EN_MS);
     const alVolver = () => {
       if (this.documento.visibilityState === 'visible') {

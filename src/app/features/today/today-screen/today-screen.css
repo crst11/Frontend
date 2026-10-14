@@ -134,3 +134,37 @@
 .hoy__atajos .button {
   flex: 1;
 }
+
+.hoy__avance {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hoy__avance-titulo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.hoy__avance-barra {
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+.hoy__avance-relleno {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+.hoy__avance-ayuda {
+  font-size: 14px;
+  color: var(--color-muted);
+}
