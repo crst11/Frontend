@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { SessionService } from '../../../core/session/session.service';
 import { EstudianteRepository, DispositivoConSesion } from '../../../data-access/estudiante.repository';
@@ -18,7 +18,6 @@ interface Dispositivo {
  */
 @Component({
   selector: 'app-my-sessions',
-  imports: [RouterLink],
   templateUrl: './my-sessions.html',
   styleUrl: './my-sessions.css',
 })

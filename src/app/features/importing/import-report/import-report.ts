@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { Location } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
@@ -27,7 +28,7 @@ interface PasoDeLaGuia {
  */
 @Component({
   selector: 'app-import-report',
-  imports: [RouterLink],
+  imports: [RouterLink, SoltarArchivo],
   templateUrl: './import-report.html',
   styleUrl: './import-report.css',
 })
@@ -134,6 +135,15 @@ export class ImportReport {
     this.analizar(archivo);
     // Se limpia para que elegir el mismo archivo otra vez vuelva a disparar el evento.
     entrada.value = '';
+  }
+
+  /** Soltar un archivo sobre la zona: es lo mismo que elegirlo, pero solo se aceptan PDF. */
+  protected soltado(archivo: File): void {
+    if (archivo.type !== 'application/pdf' && !/\.pdf$/i.test(archivo.name)) {
+      this.error.set('Ese archivo no es un PDF. Suelta el reporte tal como lo descargaste.');
+      return;
+    }
+    this.analizar(archivo);
   }
 
   protected analizar(archivo: File): void {
