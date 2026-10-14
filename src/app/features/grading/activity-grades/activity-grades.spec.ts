@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
@@ -72,6 +73,8 @@ describe('ActivityGrades', () => {
 
   beforeEach(() => notificador.problema.mockReset().mockResolvedValue(undefined));
 
+  let ultimo: ComponentFixture<Anfitrion>;
+
   function crear(
     estructura: EstructuraDeEvaluacion = ESTRUCTURA,
     registrarNota = vi.fn(),
@@ -80,23 +83,31 @@ describe('ActivityGrades', () => {
     TestBed.configureTestingModule({
       imports: [Anfitrion],
       providers: [
+        provideRouter([]),
         { provide: EvaluacionRepository, useValue: { registrarNota, quitarNota } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
     const fixture = TestBed.createComponent(Anfitrion);
+    ultimo = fixture;
     fixture.componentInstance.estructura.set(estructura);
     fixture.detectChanges();
     return { fixture, anfitrion: fixture.componentInstance, html: fixture.nativeElement as HTMLElement, registrarNota, quitarNota };
   }
 
+  /** El campo de una actividad: las notas se ven de solo lectura, así que primero se toca Editar. */
   function campo(html: HTMLElement, nombre: string): HTMLInputElement {
-    return html.querySelector<HTMLInputElement>(`input[aria-label="Nota de ${nombre}"]`)!;
+    const buscar = () => html.querySelector<HTMLInputElement>(`input[aria-label="Nota de ${nombre}"]`);
+    if (!buscar()) {
+      html.querySelector<HTMLButtonElement>(`button[aria-label="Editar la nota de ${nombre}"]`)?.click();
+      ultimo.detectChanges();
+    }
+    return buscar()!;
   }
 
   function confirmarCampo(entrada: HTMLInputElement, valor: string): void {
     entrada.value = valor;
-    entrada.dispatchEvent(new Event('change'));
+    entrada.closest('.notas__actividad')!.querySelector<HTMLButtonElement>('.notas__guardar')!.click();
   }
 
   it('muestra cada actividad con su campo de nota y lo que lleva acumulado', () => {
@@ -236,7 +247,7 @@ describe('ActivityGrades', () => {
     expect(creado.anfitrion.cambios[0].categorias[0].actividades[0].estadoEntrega).toBe('no_entregada');
   });
 
-  it('el botón Quitar solo aparece en las actividades que tienen nota', () => {
+  it('Quitar nota solo aparece al editar una actividad que tiene nota', () => {
     const conNota: EstructuraDeEvaluacion = {
       ...ESTRUCTURA,
       categorias: ESTRUCTURA.categorias.map((c, i) =>
@@ -245,7 +256,18 @@ describe('ActivityGrades', () => {
     };
     const { html } = crear(conNota);
 
+    expect(html.querySelectorAll('.notas__quitar')).toHaveLength(0);
+    campo(html, 'Parcial');
     expect(html.querySelectorAll('.notas__quitar')).toHaveLength(1);
+  });
+
+  it('ofrece subir de nuevo, que lleva al CMAD con la asignatura, y quitar lo subido', () => {
+    const { html } = crear();
+
+    const subir = html.querySelector<HTMLAnchorElement>('.notas__subida a')!;
+    expect(subir.textContent).toContain('Subir de nuevo');
+    expect(subir.getAttribute('href')).toBe('/calificaciones/importar-cmad?matricula=7');
+    expect(html.querySelector('.notas__subida button')?.textContent).toContain('Quitar lo subido');
   });
 
   it('si la pantalla le pasa otra estructura, el panel se vuelve a armar con ella', () => {

@@ -15,6 +15,13 @@ import {
 import { origenGuardado } from '../../importing/origen-de-la-importacion';
 import { ActivityGrades, NotasCambiadas } from '../activity-grades/activity-grades';
 
+/** Los cortes con los que arranca una asignatura, sin actividades: lo que queda al quitar lo subido. */
+const CORTES_DE_LA_PLANTILLA: CategoriaPorGuardar[] = [
+  { consecutivo: 1, nombre: 'Primer corte', porcentaje: 30, origen: 'plantilla', actividades: [] },
+  { consecutivo: 2, nombre: 'Segundo corte', porcentaje: 30, origen: 'plantilla', actividades: [] },
+  { consecutivo: 3, nombre: 'Tercer corte', porcentaje: 40, origen: 'plantilla', actividades: [] },
+];
+
 /**
  * Una actividad mientras se la edita. El porcentaje admite nulo porque un campo recién agregado
  * está vacío, y mostrar un 0 ahí haría creer que el estudiante ya puso un peso.
@@ -181,6 +188,26 @@ export class EvaluationStructure {
 
   private volverAlOrigen(): boolean {
     return !!origenGuardado(this.ubicacion) && Number(this.ruta.snapshot.queryParamMap.get('matricula')) > 0;
+  }
+
+  /** Deja la asignatura como al principio: los cortes de la plantilla, sin actividades ni notas. */
+  protected async quitarLoSubido(): Promise<void> {
+    const asignatura = this.seleccionada();
+    if (!asignatura) {
+      return;
+    }
+    const confirmado = await this.notificador.confirmar(
+      '¿Quitar lo que subiste?',
+      'Se borran las actividades y las notas de esta materia y quedan los cortes de la plantilla (30 / 30 / 40). Puedes volver a subirlas cuando quieras.',
+      'Sí, quitarlo',
+    );
+    if (!confirmado) {
+      return;
+    }
+    this.repositorio.guardar(asignatura.idMatricula, CORTES_DE_LA_PLANTILLA).subscribe({
+      next: () => this.elegir(asignatura),
+      error: (err: HttpErrorResponse) => this.mostrar(err),
+    });
   }
 
   protected volverALaLista(): void {
