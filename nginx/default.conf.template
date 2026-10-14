@@ -10,6 +10,10 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Sin la version de nginx en la cabecera Server ni en las paginas de error: publicarla es darle a
+    # quien busque un objetivo la lista exacta de vulnerabilidades conocidas de esta version.
+    server_tokens off;
+
     gzip on;
     gzip_types text/css application/javascript application/json image/svg+xml;
     gzip_min_length 1024;

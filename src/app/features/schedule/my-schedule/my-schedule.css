@@ -166,3 +166,42 @@
   color: var(--color-muted);
   font-weight: 500;
 }
+
+/* Los filtros arrancan plegados: lo primero que se ve son las clases. */
+.horario__resumen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  font-weight: 600;
+  color: var(--color-ink);
+  cursor: pointer;
+  list-style: none;
+}
+
+.horario__resumen::-webkit-details-marker {
+  display: none;
+}
+
+/* La flechita avisa que se despliega, y gira cuando está abierto. */
+.horario__resumen::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin: 0 4px 4px auto;
+  border: solid var(--color-muted);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.horario__filtros[open] > .horario__resumen::after {
+  margin-bottom: 0;
+  margin-top: 4px;
+  transform: rotate(-135deg);
+}
+
+.horario__filtros[open] > .horario__resumen {
+  margin-bottom: 12px;
+}
