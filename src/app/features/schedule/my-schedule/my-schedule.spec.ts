@@ -86,19 +86,20 @@ describe('MySchedule', () => {
     quitar = vi.fn().mockReturnValue(of(undefined)),
     miPreferencia = vi.fn().mockReturnValue(of(PREDETERMINADA)),
     guardarPreferencia = vi.fn().mockImplementation((p: PreferenciaDeHorario) => of(p)),
+    estructuraDe = vi.fn().mockReturnValue(of({ categorias: [] })),
   ) {
     TestBed.configureTestingModule({
       imports: [MySchedule],
       providers: [
         provideRouter([]),
         { provide: HorarioRepository, useValue: { miHorario, agregar, quitar, miPreferencia, guardarPreferencia } },
-        { provide: EvaluacionRepository, useValue: { misAsignaturas: vi.fn().mockReturnValue(of(asignaturas)) } },
+        { provide: EvaluacionRepository, useValue: { misAsignaturas: vi.fn().mockReturnValue(of(asignaturas)), estructuraDe } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
     const fixture = TestBed.createComponent(MySchedule);
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement, miHorario, agregar, quitar, miPreferencia, guardarPreferencia };
+    return { fixture, html: fixture.nativeElement as HTMLElement, miHorario, agregar, quitar, miPreferencia, guardarPreferencia, estructuraDe };
   }
 
   function boton(html: HTMLElement, texto: string): HTMLButtonElement {
@@ -149,6 +150,57 @@ describe('MySchedule', () => {
     const tarde = html.querySelectorAll('.horario__clase')[1];
     expect(tarde.textContent).toContain('Todavía sin salón');
     expect(tarde.textContent).not.toContain('Docente');
+  });
+
+  it('una clase se despliega hacia abajo con sus actividades y notas, y se vuelve a recoger', () => {
+    const estructuraDe = vi.fn().mockReturnValue(
+      of({
+        categorias: [
+          {
+            consecutivo: 1,
+            nombre: 'R1',
+            porcentaje: 100,
+            origen: 'estudiante',
+            actividades: [
+              { consecutivo: 1, nombre: 'Taller 1', porcentaje: 50, nota: 4.1 },
+              { consecutivo: 2, nombre: 'Taller 2', porcentaje: 50, nota: null },
+            ],
+          },
+        ],
+      }),
+    );
+    const { fixture, html } = crear(undefined, undefined, undefined, undefined, undefined, undefined, estructuraDe);
+    chipDelDia(html, 'Lunes').click();
+    fixture.detectChanges();
+
+    boton(html, 'Ver actividades y notas').click();
+    fixture.detectChanges();
+
+    expect(estructuraDe).toHaveBeenCalledWith(7);
+    const panel = html.querySelector('.horario__notas')!;
+    expect(panel.textContent).toContain('R1 · 100 %');
+    expect(panel.textContent).toContain('Taller 1');
+    expect(panel.textContent).toContain('4.1');
+    expect(panel.textContent).toContain('Sin nota');
+    expect(boton(html, 'Ocultar actividades y notas').getAttribute('aria-expanded')).toBe('true');
+
+    boton(html, 'Ocultar actividades y notas').click();
+    fixture.detectChanges();
+
+    expect(html.querySelector('.horario__notas')).toBeNull();
+  });
+
+  it('una clase sin actividades subidas ofrece subirlas, de vuelta aquí', () => {
+    const { fixture, html } = crear();
+    chipDelDia(html, 'Lunes').click();
+    fixture.detectChanges();
+
+    boton(html, 'Ver actividades y notas').click();
+    fixture.detectChanges();
+
+    const subir = html.querySelector<HTMLAnchorElement>('.horario__notas a')!;
+    expect(subir.textContent).toContain('Subir actividades');
+    expect(subir.getAttribute('href')).toBe('/calificaciones/importar-cmad?matricula=7');
   });
 
   it('la vista por semana muestra los siete días y marca los que no tienen clases', () => {

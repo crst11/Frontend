@@ -5,7 +5,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
-import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
+import {
+  AsignaturaMatriculada,
+  CategoriaDeEvaluacion,
+  EvaluacionRepository,
+} from '../../../data-access/evaluacion.repository';
 import {
   ClaseDelHorario,
   ClasePorAgregar,
@@ -16,6 +20,13 @@ import {
   PreferenciaDeHorario,
   VistaDelHorario,
 } from '../../../data-access/horario.repository';
+
+/** Las actividades y notas de una asignatura, traídas la primera vez que se despliega una de sus clases. */
+interface DetalleDeAsignatura {
+  cargando: boolean;
+  fallo: boolean;
+  categorias: CategoriaDeEvaluacion[];
+}
 
 /** Los días como los guarda el servidor (sin tildes) y como se leen en pantalla. */
 const DIAS = [
@@ -76,6 +87,10 @@ export class MySchedule {
   protected readonly guardando = signal(false);
   protected readonly errorDelFormulario = signal<string | null>(null);
 
+  /** Las clases desplegadas, por `idMatricula-consecutivo`. */
+  protected readonly abiertas = signal<ReadonlySet<string>>(new Set());
+  private readonly detalles = signal<Record<number, DetalleDeAsignatura>>({});
+
   protected readonly clasesDelDia = computed(() => this.clasesDe(this.diaElegido()));
   protected readonly sinAsignaturas = computed(() => this.asignaturas().length === 0);
 
@@ -127,6 +142,46 @@ export class MySchedule {
   protected ubicacion(clase: ClaseDelHorario): string | null {
     const partes = [clase.salon, clase.bloque, clase.sede].filter((parte): parte is string => !!parte);
     return partes.length > 0 ? partes.join(' · ') : null;
+  }
+
+  protected claveDe(clase: ClaseDelHorario): string {
+    return `${clase.idMatricula}-${clase.consecutivo}`;
+  }
+
+  protected estaAbierta(clase: ClaseDelHorario): boolean {
+    return this.abiertas().has(this.claveDe(clase));
+  }
+
+  protected detalleDe(clase: ClaseDelHorario): DetalleDeAsignatura | undefined {
+    return this.detalles()[clase.idMatricula];
+  }
+
+  /** Despliega o recoge las actividades y notas de la clase; la primera vez las pide al servidor. */
+  protected alternarDetalle(clase: ClaseDelHorario): void {
+    const clave = this.claveDe(clase);
+    const nuevas = new Set(this.abiertas());
+    if (nuevas.has(clave)) {
+      nuevas.delete(clave);
+    } else {
+      nuevas.add(clave);
+      if (!this.detalleDe(clase)) {
+        this.cargarDetalle(clase.idMatricula);
+      }
+    }
+    this.abiertas.set(nuevas);
+  }
+
+  private cargarDetalle(idMatricula: number): void {
+    this.detalles.update((d) => ({ ...d, [idMatricula]: { cargando: true, fallo: false, categorias: [] } }));
+    this.evaluaciones.estructuraDe(idMatricula).subscribe({
+      next: (estructura) =>
+        this.detalles.update((d) => ({
+          ...d,
+          [idMatricula]: { cargando: false, fallo: false, categorias: estructura.categorias },
+        })),
+      error: () =>
+        this.detalles.update((d) => ({ ...d, [idMatricula]: { cargando: false, fallo: true, categorias: [] } })),
+    });
   }
 
   protected docente(clase: ClaseDelHorario): string | null {

@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { Location } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import {
@@ -11,6 +12,7 @@ import {
   EstructuraDeEvaluacion,
   EvaluacionRepository,
 } from '../../../data-access/evaluacion.repository';
+import { origenGuardado } from '../../importing/origen-de-la-importacion';
 import { ActivityGrades, NotasCambiadas } from '../activity-grades/activity-grades';
 
 /**
@@ -58,6 +60,8 @@ export class EvaluationStructure {
   private readonly repositorio = inject(EvaluacionRepository);
   private readonly notificador = inject(NotifierService);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly ubicacion = inject(Location);
+  private readonly router = inject(Router);
 
   protected readonly tipos = [
     { valor: 'parcial', texto: 'Parcial' },
@@ -170,7 +174,21 @@ export class EvaluationStructure {
     );
   }
 
+  /** Quien llegó desde Hoy o desde Mi horario vuelve ahí; quien entró directo vuelve a la lista. */
+  protected textoDelVolver(): string {
+    return this.volverAlOrigen() ? origenGuardado(this.ubicacion)!.texto : 'Volver a mis asignaturas';
+  }
+
+  private volverAlOrigen(): boolean {
+    return !!origenGuardado(this.ubicacion) && Number(this.ruta.snapshot.queryParamMap.get('matricula')) > 0;
+  }
+
   protected volverALaLista(): void {
+    const origen = origenGuardado(this.ubicacion);
+    if (origen && this.volverAlOrigen()) {
+      void this.router.navigateByUrl(origen.ruta);
+      return;
+    }
     this.seleccionada.set(null);
     this.detalle.set(null);
     this.categorias.set([]);

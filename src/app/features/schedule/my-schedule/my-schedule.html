@@ -21,6 +21,42 @@
           <span><span class="visually-hidden">Docente: </span>{{ profesor }}</span>
         </p>
       }
+      <button
+        class="button button--soft horario__ver"
+        type="button"
+        [attr.aria-expanded]="estaAbierta(clase)"
+        [attr.aria-controls]="'notas-' + claveDe(clase)"
+        (click)="alternarDetalle(clase)"
+      >
+        {{ estaAbierta(clase) ? 'Ocultar actividades y notas' : 'Ver actividades y notas' }}
+      </button>
+      @if (estaAbierta(clase)) {
+        <div class="horario__notas" [id]="'notas-' + claveDe(clase)">
+          @if (detalleDe(clase); as detalle) {
+            @if (detalle.cargando) {
+              <p class="field__hint">Buscando actividades…</p>
+            } @else if (detalle.fallo) {
+              <p class="field__hint">No pudimos traer las actividades. Cierra y vuelve a abrir para intentar de nuevo.</p>
+            } @else if (detalle.categorias.length === 0) {
+              <p class="field__hint">Aún no has subido las actividades de esta materia.</p>
+              <a class="button button--primary" routerLink="/calificaciones/importar-cmad" [queryParams]="{ matricula: clase.idMatricula }" [state]="{ origen: '/horario' }">Subir actividades</a>
+            } @else {
+              @for (categoria of detalle.categorias; track categoria.consecutivo) {
+                <h4 class="horario__corte">{{ categoria.nombre }} · {{ categoria.porcentaje }} %</h4>
+                <ul class="horario__actividades">
+                  @for (actividad of categoria.actividades; track actividad.consecutivo) {
+                    <li>
+                      <span>{{ actividad.nombre }}</span>
+                      <strong [class.horario__sin-nota]="actividad.nota === null">{{ actividad.nota ?? 'Sin nota' }}</strong>
+                    </li>
+                  }
+                </ul>
+              }
+              <a class="button button--outline" routerLink="/calificaciones/mis-notas" [queryParams]="{ matricula: clase.idMatricula }" [state]="{ origen: '/horario' }">Editar mis notas</a>
+            }
+          }
+        </div>
+      }
       <button class="button button--outline horario__quitar" type="button" (click)="quitar(clase)">Quitar</button>
     </article>
   </ng-template>
