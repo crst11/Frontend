@@ -21,6 +21,11 @@ import {
 } from './lector-del-cmad';
 
 /** Una actividad de la tabla en revisión: el estudiante puede cambiarle el nombre, la nota o dejarla fuera. */
+/** El nombre sin tildes, mayúsculas ni espacios de más: «Taller 1» y «taller  1» son la misma actividad. */
+function claveDelNombre(nombre: string): string {
+  return nombre.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
 interface FilaEnRevision {
   incluir: boolean;
   nombre: string;
@@ -78,6 +83,8 @@ export class ImportCmad {
   protected readonly guardando = signal(false);
   protected readonly resultado = signal<Resultado | null>(null);
   protected readonly guiaAbierta = signal(false);
+  /** Lo que la asignatura ya tiene guardado, para decir qué cambia al subir de nuevo. */
+  private readonly guardadas = signal<{ nombre: string; nota: number | null }[]>([]);
 
   protected readonly asignatura = computed(() => this.asignaturas().find((a) => a.idMatricula === this.idElegido()) ?? null);
   protected readonly notasInvalidas = computed(() => this.filas().filter((f) => f.incluir && this.notaEscrita(f) === 'invalida'));
@@ -85,6 +92,29 @@ export class ImportCmad {
   protected readonly sePuedeGuardar = computed(
     () => this.seleccionadas().length > 0 && this.notasInvalidas().length === 0 && !this.guardando(),
   );
+  /** Qué cambia respecto a lo que ya está guardado; nulo si la asignatura no tenía actividades. */
+  protected readonly comparacion = computed(() => {
+    const guardadas = this.guardadas();
+    if (guardadas.length === 0) {
+      return null;
+    }
+    const nuevas = this.seleccionadas().map((f) => ({ nombre: f.nombre.trim(), nota: this.notaNumerica(f) }));
+    const claves = new Set(nuevas.map((n) => claveDelNombre(n.nombre)));
+    const delServidor = new Map(guardadas.map((g) => [claveDelNombre(g.nombre), g]));
+    const cambian = nuevas
+      .map((n) => ({ nombre: n.nombre, antes: delServidor.get(claveDelNombre(n.nombre))?.nota, ahora: n.nota, existe: delServidor.has(claveDelNombre(n.nombre)) }))
+      .filter((n) => n.existe && n.antes !== n.ahora)
+      .map((n) => ({ nombre: n.nombre, antes: n.antes ?? null, ahora: n.ahora }));
+    const nuevasActividades = nuevas.filter((n) => !delServidor.has(claveDelNombre(n.nombre))).map((n) => n.nombre);
+    const seQuitan = guardadas.filter((g) => !claves.has(claveDelNombre(g.nombre)));
+    return {
+      cambian,
+      nuevas: nuevasActividades,
+      seQuitan,
+      sinCambios: cambian.length === 0 && nuevasActividades.length === 0 && seQuitan.length === 0,
+    };
+  });
+
   protected readonly cortes = computed(() => armarLosCortes(this.seleccionadas().map((f) => this.aFila(f))));
 
   constructor() {
@@ -139,12 +169,35 @@ export class ImportCmad {
       this.tabla.set(tabla);
       this.filas.set(tabla.filas.map((f) => ({ incluir: true, nombre: f.nombre, ponderacion: f.ponderacion, nota: this.notaVisible(f.nota) })));
       this.avisoDeCurso.set(this.compararConLaAsignatura(original, tabla));
+      this.cargarLoGuardado();
     } catch (error) {
       this.tabla.set(null);
       this.error.set(
         error instanceof TablaDelCmadNoLegible ? error.message : 'No pudimos leer eso. Revisa que sea la tabla de calificaciones del CMAD.',
       );
     }
+  }
+
+  /** Si la asignatura ya tenía actividades, se traen para comparar; si no, no hay nada contra qué comparar. */
+  private cargarLoGuardado(): void {
+    const asignatura = this.asignatura();
+    this.guardadas.set([]);
+    if (!asignatura?.tieneEstructura) {
+      return;
+    }
+    this.repositorio.estructuraDe(asignatura.idMatricula).subscribe({
+      next: (estructura) =>
+        this.guardadas.set(
+          estructura.categorias.flatMap((c) => c.actividades.map((a) => ({ nombre: a.nombre, nota: a.nota }))),
+        ),
+      // Sin la comparación igual se puede guardar: es una ayuda, no un requisito.
+      error: () => this.guardadas.set([]),
+    });
+  }
+
+  private notaNumerica(fila: FilaEnRevision): number | null {
+    const numero = Number(fila.nota.trim().replace(',', '.'));
+    return fila.nota.trim() !== '' && Number.isFinite(numero) ? numero : null;
   }
 
   /** Si la página dice de qué curso es y no es el elegido, se avisa: es el error más fácil de cometer. */
@@ -164,6 +217,7 @@ export class ImportCmad {
     this.filas.set([]);
     this.error.set(null);
     this.avisoDeCurso.set(null);
+    this.guardadas.set([]);
     this.resultado.set(null);
   }
 
