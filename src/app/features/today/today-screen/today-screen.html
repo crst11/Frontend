@@ -1,11 +1,4 @@
 <main class="screen hoy">
-  <header class="top-bar">
-    <span class="top-bar__title">Hoy</span>
-    <a class="icon-button hoy__cuenta" routerLink="/cuenta/mi-cuenta" aria-label="Mi cuenta">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
-    </a>
-  </header>
-
   @if (cargando()) {
     <p class="subtitle">Armando tu día…</p>
   } @else if (error(); as mensaje) {
@@ -86,9 +79,5 @@
       }
     }
 
-    <nav class="hoy__atajos" aria-label="Más de CundiApp">
-      <a class="button button--outline" routerLink="/horario">Mi horario</a>
-      <a class="button button--outline" routerLink="/calificaciones/mis-notas">Mis notas</a>
-    </nav>
   }
 </main>

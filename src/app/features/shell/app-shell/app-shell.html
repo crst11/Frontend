@@ -1,0 +1,65 @@
+<header class="shell__barra">
+  <button
+    #botonDelMenu
+    class="icon-button shell__boton"
+    type="button"
+    aria-label="Abrir el menú"
+    aria-controls="menu-lateral"
+    [attr.aria-expanded]="menuAbierto()"
+    (click)="alternarMenu()"
+  >
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+  </button>
+
+  <h1 class="shell__titulo">{{ titulo() }}</h1>
+
+  <button
+    #botonDelAvatar
+    class="shell__avatar"
+    type="button"
+    [attr.aria-label]="'Mi perfil: ' + nombreCompleto()"
+    aria-haspopup="dialog"
+    aria-controls="panel-del-perfil"
+    [attr.aria-expanded]="perfilAbierto()"
+    (click)="alternarPerfil()"
+  >
+    {{ iniciales() }}
+  </button>
+</header>
+
+@if (menuAbierto()) {
+  <div class="shell__fondo" (click)="cerrarTodo()" aria-hidden="true"></div>
+  <nav id="menu-lateral" class="shell__menu" aria-label="Secciones de CundiApp">
+    <p class="shell__menu-titulo">CundiApp</p>
+    <ul class="shell__lista">
+      @for (seccion of secciones; track seccion.ruta) {
+        <li>
+          <a class="shell__enlace" [routerLink]="seccion.ruta" routerLinkActive="shell__enlace--activo" ariaCurrentWhenActive="page">
+            {{ seccion.texto }}
+          </a>
+        </li>
+      }
+    </ul>
+    <button class="shell__cerrar" type="button" (click)="cerrarTodo()">Cerrar el menú</button>
+  </nav>
+}
+
+@if (perfilAbierto()) {
+  <div class="shell__fondo shell__fondo--suave" (click)="cerrarTodo()" aria-hidden="true"></div>
+  <section id="panel-del-perfil" class="shell__perfil" role="dialog" aria-label="Mi perfil">
+    <div class="shell__perfil-cabecera">
+      <span class="shell__avatar shell__avatar--grande" aria-hidden="true">{{ iniciales() }}</span>
+      <div class="shell__perfil-datos">
+        <p class="shell__perfil-nombre">{{ nombreCompleto() }}</p>
+        @if (cuenta(); as datos) {
+          <p class="shell__perfil-correo">{{ datos.correo }}</p>
+        }
+      </div>
+    </div>
+    <a class="shell__enlace" routerLink="/cuenta/mi-cuenta">Mi cuenta</a>
+    <a class="shell__enlace" routerLink="/cuenta/mis-sesiones">Mis sesiones</a>
+    <button class="shell__enlace shell__enlace--boton" type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+  </section>
+}
+
+<router-outlet />
