@@ -26,7 +26,8 @@
               }
             ],
             "styles": ["src/styles.css"],
-            "allowedCommonJsDependencies": ["sweetalert2", "tesseract.js", "regenerator-runtime"]
+            "allowedCommonJsDependencies": ["sweetalert2", "clipper-lib", "@techstark/opencv-js"],
+            "externalDependencies": ["fs", "path", "crypto"]
           },
           "configurations": {
             "production": {
@@ -108,6 +109,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "prebundle": false
+          },
           "configurations": {
             "production": {
               "buildTarget": "cundiapp:build:production"
