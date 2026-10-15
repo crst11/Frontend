@@ -1,0 +1,49 @@
+<div class="pendientes">
+  @if (cargando()) {
+    <p class="field__hint">Buscando actividades…</p>
+  } @else if (fallo()) {
+    <p class="field__hint">No pudimos traer las actividades. Cierra y vuelve a abrir para intentar de nuevo.</p>
+  } @else if (sinActividades()) {
+    <p class="field__hint">Aún no has subido las actividades de esta materia.</p>
+    <a
+      class="button button--primary"
+      routerLink="/calificaciones/importar-cmad"
+      [queryParams]="{ matricula: idMatricula() }"
+      [state]="{ origen: origen() }"
+    >Subir actividades</a>
+  } @else if (cuantasFaltan() === 0) {
+    <p class="pendientes__al-dia">Ya tienes nota en todas las actividades de esta materia.</p>
+    <a
+      class="button button--outline"
+      routerLink="/calificaciones/mis-notas"
+      [queryParams]="{ matricula: idMatricula() }"
+      [state]="{ origen: origen() }"
+    >Ver mis notas</a>
+  } @else {
+    <p class="pendientes__titulo">
+      {{ cuantasFaltan() === 1 ? 'Te falta 1 actividad por calificar' : 'Te faltan ' + cuantasFaltan() + ' actividades por calificar' }}
+    </p>
+    @for (categoria of pendientes(); track categoria.consecutivo) {
+      <h4 class="pendientes__corte">{{ categoria.nombre }} · {{ categoria.porcentaje }} %</h4>
+      <ul class="pendientes__lista">
+        @for (actividad of categoria.actividades; track actividad.consecutivo) {
+          <li>
+            <span>{{ actividad.nombre }}</span>
+            <span class="pendientes__datos">
+              @if (fechaCorta(actividad.fechaProgramada); as fecha) {
+                <span>{{ fecha }}</span>
+              }
+              <strong>{{ actividad.porcentaje }} %</strong>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+    <a
+      class="button button--outline"
+      routerLink="/calificaciones/mis-notas"
+      [queryParams]="{ matricula: idMatricula() }"
+      [state]="{ origen: origen() }"
+    >Poner o editar mis notas</a>
+  }
+</div>

@@ -7,9 +7,9 @@ import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import {
   AsignaturaMatriculada,
-  CategoriaDeEvaluacion,
   EvaluacionRepository,
 } from '../../../data-access/evaluacion.repository';
+import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
 import {
   ClaseDelHorario,
   ClasePorAgregar,
@@ -20,13 +20,6 @@ import {
   PreferenciaDeHorario,
   VistaDelHorario,
 } from '../../../data-access/horario.repository';
-
-/** Las actividades y notas de una asignatura, traídas la primera vez que se despliega una de sus clases. */
-interface DetalleDeAsignatura {
-  cargando: boolean;
-  fallo: boolean;
-  categorias: CategoriaDeEvaluacion[];
-}
 
 /** Los días como los guarda el servidor (sin tildes) y como se leen en pantalla. */
 const DIAS = [
@@ -58,7 +51,7 @@ const DIAS = [
  */
 @Component({
   selector: 'app-my-schedule',
-  imports: [RouterLink, ReactiveFormsModule, NgTemplateOutlet],
+  imports: [RouterLink, ReactiveFormsModule, NgTemplateOutlet, PendingActivities],
   templateUrl: './my-schedule.html',
   styleUrl: './my-schedule.css',
 })
@@ -89,7 +82,6 @@ export class MySchedule {
 
   /** Las clases desplegadas, por `idMatricula-consecutivo`. */
   protected readonly abiertas = signal<ReadonlySet<string>>(new Set());
-  private readonly detalles = signal<Record<number, DetalleDeAsignatura>>({});
 
   protected readonly clasesDelDia = computed(() => this.clasesDe(this.diaElegido()));
   protected readonly sinAsignaturas = computed(() => this.asignaturas().length === 0);
@@ -152,11 +144,7 @@ export class MySchedule {
     return this.abiertas().has(this.claveDe(clase));
   }
 
-  protected detalleDe(clase: ClaseDelHorario): DetalleDeAsignatura | undefined {
-    return this.detalles()[clase.idMatricula];
-  }
-
-  /** Despliega o recoge las actividades y notas de la clase; la primera vez las pide al servidor. */
+  /** Despliega o recoge, bajo la clase, las actividades de su asignatura que no tienen nota. */
   protected alternarDetalle(clase: ClaseDelHorario): void {
     const clave = this.claveDe(clase);
     const nuevas = new Set(this.abiertas());
@@ -164,24 +152,8 @@ export class MySchedule {
       nuevas.delete(clave);
     } else {
       nuevas.add(clave);
-      if (!this.detalleDe(clase)) {
-        this.cargarDetalle(clase.idMatricula);
-      }
     }
     this.abiertas.set(nuevas);
-  }
-
-  private cargarDetalle(idMatricula: number): void {
-    this.detalles.update((d) => ({ ...d, [idMatricula]: { cargando: true, fallo: false, categorias: [] } }));
-    this.evaluaciones.estructuraDe(idMatricula).subscribe({
-      next: (estructura) =>
-        this.detalles.update((d) => ({
-          ...d,
-          [idMatricula]: { cargando: false, fallo: false, categorias: estructura.categorias },
-        })),
-      error: () =>
-        this.detalles.update((d) => ({ ...d, [idMatricula]: { cargando: false, fallo: true, categorias: [] } })),
-    });
   }
 
   protected docente(clase: ClaseDelHorario): string | null {
