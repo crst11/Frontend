@@ -5,6 +5,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Sin publicar]
 
 ### Seguridad
+- La compilación ya no inserta el `onload` en línea que Angular usa para cargar la hoja de estilos crítica (SCRUM-93): `optimization.styles.inlineCritical: false` en `production`, `pre` y `dev`. Una Content-Security-Policy estricta bloquea ese manejador. La hoja principal pesa unos 7 kB y ahora se carga como un `<link rel="stylesheet">` normal; el `index.html` compilado queda sin ningún manejador en línea. Probado con la política en bloqueo (ver el pull request del Backend con la CSP de CloudFront).
 - Escaneo de dependencias (SCRUM-90). **El primer escaneo encontró `@angular/router` con una vulnerabilidad alta (DoS por números en parámetros de matriz de la URL, en SSR; la app no usa SSR, pero el arreglo existe) y tres más de herramientas de desarrollo** (`piscina`, `source-map-js` y el SDK de MCP del CLI): se sube Angular a 22.2.2 (con `ng update`, porque los paquetes exigen la misma versión entre sí) y las de desarrollo se corrigen con `npm audit fix`; `npm audit` queda en 0. El CI corre `npm audit --omit=dev --audit-level=high` y falla con una vulnerabilidad alta o crítica de lo que llega al navegador. Dependabot abre un pull request semanal para npm (con los paquetes de Angular agrupados) y GitHub Actions. Cómo se atiende un aviso, en el README. La prueba de verificación de correo necesitó neutralizar `navigate`: el router nuevo rechaza como error no manejado navegar a una ruta que la prueba no registra.
 
 ### Agregado
