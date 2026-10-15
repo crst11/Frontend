@@ -209,17 +209,17 @@
         <p class="alert" role="alert">{{ mensaje }}</p>
       }
 
-      @if (leyendoImagen() !== null) {
-        <p class="notice" role="status">Leyendo la imagen… {{ leyendoImagen() }} %. La primera vez tarda un poco más.</p>
+      @if (leyendoImagen()) {
+        <p class="notice" role="status">Leyendo la imagen… la primera vez tarda un poco más porque descarga el lector.</p>
       }
       <label
         class="import__zona"
-        [class.import__zona--ocupada]="leyendoImagen() !== null"
+        [class.import__zona--ocupada]="leyendoImagen()"
         appSoltarArchivo
-        [desactivado]="leyendoImagen() !== null"
+        [desactivado]="leyendoImagen()"
         (archivoSoltado)="soltado($event)"
       >
-        <input class="import__archivo" type="file" accept=".html,.htm,text/html,image/*" [disabled]="leyendoImagen() !== null" (change)="archivoElegido($event)" />
+        <input class="import__archivo" type="file" accept=".html,.htm,text/html,image/*" [disabled]="leyendoImagen()" (change)="archivoElegido($event)" />
         <span class="import__zona-icono" aria-hidden="true">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
