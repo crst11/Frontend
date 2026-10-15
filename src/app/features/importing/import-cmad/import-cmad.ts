@@ -86,8 +86,8 @@ export class ImportCmad {
   protected readonly guardando = signal(false);
   protected readonly resultado = signal<Resultado | null>(null);
   protected readonly guiaAbierta = signal(false);
-  /** Avance (0 a 100) mientras se lee una imagen con OCR; nulo si no se está leyendo ninguna. */
-  protected readonly leyendoImagen = signal<number | null>(null);
+  /** Verdadero mientras se lee una imagen con OCR. */
+  protected readonly leyendoImagen = signal(false);
   /** Lo detectado salió de una imagen: el OCR puede equivocarse, así que se avisa que se revise. */
   protected readonly vieneDeImagen = signal(false);
   /** Lo que la asignatura ya tiene guardado, para decir qué cambia al subir de nuevo. */
@@ -169,7 +169,7 @@ export class ImportCmad {
 
   /** Una imagen se lee con OCR y lo demás es la página guardada; todo en el navegador, nada se sube. */
   private async procesar(archivo: File): Promise<void> {
-    if (this.leyendoImagen() !== null) {
+    if (this.leyendoImagen()) {
       return;
     }
     if (archivo.type.startsWith('image/')) {
@@ -183,9 +183,9 @@ export class ImportCmad {
 
   private async leerImagen(imagen: File): Promise<void> {
     this.error.set(null);
-    this.leyendoImagen.set(0);
+    this.leyendoImagen.set(true);
     try {
-      const texto = await this.lectorDeImagen.leer(imagen, (avance) => this.leyendoImagen.set(Math.round(avance * 100)));
+      const texto = await this.lectorDeImagen.leer(imagen);
       this.leer(() => leerTextoDelCmad(texto), texto);
       this.vieneDeImagen.set(this.tabla() !== null);
       // El OCR suele perder la coma decimal: «41» no es una nota válida y casi seguro era «4,1».
@@ -193,7 +193,7 @@ export class ImportCmad {
     } catch {
       this.error.set('No pudimos leer la imagen. Prueba con una captura más nítida o pega la tabla.');
     } finally {
-      this.leyendoImagen.set(null);
+      this.leyendoImagen.set(false);
     }
   }
 
