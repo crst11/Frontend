@@ -12,6 +12,11 @@ updates:
       angular:
         patterns:
           - "@angular/*"
+    ignore:
+      # Cada versión de Angular acepta una sola línea de TypeScript (la 22.2 pide >=6.0 <6.1): subirlo a 7
+      # rompe `npm ci`. Sube cuando lo haga Angular, con `ng update`.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
     commit-message:
       prefix: "chore(deps)"
   - package-ecosystem: github-actions
