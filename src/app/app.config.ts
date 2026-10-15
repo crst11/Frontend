@@ -10,6 +10,7 @@ import { provideRouter } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
 import { SessionService } from './core/session/session.service';
+import { verificacionHumanaInterceptor } from './core/humano/verificacion-humana.interceptor';
 import { sessionInterceptor } from './core/session/session.interceptor';
 import { EstudianteRepository } from './data-access/estudiante.repository';
 import { EstudianteHttpRepository } from './data-access/http/estudiante-http.repository';
@@ -36,7 +37,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([sessionInterceptor])),
+    provideHttpClient(withInterceptors([verificacionHumanaInterceptor, sessionInterceptor])),
     { provide: GuiaRepository, useClass: GuiaHttpRepository },
     { provide: EstudianteRepository, useClass: EstudianteHttpRepository },
     { provide: PlanDeEstudiosRepository, useClass: PlanDeEstudiosHttpRepository },
