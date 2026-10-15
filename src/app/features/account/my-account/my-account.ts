@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { GoogleIdentityService } from '../../../core/google/google-identity.service';
+import { CierreDeSesion } from '../../../core/session/cierre-de-sesion.service';
 import { SessionService } from '../../../core/session/session.service';
 import { Cuenta, EstudianteRepository, VinculoConGoogle } from '../../../data-access/estudiante.repository';
 
@@ -19,6 +20,7 @@ export class MyAccount {
   private readonly sesion = inject(SessionService);
   private readonly router = inject(Router);
   private readonly notificador = inject(NotifierService);
+  private readonly cierre = inject(CierreDeSesion);
   private readonly contenedorGoogle = viewChild<ElementRef<HTMLElement>>('botonGoogle');
   protected readonly google = inject(GoogleIdentityService);
 
@@ -124,21 +126,8 @@ export class MyAccount {
     });
   }
 
-  protected async cerrarSesion(): Promise<void> {
-    const confirmado = await this.notificador.confirmar(
-      '¿Cerrar sesión?',
-      'Tendrás que iniciar sesión de nuevo para ver tu cuenta.',
-      'Cerrar sesión',
-    );
-    if (!confirmado) {
-      return;
-    }
-
-    const irAEntrar = () => {
-      void this.router.navigate(['/cuenta/entrar']);
-      void this.notificador.aviso('Sesión cerrada.');
-    };
-    this.sesion.cerrar().subscribe({ next: irAEntrar, error: irAEntrar });
+  protected cerrarSesion(): Promise<void> {
+    return this.cierre.conConfirmacion();
   }
 
   protected async eliminarCuenta(): Promise<void> {

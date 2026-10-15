@@ -1,0 +1,256 @@
+<main class="screen horario">
+  <!-- Una clase, igual en la vista por día y en la de semana. -->
+  <ng-template #tarjeta let-clase>
+    <article class="card horario__clase">
+      <p class="horario__hora">
+        {{ clase.horaInicio }} – {{ clase.horaFin }}
+        <span class="field__hint">· {{ clase.duracionEnMinutos }} min</span>
+      </p>
+      <h3 class="horario__asignatura">{{ clase.asignatura }}</h3>
+      @if (ubicacion(clase); as lugar) {
+        <p class="horario__detalle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+          <span><span class="visually-hidden">Lugar: </span>{{ lugar }}</span>
+        </p>
+      } @else {
+        <p class="field__hint">Todavía sin salón.</p>
+      }
+      @if (docente(clase); as profesor) {
+        <p class="horario__detalle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>
+          <span><span class="visually-hidden">Docente: </span>{{ profesor }}</span>
+        </p>
+      }
+      <button
+        class="button button--soft horario__ver"
+        type="button"
+        [attr.aria-expanded]="estaAbierta(clase)"
+        [attr.aria-controls]="'notas-' + claveDe(clase)"
+        (click)="alternarDetalle(clase)"
+      >
+        {{ estaAbierta(clase) ? 'Ocultar actividades y notas' : 'Ver actividades y notas' }}
+      </button>
+      @if (estaAbierta(clase)) {
+        <div class="horario__notas" [id]="'notas-' + claveDe(clase)">
+          @if (detalleDe(clase); as detalle) {
+            @if (detalle.cargando) {
+              <p class="field__hint">Buscando actividades…</p>
+            } @else if (detalle.fallo) {
+              <p class="field__hint">No pudimos traer las actividades. Cierra y vuelve a abrir para intentar de nuevo.</p>
+            } @else if (detalle.categorias.length === 0) {
+              <p class="field__hint">Aún no has subido las actividades de esta materia.</p>
+              <a class="button button--primary" routerLink="/calificaciones/importar-cmad" [queryParams]="{ matricula: clase.idMatricula }" [state]="{ origen: '/horario' }">Subir actividades</a>
+            } @else {
+              @for (categoria of detalle.categorias; track categoria.consecutivo) {
+                <h4 class="horario__corte">{{ categoria.nombre }} · {{ categoria.porcentaje }} %</h4>
+                <ul class="horario__actividades">
+                  @for (actividad of categoria.actividades; track actividad.consecutivo) {
+                    <li>
+                      <span>{{ actividad.nombre }}</span>
+                      <strong [class.horario__sin-nota]="actividad.nota === null">{{ actividad.nota ?? 'Sin nota' }}</strong>
+                    </li>
+                  }
+                </ul>
+              }
+              <a class="button button--outline" routerLink="/calificaciones/mis-notas" [queryParams]="{ matricula: clase.idMatricula }" [state]="{ origen: '/horario' }">Editar mis notas</a>
+            }
+          }
+        </div>
+      }
+      <button class="button button--outline horario__quitar" type="button" (click)="quitar(clase)">Quitar</button>
+    </article>
+  </ng-template>
+
+  <section class="screen__body horario__cuerpo" aria-label="Mi horario">
+    @if (error(); as mensaje) {
+      <p class="alert" role="alert">{{ mensaje }}</p>
+    }
+
+    @if (cargando()) {
+      <p class="subtitle">Buscando tu horario…</p>
+    } @else {
+      <div class="chips" role="group" aria-label="Cómo quieres verlo">
+        <button class="chip" type="button" [class.chip--active]="vista() === 'dia'" [attr.aria-pressed]="vista() === 'dia'" (click)="cambiarVista('dia')">Día</button>
+        <button class="chip" type="button" [class.chip--active]="vista() === 'semana'" [attr.aria-pressed]="vista() === 'semana'" (click)="cambiarVista('semana')">Semana</button>
+      </div>
+
+      <!-- Organizar: el servidor filtra y ordena; aquí solo se elige. Las opciones salen del horario completo. -->
+      @if ((horario()?.asignaturas?.length ?? 0) > 0) {
+        <details class="card horario__filtros" [open]="hayFiltro()" [attr.aria-busy]="actualizando()">
+          <summary class="horario__resumen">
+            Organizar mi horario
+            @if (hayFiltro()) {
+              <span class="badge badge--ok">Con filtros</span>
+            }
+          </summary>
+          <div class="field-row">
+            <label class="field">
+              <span class="field__label">Asignatura</span>
+              <select class="field__input" (change)="elegirAsignatura($any($event.target).value)">
+                <option value="" [selected]="asignaturaElegida() === ''">Todas</option>
+                @for (asignatura of horario()?.asignaturas; track asignatura.codigo) {
+                  <option [value]="asignatura.codigo" [selected]="asignatura.codigo === asignaturaElegida()">{{ asignatura.nombre }}</option>
+                }
+              </select>
+            </label>
+            <label class="field">
+              <span class="field__label">Sede</span>
+              <select class="field__input" (change)="elegirSede($any($event.target).value)">
+                <option value="" [selected]="sedeElegida() === ''">Todas</option>
+                @for (sede of sedesParaElegir(); track sede) {
+                  <option [value]="sede" [selected]="sede === sedeElegida()">{{ sede }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Ordenar por</span>
+            <select class="field__input" (change)="elegirOrden($any($event.target).value)">
+              <option value="hora" [selected]="ordenElegido() === 'hora'">Hora</option>
+              <option value="asignatura" [selected]="ordenElegido() === 'asignatura'">Asignatura</option>
+            </select>
+          </label>
+          <div class="horario__acciones-filtros">
+            @if (hayFiltro()) {
+              <button class="button button--outline horario__chico" type="button" (click)="quitarFiltros()">Quitar filtros</button>
+            }
+            <button class="button button--soft horario__chico" type="button" [disabled]="yaEsMiVista() || guardandoMiVista()" (click)="guardarMiVista()">
+              {{ yaEsMiVista() ? 'Esta es tu vista guardada' : guardandoMiVista() ? 'Guardando…' : 'Guardar como mi vista' }}
+            </button>
+          </div>
+          <p class="field__hint">Se guarda la vista, la sede y el orden. La asignatura no: cambia cada período.</p>
+        </details>
+      }
+
+      @if (sinAsignaturas() && !agregando()) {
+        <p class="notice">
+          Para armar tu horario necesitas tener asignaturas en curso. Importa tu Reporte de Horario y tus
+          asignaturas y sus clases aparecerán aquí.
+        </p>
+        <a class="button button--soft" routerLink="/cuenta/importar-horario" [state]="{ origen: '/horario' }">Importar mi horario</a>
+      }
+
+      @if (vista() === 'dia') {
+        <div class="chips horario__dias" role="group" aria-label="Elige el día">
+          @for (dia of dias; track dia.valor) {
+            <button
+              class="chip"
+              type="button"
+              [class.chip--active]="diaElegido() === dia.valor"
+              [attr.aria-pressed]="diaElegido() === dia.valor"
+              [attr.aria-label]="dia.texto"
+              (click)="elegirDia(dia.valor)"
+            >
+              {{ dia.corto }}
+            </button>
+          }
+        </div>
+
+        <h2 class="horario__titulo-dia">{{ textoDelDia(diaElegido()) }}</h2>
+        @for (clase of clasesDelDia(); track clase.idMatricula + '-' + clase.consecutivo) {
+          <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
+        } @empty {
+          <p class="notice">
+            @if (hayFiltro() && horario()?.totalDeClases === 0) {
+              Ninguna clase coincide con tus filtros. Quítalos para ver todo tu horario.
+            } @else {
+              No tienes clases este día.
+              @if (horario()?.totalDeClases === 0) {
+                Cuando agregues una, la verás aquí.
+              }
+            }
+          </p>
+        }
+      } @else {
+        @for (dia of dias; track dia.valor) {
+          <section class="horario__dia-semana" [attr.aria-label]="dia.texto">
+            <h2 class="horario__titulo-dia">{{ dia.texto }}</h2>
+            @for (clase of clasesDe(dia.valor); track clase.idMatricula + '-' + clase.consecutivo) {
+              <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
+            } @empty {
+              <p class="field__hint">Sin clases.</p>
+            }
+          </section>
+        }
+      }
+
+      <!-- Agregar una clase a mano va al final: lo que se consulta a diario son las clases. -->
+      @if (agregando()) {
+        <form class="card horario__formulario" [formGroup]="formulario" (ngSubmit)="agregar()" aria-label="Agregar una clase">
+          <h2 class="horario__titulo-formulario">Agregar una clase</h2>
+
+          <label class="field">
+            <span class="field__label">Asignatura</span>
+            <select class="field__input" formControlName="idMatricula">
+              @for (asignatura of asignaturas(); track asignatura.idMatricula) {
+                <option [ngValue]="asignatura.idMatricula">{{ asignatura.nombre }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field__label">Día</span>
+            <select class="field__input" formControlName="dia">
+              @for (dia of dias; track dia.valor) {
+                <option [value]="dia.valor">{{ dia.texto }}</option>
+              }
+            </select>
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span class="field__label">Desde</span>
+              <input class="field__input" type="time" formControlName="horaInicio" />
+            </label>
+            <label class="field">
+              <span class="field__label">Hasta</span>
+              <input class="field__input" type="time" formControlName="horaFin" />
+            </label>
+          </div>
+
+          <p class="field__hint">Dónde es y quién la dicta son opcionales: puedes agregarlos cuando los sepas.</p>
+          <div class="field-row">
+            <label class="field">
+              <span class="field__label">Salón</span>
+              <input class="field__input" type="text" maxlength="30" placeholder="F-203" formControlName="salon" />
+            </label>
+            <label class="field">
+              <span class="field__label">Bloque</span>
+              <input class="field__input" type="text" maxlength="30" placeholder="Bloque F" formControlName="bloque" />
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Sede</span>
+            <input class="field__input" type="text" maxlength="60" placeholder="Fusagasugá" formControlName="sede" />
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span class="field__label">Nombres del docente</span>
+              <input class="field__input" type="text" maxlength="80" formControlName="docenteNombres" />
+            </label>
+            <label class="field">
+              <span class="field__label">Apellidos</span>
+              <input class="field__input" type="text" maxlength="80" formControlName="docenteApellidos" />
+            </label>
+          </div>
+
+          @if (errorDelFormulario(); as mensaje) {
+            <p class="alert" role="alert">{{ mensaje }}</p>
+          }
+
+          <div class="horario__acciones">
+            <button class="button button--primary" type="submit" [disabled]="formulario.invalid || guardando()">
+              {{ guardando() ? 'Guardando…' : 'Agregar' }}
+            </button>
+            <button class="button button--outline" type="button" (click)="cerrarFormulario()">Cancelar</button>
+          </div>
+        </form>
+      } @else if (!sinAsignaturas()) {
+        <button class="button button--soft" type="button" (click)="abrirFormulario()">Agregar una clase</button>
+        <a class="horario__importar" routerLink="/cuenta/importar-horario" [state]="{ origen: '/horario' }">
+          Importar mi horario desde el reporte
+        </a>
+      }
+    }
+  </section>
+</main>

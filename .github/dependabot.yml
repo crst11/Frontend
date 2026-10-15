@@ -1,0 +1,27 @@
+# Dependabot abre un pull request por semana con las actualizaciones de dependencias (SCRUM-90).
+# Los avisos de seguridad llegan aparte y al momento. Cada uno se revisa como cualquier otro pull request.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Los paquetes de Angular tienen que subir juntos: cada uno exige la misma versión de los demás.
+      angular:
+        patterns:
+          - "@angular/*"
+    ignore:
+      # Cada versión de Angular acepta una sola línea de TypeScript (la 22.2 pide >=6.0 <6.1): subirlo a 7
+      # rompe `npm ci`. Sube cuando lo haga Angular, con `ng update`.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+    commit-message:
+      prefix: "chore(deps)"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"

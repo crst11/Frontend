@@ -9,10 +9,10 @@ jobs:
     name: Instalar, lint, pruebas y build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Configurar Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
           cache: npm
@@ -21,3 +21,22 @@ jobs:
       - run: npm run lint
       - run: npm test -- --watch=false
       - run: npm run build
+
+  dependencias:
+    name: Dependencias sin vulnerabilidades altas ni criticas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configurar Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - run: npm ci
+
+      # Lo que va en el paquete final (sin las herramientas de desarrollo): falla con una vulnerabilidad
+      # alta o critica. Las de desarrollo no llegan al navegador y las atiende Dependabot.
+      - name: npm audit
+        run: npm audit --omit=dev --audit-level=high

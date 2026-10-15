@@ -1,0 +1,166 @@
+<main class="screen import">
+  <header class="top-bar">
+    <a class="icon-button" [routerLink]="origen.ruta" [attr.aria-label]="origen.texto">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+    </a>
+    <span class="top-bar__title">Importar mi horario</span>
+  </header>
+
+  @if (analisis(); as detectado) {
+    <!-- Paso 2: lo detectado, para confirmar antes de guardar nada. -->
+    <section class="card import__resumen" aria-label="Lo que detectamos">
+      <h1 class="import__titulo">Esto encontramos en tu horario</h1>
+      <p class="subtitle">Revísalo antes de guardar. Nada se guarda hasta que confirmes.</p>
+
+      <dl class="import__cuentas">
+        <div>
+          <dt class="field__label">Asignaturas</dt>
+          <dd>{{ detectado.seVanAGuardar }}</dd>
+        </div>
+        <div>
+          <dt class="field__label">Clases</dt>
+          <dd>{{ detectado.clases }}</dd>
+        </div>
+        <div>
+          <dt class="field__label">Período</dt>
+          <dd>{{ detectado.periodo }}</dd>
+        </div>
+      </dl>
+      <p class="import__periodo-meta">{{ nombreDelPeriodo(detectado.periodo) }}, según la fecha del reporte.</p>
+
+      @if (!detectado.coincideConMiPrograma) {
+        <p class="alert" role="alert">
+          El reporte dice <b>{{ detectado.programaDelReporte }}</b>, que no es el programa que elegiste en
+          CundiApp. Si cambiaste de programa está bien; si no, revisa que sea tu reporte.
+        </p>
+      }
+
+      @if (clasesQueSeReemplazan() > 0) {
+        <p class="notice">
+          Las asignaturas que ya tenías cambian sus clases por las del reporte: se reemplazan
+          {{ clasesQueSeReemplazan() }} {{ clasesQueSeReemplazan() === 1 ? 'clase' : 'clases' }}, también
+          las que hayas agregado a mano.
+        </p>
+      }
+
+      @if (fueraDelPlan().length > 0) {
+        <p class="notice">
+          {{ fueraDelPlan().length === 1 ? 'Una asignatura no está' : fueraDelPlan().length + ' asignaturas no están' }}
+          en tu ruta de aprendizaje, así que no se van a guardar. Las marcamos abajo para que sepas cuáles son.
+        </p>
+      }
+    </section>
+
+    @for (asignatura of detectado.asignaturas; track asignatura.codigo) {
+      <section class="card import__periodo" [attr.aria-label]="asignatura.nombre">
+        <header class="import__periodo-head horario-import__cabecera">
+          <div class="horario-import__titulo">
+            <h2 class="import__periodo-nombre">{{ asignatura.nombre }}</h2>
+            @if (asignatura.grupo) {
+              <span class="import__periodo-meta">Grupo {{ asignatura.grupo }}</span>
+            }
+          </div>
+          <span class="horario-import__estado" [class.horario-import__estado--fuera]="!asignatura.enElPlan">
+            {{ estadoDe(asignatura) }}
+          </span>
+        </header>
+
+        @if (asignatura.clases.length > 0) {
+          <ul class="import__asignaturas">
+            @for (clase of asignatura.clases; track $index) {
+              <li class="import__asignatura horario-import__clase">
+                <div class="import__asignatura-texto">
+                  <h3 class="import__asignatura-nombre">
+                    {{ textoDelDia(clase.dia) }} · {{ clase.horaInicio }} a {{ clase.horaFin }}
+                  </h3>
+                  @if (lugarDe(clase); as lugar) {
+                    <p class="import__asignatura-meta">{{ lugar }}</p>
+                  }
+                  @if (docenteDe(clase); as docente) {
+                    <p class="import__asignatura-meta">{{ docente }}</p>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="horario-import__sin-clases">El reporte no trae clases para esta asignatura.</p>
+        }
+      </section>
+    }
+
+    <div class="screen__footer">
+      <button class="button button--primary" type="button" [disabled]="guardando()" (click)="confirmar()">
+        {{ guardando() ? 'Guardando…' : 'Confirmar y guardar' }}
+      </button>
+      <button class="button button--outline" type="button" [disabled]="guardando()" (click)="volverAEmpezar()">
+        Subir otro archivo
+      </button>
+    </div>
+  } @else {
+    <!-- Paso 1: qué archivo es y cómo subirlo. -->
+    <p class="subtitle">
+      Sube tu <b>Reporte de Horario</b> y CundiApp arma tu horario con sus clases, salones y docentes sin
+      que tengas que digitarlos.
+    </p>
+
+    <section class="card import__guia" aria-labelledby="titulo-guia">
+      <button class="import__guia-head" type="button" [attr.aria-expanded]="guiaAbierta()" aria-controls="pasos-guia" (click)="alternarGuia()">
+        <span id="titulo-guia" class="import__guia-titulo">¿Dónde consigo ese archivo?</span>
+        <svg class="import__chevron" [class.import__chevron--open]="guiaAbierta()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+
+      @if (guiaAbierta()) {
+        <ol class="import__pasos" id="pasos-guia">
+          @for (paso of pasos; track paso.resaltado) {
+            <li class="import__paso">{{ paso.texto }} <b>{{ paso.resaltado }}</b>.</li>
+          }
+        </ol>
+        <p class="import__advertencia">
+          Se descarga un PDF; si en cambio se abre la ventana de impresión, en Destino elige
+          <b>Guardar como PDF</b>. Súbelo tal como lo descargaste: debe decir <b>Horario - Campo de aprendizaje</b>
+          y traer una tabla con los días de la semana.
+        </p>
+      }
+      <p class="import__advertencia">
+        Tu documento y los de tus docentes salen en el archivo, pero CundiApp no los lee ni los guarda.
+        Para tus notas se usa otro archivo: el Registro Académico Extendido, desde
+        <a routerLink="/cuenta/historial" [state]="{ origen: '/horario' }">Mi historial</a>.
+      </p>
+    </section>
+
+    @if (error(); as mensaje) {
+      <p class="alert" role="alert">{{ mensaje }}</p>
+      <p class="notice">
+        Si el archivo no se deja leer, no te quedas sin horario: puedes agregar tus clases a mano desde
+        <a routerLink="/horario">Mi horario</a>.
+      </p>
+    }
+
+    <label
+      class="import__zona"
+      [class.import__zona--ocupada]="analizando()"
+      appSoltarArchivo
+      [desactivado]="analizando()"
+      (archivoSoltado)="soltado($event)"
+    >
+      <input
+        class="import__archivo"
+        type="file"
+        accept="application/pdf,.pdf"
+        [disabled]="analizando()"
+        (change)="archivoElegido($event)"
+      />
+      <span class="import__zona-icono" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+          <path d="M14 3v5h5M12 18v-6M9 15l3-3 3 3" />
+        </svg>
+      </span>
+      <span class="import__zona-texto">
+        {{ analizando() ? 'Leyendo tu horario…' : 'Toca aquí para elegir tu PDF' }}
+      </span>
+      <span class="import__zona-ayuda">Solo el archivo PDF, hasta 5 MB</span>
+    </label>
+  }
+</main>
