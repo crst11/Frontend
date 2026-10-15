@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { Location } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import {
@@ -8,8 +9,18 @@ import {
   AsignaturaMatriculada,
   CategoriaDeEvaluacion,
   CategoriaPorGuardar,
+  EstructuraDeEvaluacion,
   EvaluacionRepository,
 } from '../../../data-access/evaluacion.repository';
+import { origenGuardado } from '../../importing/origen-de-la-importacion';
+import { ActivityGrades, NotasCambiadas } from '../activity-grades/activity-grades';
+
+/** Los cortes con los que arranca una asignatura, sin actividades: lo que queda al quitar lo subido. */
+const CORTES_DE_LA_PLANTILLA: CategoriaPorGuardar[] = [
+  { consecutivo: 1, nombre: 'Primer corte', porcentaje: 30, origen: 'plantilla', actividades: [] },
+  { consecutivo: 2, nombre: 'Segundo corte', porcentaje: 30, origen: 'plantilla', actividades: [] },
+  { consecutivo: 3, nombre: 'Tercer corte', porcentaje: 40, origen: 'plantilla', actividades: [] },
+];
 
 /**
  * Una actividad mientras se la edita. El porcentaje admite nulo porque un campo recién agregado
@@ -21,6 +32,8 @@ interface ActividadEnEdicion {
   porcentaje: number | null;
   fechaProgramada: string | null;
   tipo: string;
+  /** Solo para avisar antes de quitar una actividad que ya tiene nota; no se manda al guardar. */
+  nota: number | null;
 }
 
 interface CategoriaEnEdicion {
@@ -32,7 +45,10 @@ interface CategoriaEnEdicion {
 }
 
 /**
- * Definir cómo me evalúan (RF05, SCRUM-27).
+ * Definir cómo me evalúan y anotar mis notas (RF05, SCRUM-27 y SCRUM-28).
+ *
+ * <p>Al elegir una asignatura hay dos vistas: Notas (la que abre cuando la asignatura ya tiene
+ * actividades, porque es lo que se usa a diario) y Estructura (donde se arma el árbol).
  *
  * <p>Primero elige la asignatura y después arma el árbol: categorías que suman 100 % y, dentro de
  * cada una, actividades que también suman 100 %. Las sumas se muestran mientras edita, así que no
@@ -43,13 +59,16 @@ interface CategoriaEnEdicion {
  */
 @Component({
   selector: 'app-evaluation-structure',
-  imports: [RouterLink],
+  imports: [RouterLink, ActivityGrades],
   templateUrl: './evaluation-structure.html',
   styleUrl: './evaluation-structure.css',
 })
 export class EvaluationStructure {
   private readonly repositorio = inject(EvaluacionRepository);
   private readonly notificador = inject(NotifierService);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly ubicacion = inject(Location);
+  private readonly router = inject(Router);
 
   protected readonly tipos = [
     { valor: 'parcial', texto: 'Parcial' },
@@ -61,6 +80,9 @@ export class EvaluationStructure {
   protected readonly asignaturas = signal<AsignaturaMatriculada[]>([]);
   protected readonly cargando = signal(true);
   protected readonly seleccionada = signal<AsignaturaMatriculada | null>(null);
+  /** La estructura tal como la devolvió el servidor, con notas y acumulado: es lo que muestra Notas. */
+  protected readonly detalle = signal<EstructuraDeEvaluacion | null>(null);
+  protected readonly vista = signal<'notas' | 'estructura'>('estructura');
   protected readonly guardada = signal(false);
   protected readonly categorias = signal<CategoriaEnEdicion[]>([]);
   protected readonly guardando = signal(false);
@@ -90,10 +112,16 @@ export class EvaluationStructure {
   }
 
   private cargarAsignaturas(): void {
-    this.repositorio.misAsignaturas().subscribe({
+    this.repositorio.misAsignaturas('actual').subscribe({
       next: (asignaturas) => {
         this.asignaturas.set(asignaturas);
         this.cargando.set(false);
+        // Quien llega desde la pantalla del día trae la asignatura que tocó (SCRUM-31).
+        const pedida = Number(this.ruta.snapshot.queryParamMap.get('matricula'));
+        const asignatura = asignaturas.find((a) => a.idMatricula === pedida);
+        if (asignatura) {
+          this.elegir(asignatura);
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.cargando.set(false);
@@ -119,13 +147,77 @@ export class EvaluationStructure {
         this.seleccionada.set(estructura.asignatura);
         this.guardada.set(estructura.guardada);
         this.categorias.set(estructura.categorias.map(aEdicion));
+        this.detalle.set(estructura);
+        // Notas es lo que se usa a diario; Estructura abre sola solo mientras no haya nada que calificar.
+        this.vista.set(estructura.guardada && estructura.acumulado.actividadesTotales > 0 ? 'notas' : 'estructura');
       },
       error: (err: HttpErrorResponse) => this.mostrar(err),
     });
   }
 
+  protected cambiarVista(vista: 'notas' | 'estructura'): void {
+    this.vista.set(vista);
+  }
+
+  /**
+   * El panel de notas ya habló con el servidor: aquí solo se recoge lo que cambió, para que al
+   * volver de una vista a la otra no se vea una versión vieja.
+   */
+  protected alCambiarLasNotas(cambio: NotasCambiadas): void {
+    this.detalle.update((detalle) =>
+      detalle ? { ...detalle, categorias: cambio.categorias, acumulado: cambio.acumulado } : detalle,
+    );
+    this.categorias.update((categorias) =>
+      categorias.map((categoria) => {
+        const nueva = cambio.categorias.find((c) => c.consecutivo === categoria.consecutivo);
+        return {
+          ...categoria,
+          actividades: categoria.actividades.map((actividad) => ({
+            ...actividad,
+            nota: nueva?.actividades.find((a) => a.consecutivo === actividad.consecutivo)?.nota ?? null,
+          })),
+        };
+      }),
+    );
+  }
+
+  /** Quien llegó desde Hoy o desde Mi horario vuelve ahí; quien entró directo vuelve a la lista. */
+  protected textoDelVolver(): string {
+    return this.volverAlOrigen() ? origenGuardado(this.ubicacion)!.texto : 'Volver a mis asignaturas';
+  }
+
+  private volverAlOrigen(): boolean {
+    return !!origenGuardado(this.ubicacion) && Number(this.ruta.snapshot.queryParamMap.get('matricula')) > 0;
+  }
+
+  /** Deja la asignatura como al principio: los cortes de la plantilla, sin actividades ni notas. */
+  protected async quitarLoSubido(): Promise<void> {
+    const asignatura = this.seleccionada();
+    if (!asignatura) {
+      return;
+    }
+    const confirmado = await this.notificador.confirmar(
+      '¿Quitar lo que subiste?',
+      'Se borran las actividades y las notas de esta materia y quedan los cortes de la plantilla (30 / 30 / 40). Puedes volver a subirlas cuando quieras.',
+      'Sí, quitarlo',
+    );
+    if (!confirmado) {
+      return;
+    }
+    this.repositorio.guardar(asignatura.idMatricula, CORTES_DE_LA_PLANTILLA).subscribe({
+      next: () => this.elegir(asignatura),
+      error: (err: HttpErrorResponse) => this.mostrar(err),
+    });
+  }
+
   protected volverALaLista(): void {
+    const origen = origenGuardado(this.ubicacion);
+    if (origen && this.volverAlOrigen()) {
+      void this.router.navigateByUrl(origen.ruta);
+      return;
+    }
     this.seleccionada.set(null);
+    this.detalle.set(null);
     this.categorias.set([]);
     this.error.set(null);
   }
@@ -137,7 +229,13 @@ export class EvaluationStructure {
     ]);
   }
 
-  protected quitarCategoria(consecutivo: number): void {
+  /** Una categoría con notas se lleva sus notas al guardar: antes se le avisa, no después. */
+  protected async quitarCategoria(consecutivo: number): Promise<void> {
+    const categoria = this.categorias().find((c) => c.consecutivo === consecutivo);
+    const conNotas = categoria?.actividades.filter((a) => a.nota !== null).length ?? 0;
+    if (conNotas > 0 && !(await this.confirmarPerderNotas(conNotas))) {
+      return;
+    }
     this.categorias.update((categorias) => categorias.filter((c) => c.consecutivo !== consecutivo));
   }
 
@@ -146,12 +244,18 @@ export class EvaluationStructure {
       ...categoria,
       actividades: [
         ...categoria.actividades,
-        { consecutivo: siguiente(categoria.actividades), nombre: '', porcentaje: null, fechaProgramada: null, tipo: 'taller' },
+        { consecutivo: siguiente(categoria.actividades), nombre: '', porcentaje: null, fechaProgramada: null, tipo: 'taller', nota: null },
       ],
     }));
   }
 
-  protected quitarActividad(consecutivo: number, consecutivoActividad: number): void {
+  protected async quitarActividad(consecutivo: number, consecutivoActividad: number): Promise<void> {
+    const actividad = this.categorias()
+      .find((c) => c.consecutivo === consecutivo)
+      ?.actividades.find((a) => a.consecutivo === consecutivoActividad);
+    if (actividad?.nota != null && !(await this.confirmarPerderNotas(1))) {
+      return;
+    }
     this.cambiarCategoria(consecutivo, (categoria) => ({
       ...categoria,
       actividades: categoria.actividades.filter((a) => a.consecutivo !== consecutivoActividad),
@@ -201,6 +305,7 @@ export class EvaluationStructure {
         this.guardando.set(false);
         this.guardada.set(estructura.guardada);
         this.categorias.set(estructura.categorias.map(aEdicion));
+        this.detalle.set(estructura);
         this.refrescarLaLista(asignatura.idMatricula, estructura.asignatura);
         void this.notificador.aviso(
           estructura.guardada
@@ -213,6 +318,16 @@ export class EvaluationStructure {
         this.mostrar(err);
       },
     });
+  }
+
+  private confirmarPerderNotas(cuantas: number): Promise<boolean> {
+    return this.notificador.confirmar(
+      cuantas === 1 ? 'Esta actividad tiene una nota' : `Hay ${cuantas} actividades con nota`,
+      cuantas === 1
+        ? 'Si la quitas y guardas, también se borra su nota.'
+        : 'Si las quitas y guardas, también se borran sus notas.',
+      'Quitar de todos modos',
+    );
   }
 
   /** La lista de atrás tiene que reflejar lo que acabó de guardar, sin volver a pedirla al servidor. */
@@ -276,6 +391,7 @@ function aEdicion(categoria: CategoriaDeEvaluacion): CategoriaEnEdicion {
       porcentaje: actividad.porcentaje,
       fechaProgramada: actividad.fechaProgramada,
       tipo: actividad.tipo,
+      nota: actividad.nota,
     })),
   };
 }

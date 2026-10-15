@@ -1,32 +1,69 @@
 <main class="screen evaluacion">
-  <header class="top-bar">
-    @if (seleccionada()) {
-      <button class="icon-button" type="button" (click)="volverALaLista()" aria-label="Volver a mis asignaturas">
+  @if (seleccionada()) {
+    <header class="top-bar">
+      <button class="icon-button" type="button" (click)="volverALaLista()" [attr.aria-label]="textoDelVolver()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
       </button>
-    } @else {
-      <a class="icon-button" routerLink="/cuenta/mi-cuenta" aria-label="Volver a mi cuenta">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-      </a>
-    }
-    <span class="top-bar__title">Mis notas</span>
-  </header>
+      <span class="top-bar__title">{{ textoDelVolver() }}</span>
+    </header>
+  }
 
   @if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
   }
 
   @if (seleccionada(); as asignatura) {
-    <!-- Paso 2: el árbol de la asignatura elegida. -->
+    <!-- Paso 2: la asignatura elegida, con dos vistas. -->
+    <div class="evaluacion__cabecera-vistas">
+      <h1 class="evaluacion__titulo">{{ asignatura.nombre }}</h1>
+      <p class="subtitle">{{ asignatura.codigoPeriodo }} · {{ asignatura.creditos }} créditos</p>
+      <div class="chips" role="group" aria-label="Qué quieres hacer">
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="vista() === 'notas'"
+          [attr.aria-pressed]="vista() === 'notas'"
+          (click)="cambiarVista('notas')"
+        >
+          Notas
+        </button>
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="vista() === 'estructura'"
+          [attr.aria-pressed]="vista() === 'estructura'"
+          (click)="cambiarVista('estructura')"
+        >
+          Estructura
+        </button>
+      </div>
+    </div>
+
+    @if (vista() === 'notas') {
+      @if (detalle(); as estructura) {
+        <app-activity-grades
+          [estructura]="estructura"
+          (cambiaronLasNotas)="alCambiarLasNotas($event)"
+          (irAEstructura)="cambiarVista('estructura')"
+          (quitarLoSubido)="quitarLoSubido()"
+        />
+      }
+    } @else {
     <section class="screen__body evaluacion__editor" aria-label="Estructura de evaluación">
       <div class="card evaluacion__cabecera">
-        <h1 class="evaluacion__titulo">{{ asignatura.nombre }}</h1>
-        <p class="subtitle">{{ asignatura.codigoPeriodo }} · {{ asignatura.creditos }} créditos</p>
         @if (!guardada()) {
           <p class="notice">
             Estos son los cortes con los que trabaja la universidad por defecto. Ajústalos a lo que te dijo
             tu docente y guarda; mientras no guardes, no hay nada registrado.
           </p>
+          <a
+            class="button button--soft"
+            routerLink="/calificaciones/importar-cmad"
+            [queryParams]="{ matricula: seleccionada()?.idMatricula }"
+            [state]="{ origen: '/calificaciones/mis-notas' }"
+          >
+            Importar mis actividades del CMAD
+          </a>
         }
       </div>
 
@@ -173,22 +210,24 @@
         {{ guardando() ? 'Guardando…' : 'Guardar' }}
       </button>
     </footer>
+    }
   } @else {
     <!-- Paso 1: elegir la asignatura. -->
     <section class="screen__body" aria-label="Mis asignaturas">
       <h1 class="evaluacion__titulo">Elige la asignatura</h1>
       <p class="subtitle">
-        Para cada una defines las categorías que suman 100 % y, dentro de cada categoría, sus actividades.
+        Son las del semestre que cursas ahora. Para cada una defines las categorías que suman 100 % y,
+        dentro de cada categoría, sus actividades.
       </p>
 
       @if (cargando()) {
         <p class="subtitle">Buscando tus asignaturas…</p>
       } @else if (asignaturas().length === 0) {
         <p class="notice">
-          Todavía no tienes asignaturas matriculadas en CundiApp. Importa tu Registro Académico Extendido y
-          aparecerán aquí.
+          No tienes asignaturas en curso en CundiApp. Importa tu Reporte de Horario y las del semestre
+          aparecerán aquí; las de semestres anteriores están en Mi historial.
         </p>
-        <a class="button button--soft" routerLink="/cuenta/importar-reporte">Importar mi reporte</a>
+        <a class="button button--soft" routerLink="/cuenta/importar-horario" [state]="{ origen: '/calificaciones/mis-notas' }">Importar mi horario</a>
       } @else {
         <ul class="evaluacion__lista">
           @for (asignatura of asignaturas(); track asignatura.idMatricula) {

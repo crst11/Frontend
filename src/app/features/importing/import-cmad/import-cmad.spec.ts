@@ -1,0 +1,350 @@
+import { Location } from '@angular/common';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
+import { NotifierService } from '../../../core/feedback/notifier.service';
+import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
+import { ImportCmad } from './import-cmad';
+import { LectorDeImagen } from './lector-de-imagen';
+
+describe('ImportCmad', () => {
+  const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn(), confirmar: vi.fn() };
+
+  const INGLES: AsignaturaMatriculada = {
+    idMatricula: 7,
+    codigoAsignatura: 'CAI1002020507',
+    nombre: 'Lengua Extranjera III',
+    creditos: 2,
+    codigoPeriodo: '2026-2',
+    estado: 'en_curso',
+    enCurso: true,
+    tieneEstructura: false,
+    categorias: 0,
+    actividades: 0,
+  };
+  const SISTEMAS: AsignaturaMatriculada = { ...INGLES, idMatricula: 8, codigoAsignatura: 'CAD612021520', nombre: 'Sistemas Operativos' };
+
+  function celdas(nombre: string, peso: string, nota: string): string {
+    return `<tr><td class="column-itemname"><a class="gradeitemheader">${nombre}</a></td><td class="column-weight">${peso}</td>
+      <td class="column-grade">${nota}</td><td class="column-range">0–5</td><td class="column-feedback">Hola Ana, bien hecho</td></tr>`;
+  }
+
+  const PAGINA = `<table class="generaltable user-grade"><tbody>
+    <tr><td class="column-itemname"><a class="gradeitemheader">603574/LENGUA EXTRANJERA III/FU/CAI1002020507/LE3-M1/28619</a></td></tr>
+    ${celdas('R1-A1-S1 ABOUT ROUTINES!', '50.00 %', '4.0')}
+    ${celdas('R1-A2-S2 BROCHURE.', '50.00 %', '-')}
+    <tr><td class="column-itemname">Cálculo total Total del curso</td><td class="column-weight">-</td><td class="column-grade">2.0</td><td class="column-range">0–5</td></tr>
+  </tbody></table>`;
+
+  function crear(
+    matricula: string | null = '7',
+    registrarNota = vi.fn().mockImplementation(() => of({ nota: 4, acumulado: { puntos: 2.0, porcentajeEvaluado: 50, promedioDeLoEvaluado: 4, actividadesCalificadas: 1, actividadesTotales: 2 } })),
+    guardar = vi.fn().mockReturnValue(of({})),
+    misAsignaturas = vi.fn().mockReturnValue(of([INGLES, SISTEMAS])),
+    estructuraDe = vi.fn().mockReturnValue(of({ categorias: [] })),
+  ) {
+    TestBed.configureTestingModule({
+      imports: [ImportCmad],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap(matricula ? { matricula } : {}) } } },
+        { provide: EvaluacionRepository, useValue: { misAsignaturas, guardar, registrarNota, estructuraDe } },
+        { provide: NotifierService, useValue: notificador },
+      ],
+    });
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    vi.spyOn(TestBed.inject(Location), 'getState').mockReturnValue({});
+    const fixture = TestBed.createComponent(ImportCmad);
+    fixture.detectChanges();
+    return { fixture, html: fixture.nativeElement as HTMLElement, guardar, registrarNota, misAsignaturas, navegar };
+  }
+
+  async function subirPagina(fixture: ReturnType<typeof crear>['fixture'], html: HTMLElement, contenido = PAGINA) {
+    const entrada = html.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const archivo = new File([contenido], 'cmad.html', { type: 'text/html' });
+    Object.defineProperty(entrada, 'files', { value: [archivo], configurable: true });
+    entrada.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  function boton(html: HTMLElement, texto: string): HTMLButtonElement {
+    return Array.from(html.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.includes(texto))!;
+  }
+
+  beforeEach(() => {
+    notificador.problema.mockReset().mockResolvedValue(undefined);
+  });
+
+  it('pide las asignaturas del semestre actual y deja elegida la que llega por la dirección', () => {
+    const { html, misAsignaturas } = crear('8');
+
+    expect(misAsignaturas).toHaveBeenCalledWith('actual');
+    const opciones = html.querySelectorAll<HTMLOptionElement>('select option');
+    expect(Array.from(opciones).map((o) => o.textContent?.trim())).toEqual(['Lengua Extranjera III', 'Sistemas Operativos']);
+    expect(html.querySelector<HTMLOptionElement>('select option:checked')?.textContent).toContain('Sistemas Operativos');
+  });
+
+  it('dice que el archivo no se sube y explica de dónde sale la tabla', () => {
+    const { fixture, html } = crear();
+
+    expect(html.textContent).toContain('no se sube a ningún servidor');
+    html.querySelector<HTMLButtonElement>('.import__guia-head')!.click();
+    fixture.detectChanges();
+    expect(html.textContent).toContain('Valoraciones');
+    expect(html.textContent).toContain('Ctrl+S');
+  });
+
+  it('sin asignaturas en curso manda a importar el horario', () => {
+    const { html } = crear('7', undefined, undefined, vi.fn().mockReturnValue(of([])));
+
+    expect(html.textContent).toContain('No tienes asignaturas en curso');
+    expect(html.querySelector('a[href="/cuenta/importar-horario"]')).not.toBeNull();
+  });
+
+  describe('con la página guardada', () => {
+    it('muestra lo detectado sin guardar nada y sin la retroalimentación', async () => {
+      const { fixture, html, guardar } = crear();
+
+      await subirPagina(fixture, html);
+
+      expect(html.textContent).toContain('Esto encontramos en el CMAD');
+      expect(html.querySelector<HTMLInputElement>('input[aria-label^="Nombre"]')?.value).toBe('R1-A1-S1 ABOUT ROUTINES!');
+      expect(html.textContent).toContain('Total del CMAD');
+      expect(html.textContent).not.toContain('Hola Ana');
+      expect(guardar).not.toHaveBeenCalled();
+    });
+
+    it('arma los cortes con el prefijo del nombre y los muestra con su parte de la nota', async () => {
+      const { fixture, html } = crear();
+
+      await subirPagina(fixture, html);
+
+      expect(html.querySelector('[aria-label="Corte R1"]')?.textContent).toContain('100 % de la nota');
+    });
+
+    it('al confirmar manda la estructura completa y después cada nota', async () => {
+      const { fixture, html, guardar, registrarNota } = crear();
+      await subirPagina(fixture, html);
+
+      boton(html, 'Confirmar y guardar').click();
+      await fixture.whenStable();
+
+      expect(guardar).toHaveBeenCalledWith(7, [
+        {
+          consecutivo: 1,
+          nombre: 'R1',
+          porcentaje: 100,
+          origen: 'estudiante',
+          actividades: [
+            { consecutivo: 1, nombre: 'R1-A1-S1 ABOUT ROUTINES!', porcentaje: 50, fechaProgramada: null, tipo: 'taller' },
+            { consecutivo: 2, nombre: 'R1-A2-S2 BROCHURE.', porcentaje: 50, fechaProgramada: null, tipo: 'taller' },
+          ],
+        },
+      ]);
+      expect(registrarNota).toHaveBeenCalledTimes(1);
+      expect(registrarNota).toHaveBeenCalledWith(7, 1, 1, 4);
+    });
+
+    it('compara el acumulado del servidor con el total del CMAD y dice que coincide', async () => {
+      const { fixture, html } = crear();
+      await subirPagina(fixture, html);
+
+      boton(html, 'Confirmar y guardar').click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(html.textContent).toContain('Listo, cargamos tus actividades');
+      expect(html.textContent).toContain('Coincide con el CMAD');
+    });
+
+    it('si el acumulado no cuadra con el total del CMAD, lo avisa como problema', async () => {
+      const registrar = vi.fn().mockReturnValue(of({ nota: 4, acumulado: { puntos: 3.4, porcentajeEvaluado: 50, promedioDeLoEvaluado: 4, actividadesCalificadas: 1, actividadesTotales: 2 } }));
+      const { fixture, html } = crear('7', registrar);
+      await subirPagina(fixture, html);
+
+      boton(html, 'Confirmar y guardar').click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(html.querySelector('[role="alert"]')?.textContent).toContain('No coincide');
+    });
+
+    it('una nota que no es un número entre 0 y 5 impide guardar', async () => {
+      const { fixture, html } = crear();
+      await subirPagina(fixture, html);
+
+      const nota = html.querySelector<HTMLInputElement>('input[aria-label^="Nota de"]')!;
+      nota.value = '9';
+      nota.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      expect(boton(html, 'Confirmar y guardar').disabled).toBe(true);
+      expect(html.textContent).toContain('no son un número entre 0 y 5');
+    });
+
+    it('una actividad que se deja fuera no se guarda y los porcentajes se reparten de nuevo', async () => {
+      const { fixture, html, guardar } = crear();
+      await subirPagina(fixture, html);
+
+      html.querySelectorAll<HTMLInputElement>('.cmad__incluir')[1].click();
+      fixture.detectChanges();
+      boton(html, 'Confirmar y guardar').click();
+      await fixture.whenStable();
+
+      const estructura = guardar.mock.calls[0][1];
+      expect(estructura[0].actividades).toHaveLength(1);
+      expect(estructura[0].actividades[0].porcentaje).toBe(100);
+    });
+
+    it('avisa si la tabla es de otro curso', async () => {
+      const { fixture, html } = crear('8');
+
+      await subirPagina(fixture, html);
+
+      expect(html.querySelector('[role="alert"]')?.textContent).toContain('no parece ser de Sistemas Operativos');
+    });
+
+    it('si la asignatura ya tenía actividades dice que se reemplazan', async () => {
+      const conEstructura = vi.fn().mockReturnValue(of([{ ...INGLES, tieneEstructura: true }, SISTEMAS]));
+      const { fixture, html } = crear('7', undefined, undefined, conEstructura);
+
+      await subirPagina(fixture, html);
+
+      expect(html.textContent).toContain('se reemplazan por estas');
+    });
+
+    it('si ya tenía actividades dice qué cambia: lo que se quita y lo nuevo', async () => {
+      const conEstructura = vi.fn().mockReturnValue(of([{ ...INGLES, tieneEstructura: true }, SISTEMAS]));
+      const estructuraDe = vi.fn().mockReturnValue(
+        of({ categorias: [{ consecutivo: 1, nombre: 'R1', porcentaje: 100, origen: 'estudiante', actividades: [{ consecutivo: 1, nombre: 'Actividad vieja', porcentaje: 100, nota: 3 }] }] }),
+      );
+      const { fixture, html } = crear('7', undefined, undefined, conEstructura, estructuraDe);
+
+      await subirPagina(fixture, html);
+
+      const cambio = html.querySelector('.import__comparacion')!;
+      expect(estructuraDe).toHaveBeenCalledWith(7);
+      expect(cambio.textContent).toContain('Se quita: Actividad vieja (tenía 3)');
+      expect(cambio.textContent).toContain('Nueva:');
+    });
+
+    it('un archivo que no es la tabla muestra el motivo y no avanza', async () => {
+      const { fixture, html } = crear();
+
+      await subirPagina(fixture, html, '<html><body>hola</body></html>');
+
+      expect(html.querySelector('[role="alert"]')?.textContent).toContain('No encontramos la tabla');
+      expect(html.textContent).not.toContain('Esto encontramos');
+    });
+
+    it('si el servidor rechaza la estructura lo dice con su motivo y no sigue con las notas', async () => {
+      const guardar = vi.fn().mockReturnValue(throwError(() => ({ status: 422, error: { detail: 'Las categorías deben sumar 100 %' } })));
+      const { fixture, html, registrarNota } = crear('7', undefined, guardar);
+      await subirPagina(fixture, html);
+
+      boton(html, 'Confirmar y guardar').click();
+      await fixture.whenStable();
+
+      expect(notificador.problema).toHaveBeenCalledWith('No pudimos guardar las actividades', 'Las categorías deben sumar 100 %');
+      expect(registrarNota).not.toHaveBeenCalled();
+    });
+
+    it('ver mis notas lleva a esa asignatura', async () => {
+      const { fixture, html, navegar } = crear();
+      await subirPagina(fixture, html);
+      boton(html, 'Confirmar y guardar').click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      boton(html, 'Ver mis notas').click();
+
+      expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], { queryParams: { matricula: 7 } });
+    });
+  });
+
+  describe('con una imagen soltada', () => {
+    const TEXTO = 'Tarea R1-A1-S1 ABOUT\t50.00 %\t4.0\t0–5\nTarea R1-A2-S2 BROCHURE\t50.00 %\t-\t0–5';
+
+    function soltar(html: HTMLElement, archivo: File): void {
+      const evento = new Event('drop', { cancelable: true, bubbles: true });
+      Object.defineProperty(evento, 'dataTransfer', { value: { files: [archivo] } });
+      html.querySelector('.import__zona')!.dispatchEvent(evento);
+    }
+
+    it('se lee con OCR en el navegador y avisa que se revise lo detectado', async () => {
+      const leer = vi.fn().mockResolvedValue(TEXTO);
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(leer).toHaveBeenCalled();
+      expect(html.textContent).toContain('Esto encontramos en el CMAD');
+      expect(html.textContent).toContain('Leímos la tabla de una imagen');
+    });
+
+    it('una nota a la que el OCR le perdió la coma («41») se corrige a 4.1 y se deja revisar', async () => {
+      const leer = vi.fn().mockResolvedValue('Tarea R1-A1-S1 ABOUT\t50.00 %\t41\t0–5\nTarea R1-A2-S2 BROCHURE\t50.00 %\t4.7\t0–5');
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const notas = Array.from(html.querySelectorAll<HTMLInputElement>('input[aria-label^="Nota de"]')).map((i) => i.value);
+      expect(notas).toEqual(['4.1', '4.7']);
+      expect(html.textContent).toContain('Leímos la tabla de una imagen');
+    });
+
+    it('si el OCR falla lo dice y no avanza', async () => {
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer: vi.fn().mockRejectedValue(new Error('sin red')) } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(html.querySelector('[role="alert"]')?.textContent).toContain('No pudimos leer la imagen');
+      expect(html.textContent).not.toContain('Esto encontramos en el CMAD');
+    });
+  });
+
+  describe('con la tabla pegada', () => {
+    function pegar(fixture: ReturnType<typeof crear>['fixture'], html: HTMLElement, texto: string) {
+      const area = html.querySelector<HTMLTextAreaElement>('textarea')!;
+      area.value = texto;
+      area.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      boton(html, 'Leer lo pegado').click();
+      fixture.detectChanges();
+    }
+
+    it('lee el texto y muestra lo detectado', () => {
+      const { fixture, html } = crear();
+
+      pegar(fixture, html, 'Tarea R1-A1-S1 ABOUT\t50.00 %\t4.0\t0–5\t80 %\tHola Ana\t4 %\nTarea R1-A2-S2 BROCHURE\t50.00 %\t-\t0–5\t-\t\t0 %');
+
+      expect(html.textContent).toContain('Esto encontramos en el CMAD');
+      expect(html.textContent).not.toContain('Hola Ana');
+    });
+
+    it('el botón de leer espera a que haya texto', () => {
+      const { html } = crear();
+
+      expect(boton(html, 'Leer lo pegado').disabled).toBe(true);
+    });
+
+    it('un texto que no es la tabla lo dice', () => {
+      const { fixture, html } = crear();
+
+      pegar(fixture, html, 'esto no es la tabla');
+
+      expect(html.querySelector('[role="alert"]')?.textContent).toContain('No encontramos actividades');
+    });
+  });
+});

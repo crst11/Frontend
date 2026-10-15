@@ -1,0 +1,65 @@
+<main class="screen todo">
+  @if (cargando()) {
+    <p class="subtitle">Calculando tu avance…</p>
+  } @else if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+    <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
+  } @else if (avance(); as datos) {
+    <section class="card todo__avance" aria-label="Tu avance">
+      <h2 class="todo__titulo">
+        @if (completo()) {
+          Tu información está al día
+        } @else {
+          Sube tus archivos y arma tu semestre
+        }
+      </h2>
+      <div
+        class="todo__barra"
+        role="progressbar"
+        aria-label="Avance de tu información"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="datos.porcentaje"
+        [attr.aria-valuetext]="datos.porcentaje + ' por ciento, ' + datos.hechos + ' de ' + datos.total + ' pasos'"
+      >
+        <div class="todo__relleno" [style.width.%]="datos.porcentaje"></div>
+      </div>
+      <p class="todo__cifras">
+        <strong>{{ datos.porcentaje }} %</strong>
+        <span>{{ datos.hechos }} de {{ datos.total }} pasos</span>
+      </p>
+      @if (!completo()) {
+        <p class="subtitle">
+          Además de los dos reportes, sube las actividades de cada materia que cursas este semestre.
+        </p>
+      }
+    </section>
+
+    <ol class="todo__pasos" aria-label="Lo que falta por subir">
+      @for (paso of datos.pasos; track paso.tipo + (paso.idMatricula ?? '')) {
+        <li class="card todo__paso" [class.todo__paso--hecho]="paso.hecho">
+          <span class="todo__marca" aria-hidden="true">
+            @if (paso.hecho) {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7" /></svg>
+            }
+          </span>
+          <span class="todo__texto">
+            <span class="todo__nombre">{{ paso.texto }}</span>
+            <span class="todo__estado">{{ paso.hecho ? 'Listo' : 'Falta subirlo' }}</span>
+          </span>
+          <a
+            class="button todo__boton"
+            [class.button--primary]="!paso.hecho"
+            [class.button--outline]="paso.hecho"
+            [routerLink]="destinoDe(paso)"
+            [queryParams]="parametrosDe(paso)"
+            [state]="{ origen: '/importar' }"
+            [attr.aria-label]="textoDelBoton(paso) + ': ' + paso.texto"
+          >
+            {{ textoDelBoton(paso) }}
+          </a>
+        </li>
+      }
+    </ol>
+  }
+</main>
