@@ -13,6 +13,7 @@ import {
 import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { origenDeLaImportacion } from '../origen-de-la-importacion';
 import { LectorDeImagen } from './lector-de-imagen';
+import { extraerHtmlDeMhtml } from './mhtml';
 import {
   TablaDelCmad,
   TablaDelCmadNoLegible,
@@ -167,7 +168,7 @@ export class ImportCmad {
     return this.procesar(archivo);
   }
 
-  /** Una imagen se lee con OCR y lo demás es la página guardada; todo en el navegador, nada se sube. */
+  /** Una imagen se lee con OCR y lo demás es la página guardada (.html o .mht); todo en el navegador, nada se sube. */
   private async procesar(archivo: File): Promise<void> {
     if (this.leyendoImagen()) {
       return;
@@ -176,7 +177,8 @@ export class ImportCmad {
       await this.leerImagen(archivo);
       return;
     }
-    const contenido = await archivo.text();
+    // En el teléfono, Chrome guarda la página como .mht (MHTML): se toma de ahí la parte HTML.
+    const contenido = extraerHtmlDeMhtml(await archivo.text());
     this.vieneDeImagen.set(false);
     this.leer(() => leerHtmlDelCmad(contenido), contenido);
   }
