@@ -152,7 +152,7 @@ describe('MySchedule', () => {
     expect(tarde.textContent).not.toContain('Docente');
   });
 
-  it('una clase se despliega hacia abajo con sus actividades y notas, y se vuelve a recoger', () => {
+  it('una clase se despliega hacia abajo con lo que falta por calificar, y se vuelve a recoger', () => {
     const estructuraDe = vi.fn().mockReturnValue(
       of({
         categorias: [
@@ -173,18 +173,17 @@ describe('MySchedule', () => {
     chipDelDia(html, 'Lunes').click();
     fixture.detectChanges();
 
-    boton(html, 'Ver actividades y notas').click();
+    boton(html, 'Ver lo que falta por calificar').click();
     fixture.detectChanges();
 
     expect(estructuraDe).toHaveBeenCalledWith(7);
     const panel = html.querySelector('.horario__notas')!;
-    expect(panel.textContent).toContain('R1 · 100 %');
-    expect(panel.textContent).toContain('Taller 1');
-    expect(panel.textContent).toContain('4.1');
-    expect(panel.textContent).toContain('Sin nota');
-    expect(boton(html, 'Ocultar actividades y notas').getAttribute('aria-expanded')).toBe('true');
+    expect(panel.textContent).toContain('Te falta 1 actividad por calificar');
+    expect(panel.textContent).toContain('Taller 2');
+    expect(panel.textContent).not.toContain('Taller 1');
+    expect(boton(html, 'Ocultar lo que falta por calificar').getAttribute('aria-expanded')).toBe('true');
 
-    boton(html, 'Ocultar actividades y notas').click();
+    boton(html, 'Ocultar lo que falta por calificar').click();
     fixture.detectChanges();
 
     expect(html.querySelector('.horario__notas')).toBeNull();
@@ -195,7 +194,7 @@ describe('MySchedule', () => {
     chipDelDia(html, 'Lunes').click();
     fixture.detectChanges();
 
-    boton(html, 'Ver actividades y notas').click();
+    boton(html, 'Ver lo que falta por calificar').click();
     fixture.detectChanges();
 
     const subir = html.querySelector<HTMLAnchorElement>('.horario__notas a')!;
