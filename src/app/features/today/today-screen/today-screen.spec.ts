@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
+import { EvaluacionRepository } from '../../../data-access/evaluacion.repository';
 import { TodayScreen } from './today-screen';
 
 describe('TodayScreen', () => {
@@ -66,20 +67,26 @@ describe('TodayScreen', () => {
 
   const AVANCE_A_MEDIAS: AvanceDeInformacion = { porcentaje: 50, hechos: 2, total: 4, pasos: [] };
 
-  function crear(miDia = vi.fn().mockReturnValue(of(MARTES)), avance: AvanceDeInformacion = AVANCE_A_MEDIAS) {
+  const SIN_ACTIVIDADES = { categorias: [] };
+
+  function crear(
+    miDia = vi.fn().mockReturnValue(of(MARTES)),
+    avance: AvanceDeInformacion = AVANCE_A_MEDIAS,
+    estructuraDe = vi.fn().mockReturnValue(of(SIN_ACTIVIDADES)),
+  ) {
     TestBed.configureTestingModule({
       imports: [TodayScreen],
       providers: [
         provideRouter([]),
         { provide: DiaRepository, useValue: { miDia } },
         { provide: AvanceRepository, useValue: { miAvance: vi.fn().mockReturnValue(of(avance)) } },
+        { provide: EvaluacionRepository, useValue: { estructuraDe } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
-    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(TodayScreen);
     fixture.detectChanges();
-    return { fixture, html: fixture.nativeElement as HTMLElement, miDia, navegar };
+    return { fixture, html: fixture.nativeElement as HTMLElement, miDia, estructuraDe };
   }
 
   it('muestra la fecha de hoy y las clases que tocan con hora, salón y docente', () => {
@@ -178,15 +185,61 @@ describe('TodayScreen', () => {
     expect(html.querySelector('.hoy__avance')).toBeNull();
   });
 
-  it('tocar una clase abre las actividades de esa asignatura', () => {
-    const { html, navegar } = crear();
+  it('tocar una clase despliega ahí mismo las actividades que le faltan por calificar, sin cambiar de pantalla', () => {
+    const estructuraDe = vi.fn().mockReturnValue(
+      of({
+        categorias: [
+          {
+            consecutivo: 1,
+            nombre: 'Corte 1',
+            porcentaje: 30,
+            origen: 'cmad',
+            actividades: [
+              { consecutivo: 1, nombre: 'Parcial', porcentaje: 60, fechaProgramada: '2026-10-20', nota: null },
+              { consecutivo: 2, nombre: 'Quiz', porcentaje: 40, fechaProgramada: null, nota: 4.5 },
+            ],
+          },
+        ],
+      }),
+    );
+    const { fixture, html } = crear(undefined, undefined, estructuraDe);
 
-    html.querySelectorAll<HTMLButtonElement>('.hoy__clase')[0].click();
+    const clase = html.querySelectorAll<HTMLButtonElement>('.hoy__clase')[0];
+    clase.click();
+    fixture.detectChanges();
 
-    expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], {
-      queryParams: { matricula: 7 },
-      state: { origen: '/inicio' },
-    });
+    expect(estructuraDe).toHaveBeenCalledWith(7);
+    expect(clase.getAttribute('aria-expanded')).toBe('true');
+    const panel = html.querySelector('.hoy__pendientes')!;
+    expect(panel.textContent).toContain('Te falta 1 actividad por calificar');
+    expect(panel.textContent).toContain('Parcial');
+    expect(panel.textContent).toContain('20 oct');
+    expect(panel.textContent).not.toContain('Quiz');
+  });
+
+  it('tocar de nuevo la clase recoge las actividades', () => {
+    const { fixture, html } = crear();
+    const clase = html.querySelectorAll<HTMLButtonElement>('.hoy__clase')[0];
+
+    clase.click();
+    fixture.detectChanges();
+    expect(html.querySelector('.hoy__pendientes')).not.toBeNull();
+
+    clase.click();
+    fixture.detectChanges();
+    expect(html.querySelector('.hoy__pendientes')).toBeNull();
+    expect(clase.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('la clase sin actividades subidas ofrece subirlas, de vuelta a Inicio', () => {
+    const { fixture, html } = crear();
+
+    html.querySelectorAll<HTMLButtonElement>('.hoy__clase')[1].click();
+    fixture.detectChanges();
+
+    const subir = html.querySelector<HTMLAnchorElement>('.hoy__pendientes a')!;
+    expect(subir.textContent).toContain('Subir actividades');
+    expect(subir.getAttribute('href')).toContain('/calificaciones/importar-cmad?matricula=');
   });
 
   it('se actualiza solo cada minuto, que es lo que cambia la clase que sigue y el día a la medianoche', () => {

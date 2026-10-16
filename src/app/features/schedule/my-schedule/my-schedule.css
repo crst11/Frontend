@@ -138,35 +138,6 @@
   padding-top: 4px;
 }
 
-.horario__corte {
-  margin: 8px 0 0;
-  font-size: 14px;
-  color: var(--color-muted);
-}
-
-.horario__actividades {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.horario__actividades li {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: var(--color-primary-soft);
-}
-
-.horario__sin-nota {
-  color: var(--color-muted);
-  font-weight: 500;
-}
-
 /* Los filtros arrancan plegados: lo primero que se ve son las clases. */
 .horario__resumen {
   display: flex;

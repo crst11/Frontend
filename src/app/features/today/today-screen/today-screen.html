@@ -58,7 +58,9 @@
                 [class.hoy__clase--en-curso]="clase.estado === 'en_curso'"
                 [class.hoy__clase--proxima]="clase.estado === 'proxima'"
                 [class.hoy__clase--pasada]="clase.estado === 'pasada'"
-                (click)="abrirAsignatura(clase)"
+                [attr.aria-expanded]="estaAbierta(clase)"
+                [attr.aria-controls]="'pendientes-' + claveDe(clase)"
+                (click)="alternar(clase)"
               >
                 <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
                 @if (etiquetaDeEstado(clase); as etiqueta) {
@@ -75,6 +77,11 @@
                   {{ textoDeActividades(clase) }}
                 </span>
               </button>
+              @if (estaAbierta(clase)) {
+                <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
+                  <app-pending-activities [idMatricula]="clase.idMatricula" origen="/inicio" />
+                </div>
+              }
             </li>
           }
         </ul>
@@ -85,13 +92,24 @@
         <ul class="hoy__clases hoy__clases--siguiente" aria-label="Tus clases del próximo día">
           @for (clase of siguiente.clases; track clase.idMatricula + clase.horaInicio) {
             <li>
-              <button class="card hoy__clase" type="button" (click)="abrirAsignatura(clase)">
+              <button
+                class="card hoy__clase"
+                type="button"
+                [attr.aria-expanded]="estaAbierta(clase)"
+                [attr.aria-controls]="'pendientes-' + claveDe(clase)"
+                (click)="alternar(clase)"
+              >
                 <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
                 <span class="hoy__asignatura">{{ clase.asignatura }}</span>
                 @if (lugarDe(clase); as lugar) {
                   <span class="hoy__detalle">{{ lugar }}</span>
                 }
               </button>
+              @if (estaAbierta(clase)) {
+                <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
+                  <app-pending-activities [idMatricula]="clase.idMatricula" origen="/inicio" />
+                </div>
+              }
             </li>
           }
         </ul>
