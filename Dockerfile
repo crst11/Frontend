@@ -36,5 +36,7 @@ ENV BACKEND_URL=http://backend:8080
 
 # nginx-unprivileged ya corre como el usuario 101 y escucha en el 8080.
 EXPOSE 8080
-HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
+# --start-interval: durante el arranque pregunta cada 1 s y no cada 15, asi que el contenedor se
+# declara sano apenas nginx escucha. Pasado el --start-period vuelve a preguntar cada 15 s.
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --start-interval=1s --retries=3 \
   CMD wget -q -O /dev/null http://127.0.0.1:8080/salud || exit 1
