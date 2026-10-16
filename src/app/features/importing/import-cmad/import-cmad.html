@@ -219,7 +219,7 @@
         [desactivado]="leyendoImagen()"
         (archivoSoltado)="soltado($event)"
       >
-        <input class="import__archivo" type="file" accept=".html,.htm,text/html,image/*" [disabled]="leyendoImagen()" (change)="archivoElegido($event)" />
+        <input class="import__archivo" type="file" accept=".html,.htm,.mht,.mhtml,text/html,multipart/related,message/rfc822,application/x-mimearchive,image/*" [disabled]="leyendoImagen()" (change)="archivoElegido($event)" />
         <span class="import__zona-icono" aria-hidden="true">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
@@ -227,7 +227,7 @@
           </svg>
         </span>
         <span class="import__zona-texto">Toca aquí o suelta un archivo</span>
-        <span class="import__zona-ayuda">La página guardada del CMAD (.html) o una foto o captura de la tabla</span>
+        <span class="import__zona-ayuda">La página guardada del CMAD (.html, o .mht si la descargaste desde el teléfono) o una foto o captura de la tabla</span>
       </label>
 
       <p class="cmad__o">o pega la tabla</p>

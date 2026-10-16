@@ -60,9 +60,15 @@ describe('ImportCmad', () => {
     return { fixture, html: fixture.nativeElement as HTMLElement, guardar, registrarNota, misAsignaturas, navegar };
   }
 
-  async function subirPagina(fixture: ReturnType<typeof crear>['fixture'], html: HTMLElement, contenido = PAGINA) {
+  async function subirPagina(
+    fixture: ReturnType<typeof crear>['fixture'],
+    html: HTMLElement,
+    contenido = PAGINA,
+    nombre = 'cmad.html',
+    tipo = 'text/html',
+  ) {
     const entrada = html.querySelector<HTMLInputElement>('input[type="file"]')!;
-    const archivo = new File([contenido], 'cmad.html', { type: 'text/html' });
+    const archivo = new File([contenido], nombre, { type: tipo });
     Object.defineProperty(entrada, 'files', { value: [archivo], configurable: true });
     entrada.dispatchEvent(new Event('change'));
     await fixture.whenStable();
@@ -114,6 +120,47 @@ describe('ImportCmad', () => {
       expect(html.textContent).toContain('Total del CMAD');
       expect(html.textContent).not.toContain('Hola Ana');
       expect(guardar).not.toHaveBeenCalled();
+    });
+
+    it('lee igual la página descargada desde el teléfono, que Chrome guarda como .mht', async () => {
+      const mht = [
+        'From: <Saved by Blink>',
+        'MIME-Version: 1.0',
+        'Content-Type: multipart/related;',
+        '\ttype="text/html";',
+        '\tboundary="----MultipartBoundary--prueba----"',
+        '',
+        '------MultipartBoundary--prueba----',
+        'Content-Type: text/html',
+        'Content-Transfer-Encoding: binary',
+        '',
+        PAGINA,
+        '------MultipartBoundary--prueba----',
+        'Content-Type: text/css',
+        'Content-Transfer-Encoding: binary',
+        '',
+        'body { color: red }',
+        '------MultipartBoundary--prueba------',
+        '',
+      ].join('\r\n');
+      const { fixture, html, guardar } = crear();
+
+      await subirPagina(fixture, html, mht, 'Usuario CMAD.mht', 'multipart/related');
+
+      expect(html.textContent).toContain('Esto encontramos en el CMAD');
+      expect(html.querySelector<HTMLInputElement>('input[aria-label^="Nombre"]')?.value).toBe('R1-A1-S1 ABOUT ROUTINES!');
+      expect(html.textContent).toContain('Total del CMAD');
+      expect(html.textContent).not.toContain('Hola Ana');
+      expect(guardar).not.toHaveBeenCalled();
+    });
+
+    it('ofrece elegir un .mht en el selector de archivos', () => {
+      const { html } = crear();
+
+      const aceptados = html.querySelector<HTMLInputElement>('input[type="file"]')!.accept;
+
+      expect(aceptados).toContain('.mht');
+      expect(aceptados).toContain('.mhtml');
     });
 
     it('arma los cortes con el prefijo del nombre y los muestra con su parte de la nota', async () => {
