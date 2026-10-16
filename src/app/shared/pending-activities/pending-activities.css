@@ -1,0 +1,55 @@
+.pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.pendientes__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.pendientes__al-dia {
+  margin: 0;
+  color: var(--color-primary-strong);
+  font-weight: 600;
+}
+
+.pendientes__corte {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.pendientes__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pendientes__lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--color-primary-soft);
+}
+
+.pendientes__datos {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  color: var(--color-muted);
+}
+
+.pendientes__datos strong {
+  color: var(--color-ink);
+}

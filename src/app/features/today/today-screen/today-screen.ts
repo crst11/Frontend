@@ -1,11 +1,12 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
+import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
 
 /** Cada cuánto se vuelve a preguntar: es lo que mantiene la próxima clase y el cambio de día al día. */
 const CADA_CUANTO_SE_ACTUALIZA_EN_MS = 60_000;
@@ -32,7 +33,7 @@ const DIAS: Record<string, string> = {
  */
 @Component({
   selector: 'app-today-screen',
-  imports: [RouterLink],
+  imports: [RouterLink, PendingActivities],
   templateUrl: './today-screen.html',
   styleUrl: './today-screen.css',
 })
@@ -40,12 +41,13 @@ export class TodayScreen {
   private readonly repositorio = inject(DiaRepository);
   private readonly avances = inject(AvanceRepository);
   private readonly notificador = inject(NotifierService);
-  private readonly router = inject(Router);
   private readonly documento = inject(DOCUMENT);
 
   protected readonly dia = signal<MiDia | null>(null);
   /** Cuánta información lleva subida; es una ayuda, así que si no llega la pantalla sigue sin ella. */
   protected readonly avance = signal<AvanceDeInformacion | null>(null);
+  /** Las clases desplegadas, por `idMatricula-horaInicio`: sobrevive a las actualizaciones de cada minuto. */
+  protected readonly abiertas = signal<ReadonlySet<string>>(new Set());
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
 
@@ -143,9 +145,22 @@ export class TodayScreen {
     return clase.actividades === 1 ? '1 actividad' : `${clase.actividades} actividades`;
   }
 
-  /** Tocar una clase abre las actividades de su asignatura si ya están, y si no, ofrece subirlas. */
-  protected abrirAsignatura(clase: ClaseDelDia): void {
-    void this.router.navigate(['/calificaciones/mis-notas'], { queryParams: { matricula: clase.idMatricula }, state: { origen: '/inicio' } });
+  protected claveDe(clase: ClaseDelDia): string {
+    return `${clase.idMatricula}-${clase.horaInicio}`;
+  }
+
+  protected estaAbierta(clase: ClaseDelDia): boolean {
+    return this.abiertas().has(this.claveDe(clase));
+  }
+
+  /** Tocar una clase despliega o recoge, bajo ella, las actividades de su asignatura que no tienen nota. */
+  protected alternar(clase: ClaseDelDia): void {
+    const clave = this.claveDe(clase);
+    const nuevas = new Set(this.abiertas());
+    if (!nuevas.delete(clave)) {
+      nuevas.add(clave);
+    }
+    this.abiertas.set(nuevas);
   }
 }
 
