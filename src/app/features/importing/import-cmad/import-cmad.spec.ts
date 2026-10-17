@@ -352,6 +352,8 @@ describe('ImportCmad', () => {
       expect(guia).toContain('Ctrl + S');
       expect(guia).toContain('.html');
       expect(guia).toContain('En el teléfono Android (Chrome)');
+      expect(guia).toContain('mantén presionada la pantalla en un espacio en blanco');
+      expect(guia).toContain('Descargar');
       expect(guia).toContain('.mht');
     });
 
