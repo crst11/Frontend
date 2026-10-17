@@ -19,11 +19,15 @@ export interface TextoEncontrado {
   x: number;
   y: number;
   alto: number;
+  /** Hasta dónde llega a la derecha. Con él se sabe si entre dos trozos hay el hueco de una celda. */
+  xFin?: number;
 }
 
 /**
  * Junta los trozos que están a la misma altura en una línea, de izquierda a derecha, y las líneas de
  * arriba abajo. Así una fila de la tabla (nombre, peso, nota y rango) sale como una sola línea de texto.
+ * Entre dos trozos separados por un hueco más ancho que una letra y media se pone un tabulador, como el
+ * de una tabla copiada: así se distingue una celda de la siguiente (el nombre de la retroalimentación).
  */
 export function juntarEnLineas(trozos: TextoEncontrado[]): string {
   const lineas: { y: number; alto: number; trozos: TextoEncontrado[] }[] = [];
@@ -35,15 +39,28 @@ export function juntarEnLineas(trozos: TextoEncontrado[]): string {
       lineas.push({ y: trozo.y, alto: trozo.alto, trozos: [trozo] });
     }
   }
-  return lineas.map((l) => [...l.trozos].sort((a, b) => a.x - b.x).map((t) => t.texto).join(' ')).join('\n');
+  return lineas.map((l) => unirTrozos([...l.trozos].sort((a, b) => a.x - b.x))).join('\n');
 }
 
-/** El texto que devuelve el OCR sin las rayas de la tabla ni los espacios de más. */
+function unirTrozos(trozos: TextoEncontrado[]): string {
+  return trozos
+    .map((trozo, i) => {
+      const previo = trozos[i - 1];
+      if (!previo) {
+        return trozo.texto;
+      }
+      const hueco = previo.xFin === undefined ? 0 : trozo.x - previo.xFin;
+      return (hueco > Math.max(previo.alto, trozo.alto) * 1.5 ? '\t' : ' ') + trozo.texto;
+    })
+    .join('');
+}
+
+/** El texto que devuelve el OCR sin las rayas de la tabla ni los espacios de más (los tabuladores se conservan). */
 export function limpiarTextoDeOcr(texto: string): string {
   return texto
     .replace(/[|¦]/g, ' ')
     .split('\n')
-    .map((linea) => linea.replace(/[ \t]+/g, ' ').trim())
+    .map((linea) => linea.replace(/ +/g, ' ').replace(/ ?\t[ \t]*/g, '\t').trim())
     .filter((linea) => linea !== '')
     .join('\n');
 }
@@ -88,9 +105,11 @@ export class LectorDeImagen {
       juntarEnLineas(
         resultado.items.map((item) => {
           const ys = item.poly.map((punto) => punto[1]);
+          const xs = item.poly.map((punto) => punto[0]);
           return {
             texto: item.text,
-            x: Math.min(...item.poly.map((punto) => punto[0])),
+            x: Math.min(...xs),
+            xFin: Math.max(...xs),
             y: ys.reduce((suma, y) => suma + y, 0) / ys.length,
             alto: Math.max(...ys) - Math.min(...ys),
           };
