@@ -32,6 +32,14 @@
       }
     </div>
 
+    <a
+      class="button button--outline notas__simular"
+      routerLink="/simulador"
+      [queryParams]="{ asignatura: estructura().asignatura.idMatricula }"
+    >
+      Simular lo que me falta
+    </a>
+
     @if (error(); as mensaje) {
       <p class="alert" role="alert">{{ mensaje }}</p>
     }
