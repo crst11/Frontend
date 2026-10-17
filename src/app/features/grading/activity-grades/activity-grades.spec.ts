@@ -119,6 +119,13 @@ describe('ActivityGrades', () => {
     expect(html.textContent).toContain('0 de 2 actividades');
   });
 
+  it('ofrece simular lo que falta en esa asignatura (SCRUM-34)', () => {
+    const { html } = crear();
+
+    const enlace = html.querySelector<HTMLAnchorElement>('.notas__simular');
+    expect(enlace?.getAttribute('href')).toBe(`/simulador?asignatura=${ESTRUCTURA.asignatura.idMatricula}`);
+  });
+
   it('una categoría sin actividades manda a la estructura en vez de mostrar un campo', () => {
     const { html } = crear();
 
