@@ -6,6 +6,7 @@ import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 import { EvaluacionRepository } from '../../../data-access/evaluacion.repository';
+import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.repository';
 import { TodayScreen } from './today-screen';
 
 describe('TodayScreen', () => {
@@ -73,6 +74,7 @@ describe('TodayScreen', () => {
     miDia = vi.fn().mockReturnValue(of(MARTES)),
     avance: AvanceDeInformacion = AVANCE_A_MEDIAS,
     estructuraDe = vi.fn().mockReturnValue(of(SIN_ACTIVIDADES)),
+    pendientes: Pendiente[] = [],
   ) {
     TestBed.configureTestingModule({
       imports: [TodayScreen],
@@ -81,6 +83,7 @@ describe('TodayScreen', () => {
         { provide: DiaRepository, useValue: { miDia } },
         { provide: AvanceRepository, useValue: { miAvance: vi.fn().mockReturnValue(of(avance)) } },
         { provide: EvaluacionRepository, useValue: { estructuraDe } },
+        { provide: PendienteRepository, useValue: { listar: vi.fn().mockReturnValue(of(pendientes)) } },
         { provide: NotifierService, useValue: notificador },
       ],
     });
@@ -286,5 +289,52 @@ describe('TodayScreen', () => {
 
     expect(html.querySelector('.hoy__fecha')).not.toBeNull();
     expect(html.querySelector('[role="alert"]')).toBeNull();
+  });
+  describe('pendientes por atender', () => {
+    const base: Pendiente = {
+      id: 1,
+      titulo: 'Taller de redes',
+      descripcion: null,
+      fechaLimite: '2026-10-14T04:59:00Z',
+      prioridad: 'alta',
+      estado: 'abierto',
+      situacion: 'urgente',
+      idMatricula: null,
+    };
+    const sinEstructura = () => vi.fn().mockReturnValue(of({ categorias: [] }));
+
+    it('muestra los vencidos y los que vencen pronto, y deja fuera los lejanos', () => {
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [
+        { ...base, id: 1, titulo: 'Ensayo atrasado', situacion: 'vencido' },
+        base,
+        { ...base, id: 3, titulo: 'Proyecto final', situacion: 'proximo' },
+      ]);
+
+      const items = html.querySelectorAll('.hoy__por-atender-item');
+      expect(items).toHaveLength(2);
+      expect(items[0].textContent).toContain('Ensayo atrasado');
+      expect(items[0].textContent).toContain('Vencido');
+      expect(items[1].textContent).toContain('Vence pronto');
+      expect(html.textContent).not.toContain('Proyecto final');
+    });
+
+    it('muestra a lo sumo tres', () => {
+      const cuatro = [1, 2, 3, 4].map((id) => ({ ...base, id, titulo: `Pendiente ${id}` }));
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), cuatro);
+
+      expect(html.querySelectorAll('.hoy__por-atender-item')).toHaveLength(3);
+    });
+
+    it('sin pendientes por atender no muestra el bloque', () => {
+      const { html } = crear();
+
+      expect(html.querySelector('.hoy__por-atender')).toBeNull();
+    });
+
+    it('lleva a Mis pendientes', () => {
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [base]);
+
+      expect(html.querySelector<HTMLAnchorElement>('.hoy__por-atender a')?.getAttribute('href')).toBe('/pendientes');
+    });
   });
 });
