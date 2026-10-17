@@ -265,7 +265,8 @@ function partirLineaDeLaPagina(linea: string): LineaDeLaPagina {
   let nota: number | null = null;
   if (rango) {
     const trasElPeso = peso ? antes.slice(peso.index + peso[0].length) : antes;
-    const calificacion = /(\d+(?:[.,]\d+)?)\s*$/.exec(trasElPeso);
+    // La nota puede traer a los lados la marca ✓ o los tres puntos de la actividad («√5.0…» en el OCR).
+    const calificacion = /(\d+(?:[.,]\d+)?)[^\p{L}\p{N}]*$/u.exec(trasElPeso);
     if (calificacion) {
       nota = sobreCinco(aNumero(calificacion[1]), Number(rango[2]));
       corte = peso ? corte : antes.length - trasElPeso.length + calificacion.index;

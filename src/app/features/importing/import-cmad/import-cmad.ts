@@ -12,7 +12,7 @@ import {
 } from '../../../data-access/evaluacion.repository';
 import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { origenDeLaImportacion } from '../origen-de-la-importacion';
-import { LectorDeImagen } from './lector-de-imagen';
+import { AvanceDeLaLectura, LectorDeImagen } from './lector-de-imagen';
 import { extraerHtmlDeMhtml } from './mhtml';
 import {
   TablaDelCmad,
@@ -92,6 +92,17 @@ export class ImportCmad {
   protected readonly guiaAbierta = signal(false);
   /** Verdadero mientras se lee una imagen con OCR. */
   protected readonly leyendoImagen = signal(false);
+  /** En qué va la lectura de la imagen; una captura larga se lee por partes y se cuenta cuál. */
+  protected readonly avanceDeLaImagen = signal<AvanceDeLaLectura | null>(null);
+  protected readonly textoDelAvance = computed(() => {
+    const avance = this.avanceDeLaImagen();
+    if (!avance || avance.etapa === 'preparando') {
+      return 'Preparando el lector… la primera vez baja unos 6 MB; las siguientes ya lo tiene.';
+    }
+    return avance.franjas > 1
+      ? `Leyendo la imagen… parte ${avance.franja} de ${avance.franjas}. Una captura larga tarda un poco más.`
+      : 'Leyendo la imagen…';
+  });
   /** Lo detectado salió de una imagen: el OCR puede equivocarse, así que se avisa que se revise. */
   protected readonly vieneDeImagen = signal(false);
   /** Lo que la asignatura ya tiene guardado, para decir qué cambia al subir de nuevo. */
@@ -190,7 +201,7 @@ export class ImportCmad {
     this.error.set(null);
     this.leyendoImagen.set(true);
     try {
-      const texto = await this.lectorDeImagen.leer(imagen);
+      const texto = await this.lectorDeImagen.leer(imagen, (avance) => this.avanceDeLaImagen.set(avance));
       this.leer(() => leerTextoDelCmad(texto), texto);
       this.vieneDeImagen.set(this.tabla() !== null);
       // El OCR suele perder la coma decimal: «41» no es una nota válida y casi seguro era «4,1».
@@ -199,6 +210,7 @@ export class ImportCmad {
       this.error.set('No pudimos leer la imagen. Prueba con una captura más nítida o pega la tabla.');
     } finally {
       this.leyendoImagen.set(false);
+      this.avanceDeLaImagen.set(null);
     }
   }
 
