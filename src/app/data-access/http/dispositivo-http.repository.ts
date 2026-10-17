@@ -21,4 +21,12 @@ export class DispositivoHttpRepository extends DispositivoRepository {
   override suscribir(suscripcion: SuscripcionPush): Observable<DispositivoConAvisos> {
     return this.http.put<DispositivoConAvisos>(`${this.ruta}/suscripcion`, suscripcion);
   }
+
+  override misDispositivos(): Observable<DispositivoConAvisos[]> {
+    return this.http.get<DispositivoConAvisos[]>(this.ruta);
+  }
+
+  override quitar(consecutivo: number): Observable<void> {
+    return this.http.delete<void>(`${this.ruta}/${consecutivo}`);
+  }
 }

@@ -1,0 +1,63 @@
+.configuracion {
+  gap: 1rem;
+}
+
+.configuracion__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.configuracion__titulo {
+  margin: 0;
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.05rem;
+  color: var(--color-ink);
+}
+
+.configuracion__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.configuracion__dispositivos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.configuracion__dispositivo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.configuracion__dispositivo .button {
+  flex: none;
+  width: auto;
+  padding-inline: 1.25rem;
+}
+
+.configuracion__dispositivo:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.configuracion__nombre {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.configuracion__fecha {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
