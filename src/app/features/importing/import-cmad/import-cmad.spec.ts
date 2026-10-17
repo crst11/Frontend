@@ -6,7 +6,6 @@ import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
 import { ImportCmad } from './import-cmad';
-import { AvanceDeLaLectura, LectorDeImagen } from './lector-de-imagen';
 
 describe('ImportCmad', () => {
   const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn(), confirmar: vi.fn() };
@@ -96,10 +95,12 @@ describe('ImportCmad', () => {
     const { fixture, html } = crear();
 
     expect(html.textContent).toContain('no se sube a ningún servidor');
+    expect(html.textContent).toContain('Valoraciones');
+    expect(html.textContent).toContain('Ctrl + S');
+
     html.querySelector<HTMLButtonElement>('.import__guia-head')!.click();
     fixture.detectChanges();
-    expect(html.textContent).toContain('Valoraciones');
-    expect(html.textContent).toContain('Ctrl+S');
+    expect(html.querySelector('#pasos-guia')).toBeNull();
   });
 
   it('sin asignaturas en curso manda a importar el horario', () => {
@@ -311,121 +312,55 @@ describe('ImportCmad', () => {
     });
   });
 
-  describe('con una imagen soltada', () => {
-    const TEXTO = 'Tarea R1-A1-S1 ABOUT\t50.00 %\t4.0\t0–5\nTarea R1-A2-S2 BROCHURE\t50.00 %\t-\t0–5';
-
+  describe('con una imagen', () => {
     function soltar(html: HTMLElement, archivo: File): void {
-      const evento = new Event('drop', { cancelable: true, bubbles: true });
-      Object.defineProperty(evento, 'dataTransfer', { value: { files: [archivo] } });
+      const evento = new Event('drop', { bubbles: true, cancelable: true });
+      Object.defineProperty(evento, 'dataTransfer', { value: { files: [archivo], types: ['Files'] } });
       html.querySelector('.import__zona')!.dispatchEvent(evento);
     }
 
-    it('se lee con OCR en el navegador y avisa que se revise lo detectado', async () => {
-      const leer = vi.fn().mockResolvedValue(TEXTO);
-      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
+    it('ya no se lee: explica por qué y manda a la guía, en vez de devolver números mal leídos', async () => {
       const { fixture, html } = crear();
 
       soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
       await fixture.whenStable();
       fixture.detectChanges();
 
-      expect(leer).toHaveBeenCalled();
-      expect(html.textContent).toContain('Esto encontramos en el CMAD');
-      expect(html.textContent).toContain('Leímos la tabla de una imagen');
-    });
-
-    it('cuenta en qué parte va cuando la captura es larga y se lee por partes', async () => {
-      let terminar: (texto: string) => void = () => undefined;
-      const leer = vi.fn().mockImplementation((_: File, alAvanzar: (avance: AvanceDeLaLectura) => void) => {
-        alAvanzar({ etapa: 'leyendo', franja: 2, franjas: 5 });
-        return new Promise<string>((resolver) => (terminar = resolver));
-      });
-      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
-      const { fixture, html } = crear();
-
-      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
-      fixture.detectChanges();
-
-      expect(html.querySelector('[role="status"]')?.textContent).toContain('parte 2 de 5');
-
-      terminar(TEXTO);
-      await fixture.whenStable();
-      fixture.detectChanges();
-      expect(html.textContent).not.toContain('parte 2 de 5');
-    });
-
-    it('antes de empezar a leer avisa que prepara el lector', () => {
-      const leer = vi.fn().mockImplementation((_: File, alAvanzar: (avance: AvanceDeLaLectura) => void) => {
-        alAvanzar({ etapa: 'preparando', franja: 0, franjas: 0 });
-        return new Promise<string>(() => undefined);
-      });
-      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
-      const { fixture, html } = crear();
-
-      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
-      fixture.detectChanges();
-
-      expect(html.querySelector('[role="status"]')?.textContent).toContain('Preparando el lector');
-    });
-
-    it('una nota a la que el OCR le perdió la coma («41») se corrige a 4.1 y se deja revisar', async () => {
-      const leer = vi.fn().mockResolvedValue('Tarea R1-A1-S1 ABOUT\t50.00 %\t41\t0–5\nTarea R1-A2-S2 BROCHURE\t50.00 %\t4.7\t0–5');
-      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
-      const { fixture, html } = crear();
-
-      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      const notas = Array.from(html.querySelectorAll<HTMLInputElement>('input[aria-label^="Nota de"]')).map((i) => i.value);
-      expect(notas).toEqual(['4.1', '4.7']);
-      expect(html.textContent).toContain('Leímos la tabla de una imagen');
-    });
-
-    it('si el OCR falla lo dice y no avanza', async () => {
-      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer: vi.fn().mockRejectedValue(new Error('sin red')) } });
-      const { fixture, html } = crear();
-
-      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(html.querySelector('[role="alert"]')?.textContent).toContain('No pudimos leer la imagen');
+      expect(html.querySelector('.alert')?.textContent).toContain('Las fotos y capturas no se leen');
       expect(html.textContent).not.toContain('Esto encontramos en el CMAD');
+      expect(html.querySelector('#pasos-guia')).not.toBeNull();
+    });
+
+    it('el selector de archivos no ofrece imágenes', () => {
+      const { html } = crear();
+
+      const aceptados = html.querySelector<HTMLInputElement>('input[type="file"]')!.accept;
+
+      expect(aceptados).not.toContain('image');
+      expect(aceptados).toContain('.html');
+      expect(aceptados).toContain('.mht');
     });
   });
 
-  describe('con la tabla pegada', () => {
-    function pegar(fixture: ReturnType<typeof crear>['fixture'], html: HTMLElement, texto: string) {
-      const area = html.querySelector<HTMLTextAreaElement>('textarea')!;
-      area.value = texto;
-      area.dispatchEvent(new Event('input'));
-      fixture.detectChanges();
-      boton(html, 'Leer lo pegado').click();
-      fixture.detectChanges();
-    }
-
-    it('lee el texto y muestra lo detectado', () => {
-      const { fixture, html } = crear();
-
-      pegar(fixture, html, 'Tarea R1-A1-S1 ABOUT\t50.00 %\t4.0\t0–5\t80 %\tHola Ana\t4 %\nTarea R1-A2-S2 BROCHURE\t50.00 %\t-\t0–5\t-\t\t0 %');
-
-      expect(html.textContent).toContain('Esto encontramos en el CMAD');
-      expect(html.textContent).not.toContain('Hola Ana');
-    });
-
-    it('el botón de leer espera a que haya texto', () => {
+  describe('la guía para conseguir la página', () => {
+    it('viene abierta y explica el computador y el teléfono', () => {
       const { html } = crear();
 
-      expect(boton(html, 'Leer lo pegado').disabled).toBe(true);
+      const guia = html.querySelector('#pasos-guia')?.textContent ?? '';
+
+      expect(guia).toContain('En el computador');
+      expect(guia).toContain('Ctrl + S');
+      expect(guia).toContain('.html');
+      expect(guia).toContain('En el teléfono Android (Chrome)');
+      expect(guia).toContain('.mht');
     });
 
-    it('un texto que no es la tabla lo dice', () => {
-      const { fixture, html } = crear();
+    it('la página guardada es la única vía: no se ofrece pegar una tabla ni subir una imagen', () => {
+      const { html } = crear();
 
-      pegar(fixture, html, 'esto no es la tabla');
-
-      expect(html.querySelector('[role="alert"]')?.textContent).toContain('No encontramos actividades');
+      expect(html.querySelector('textarea')).toBeNull();
+      expect(boton(html, 'Leer lo pegado')).toBeUndefined();
+      expect(html.querySelectorAll('input[type="file"]')).toHaveLength(1);
     });
   });
 });
