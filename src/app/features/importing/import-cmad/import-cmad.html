@@ -54,11 +54,6 @@
         </select>
       </label>
 
-      @if (vieneDeImagen()) {
-        <p class="notice" role="status">
-          Leímos la tabla de una imagen. Revisa cada nombre y cada nota: la lectura puede equivocarse con los números.
-        </p>
-      }
       @if (avisoDeCurso(); as aviso) {
         <p class="alert" role="alert">{{ aviso }}</p>
       }
@@ -184,22 +179,39 @@
 
       <section class="card import__guia" aria-labelledby="titulo-guia">
         <button class="import__guia-head" type="button" [attr.aria-expanded]="guiaAbierta()" aria-controls="pasos-guia" (click)="alternarGuia()">
-          <span id="titulo-guia" class="import__guia-titulo">¿Cómo consigo la tabla?</span>
+          <span id="titulo-guia" class="import__guia-titulo">¿Cómo consigo la página?</span>
           <svg class="import__chevron" [class.import__chevron--open]="guiaAbierta()" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
         </button>
         @if (guiaAbierta()) {
           <div id="pasos-guia">
             <p class="import__advertencia">
               En el CMAD entra a tu curso y abre <b>Valoraciones</b>: es la tabla con cada actividad, su
-              ponderación y tu nota. Después, de dos maneras:
+              ponderación y tu nota. Guárdala así y elige el archivo abajo:
             </p>
+
+            <h3 class="import__dispositivo">En el computador</h3>
             <ol class="import__pasos">
-              <li class="import__paso"><b>Guardar la página</b> (en el computador): <b>Ctrl+S</b>, guárdala y elígela abajo.</li>
-              <li class="import__paso"><b>Copiar la tabla</b> (sirve en el celular): selecciónala, cópiala y pégala abajo.</li>
+              <li class="import__paso">Con <b>Valoraciones</b> abierta, pulsa <b>Ctrl + S</b> (en Mac, <b>⌘ + S</b>).</li>
+              <li class="import__paso">En «Tipo» elige <b>Página web, solo HTML</b> (o «completa») y guarda.</li>
+              <li class="import__paso">Aquí abajo toca el recuadro y elige ese archivo <b>.html</b>, o arrástralo.</li>
             </ol>
+
+            <h3 class="import__dispositivo">En el teléfono Android (Chrome)</h3>
+            <ol class="import__pasos">
+              <li class="import__paso">Con <b>Valoraciones</b> abierta, toca los <b>tres puntos ⋮</b> y el ícono de <b>descargar</b> (la flecha hacia abajo).</li>
+              <li class="import__paso">Chrome guarda la página como un archivo <b>.mht</b> en <b>Descargas</b>.</li>
+              <li class="import__paso">Aquí abajo toca el recuadro y elige ese archivo.</li>
+            </ol>
+
+            <h3 class="import__dispositivo">En el iPhone</h3>
             <p class="import__advertencia">
-              La página guardada trae datos de tu sesión del CMAD y los comentarios de tus docentes; por eso se
-              lee aquí y no sale de tu dispositivo, y los comentarios se descartan.
+              El iPhone no guarda la página en un archivo que CundiApp lea: usa un computador o un teléfono Android.
+            </p>
+
+            <p class="import__advertencia">
+              La página trae datos de tu sesión del CMAD y los comentarios de tus docentes: se lee en tu
+              dispositivo, no se sube y los comentarios se descartan. Las fotos, las capturas y la tabla
+              copiada no se aceptan: se confunden los números.
             </p>
           </div>
         }
@@ -209,17 +221,8 @@
         <p class="alert" role="alert">{{ mensaje }}</p>
       }
 
-      @if (leyendoImagen()) {
-        <p class="notice" role="status">{{ textoDelAvance() }}</p>
-      }
-      <label
-        class="import__zona"
-        [class.import__zona--ocupada]="leyendoImagen()"
-        appSoltarArchivo
-        [desactivado]="leyendoImagen()"
-        (archivoSoltado)="soltado($event)"
-      >
-        <input class="import__archivo" type="file" accept=".html,.htm,.mht,.mhtml,text/html,multipart/related,message/rfc822,application/x-mimearchive,image/*" [disabled]="leyendoImagen()" (change)="archivoElegido($event)" />
+      <label class="import__zona" appSoltarArchivo (archivoSoltado)="soltado($event)">
+        <input class="import__archivo" type="file" accept=".html,.htm,.mht,.mhtml,text/html,multipart/related,message/rfc822,application/x-mimearchive" (change)="archivoElegido($event)" />
         <span class="import__zona-icono" aria-hidden="true">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
@@ -227,23 +230,9 @@
           </svg>
         </span>
         <span class="import__zona-texto">Toca aquí o suelta un archivo</span>
-        <span class="import__zona-ayuda">La página guardada del CMAD (.html, o .mht si la descargaste desde el teléfono) o una foto o captura de la tabla</span>
+        <span class="import__zona-ayuda">La página guardada del CMAD: .html del computador o .mht del teléfono</span>
       </label>
 
-      <p class="cmad__o">o pega la tabla</p>
-      <label class="field">
-        <span class="field__label">Tabla copiada</span>
-        <textarea
-          class="field__input cmad__texto"
-          rows="6"
-          placeholder="Pega aquí la tabla de Valoraciones"
-          [value]="textoPegado()"
-          (input)="escribirTexto($event)"
-        ></textarea>
-      </label>
-      <button class="button button--soft" type="button" [disabled]="textoPegado().trim() === ''" (click)="leerLoPegado()">
-        Leer lo pegado
-      </button>
     }
   }
 </main>
