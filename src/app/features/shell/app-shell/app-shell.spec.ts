@@ -92,6 +92,7 @@ describe('AppShell', () => {
         'Hoy',
         'Mi horario',
         'Mis notas',
+        'Mis pendientes',
         'Mi historial y promedios',
         'Mi plan de estudios',
         'Importar mis archivos',

@@ -1,0 +1,117 @@
+.pendientes__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pendientes__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.pendientes__vacio,
+.pendientes__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pendientes__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pendientes__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.pendientes__marca {
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.pendientes__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pendientes__nombre {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.pendientes__fecha {
+  font-size: 14px;
+  color: var(--color-primary-strong);
+}
+
+.pendientes__detalle {
+  font-size: 14px;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+
+.pendientes__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pendientes__situacion,
+.pendientes__prioridad {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-background);
+  color: var(--color-muted);
+}
+
+/* Lo vencido y lo urgente no dependen solo del color: llevan su etiqueta escrita. */
+.pendientes__situacion--vencido {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.pendientes__situacion--urgente {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.pendientes__item--vencido {
+  border-color: var(--color-danger);
+}
+
+.pendientes__item--urgente {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-ring);
+}
+
+.pendientes__item--hecho {
+  opacity: 0.6;
+}
+
+.pendientes__item--hecho .pendientes__nombre {
+  text-decoration: line-through;
+}
+
+.pendientes__borrar {
+  color: var(--color-muted);
+}
