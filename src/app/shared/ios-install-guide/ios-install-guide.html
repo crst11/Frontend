@@ -1,0 +1,13 @@
+<section class="guia-ios card" aria-label="Instalar CundiApp en iPhone o iPad">
+  <h2 class="guia-ios__titulo">Para recibir avisos en tu iPhone o iPad, instala CundiApp</h2>
+  <p class="subtitle">En iOS los avisos solo llegan a una aplicación instalada en la pantalla de inicio, no a una página abierta en Safari.</p>
+  <ol class="guia-ios__pasos">
+    <li>Abre CundiApp en <strong>Safari</strong>.</li>
+    <li>Toca el botón <strong>Compartir</strong> (el cuadrado con una flecha hacia arriba).</li>
+    <li>Elige <strong>Añadir a pantalla de inicio</strong> y toca <strong>Añadir</strong>.</li>
+    <li>Abre CundiApp desde el ícono nuevo y activa los avisos en la pantalla <strong>Avisos</strong>.</li>
+  </ol>
+  @if (descartable()) {
+    <button class="button button--soft" type="button" (click)="descartada.emit()">Entendido</button>
+  }
+</section>

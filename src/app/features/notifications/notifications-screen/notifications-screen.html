@@ -1,0 +1,84 @@
+<main class="screen avisos">
+  @switch (push.estado()) {
+    @case ('instalar_en_ios') {
+      <app-ios-install-guide />
+    }
+    @case ('desactivado') {
+      <section class="card avisos__dispositivo" aria-label="Avisos en este dispositivo">
+        <h2 class="avisos__titulo">Recibe los avisos aunque la aplicación esté cerrada</h2>
+        <p class="subtitle">Te avisamos en este dispositivo antes de que venza un pendiente.</p>
+        @if (push.error(); as mensaje) {
+          <p class="alert" role="alert">{{ mensaje }}</p>
+        }
+        <button class="button button--primary" type="button" [disabled]="push.activando()" (click)="activar()">
+          Activar avisos en este dispositivo
+        </button>
+      </section>
+    }
+    @case ('fallo') {
+      <section class="card avisos__dispositivo" aria-label="Avisos en este dispositivo">
+        <h2 class="avisos__titulo">No pudimos activar los avisos</h2>
+        @if (push.error(); as mensaje) {
+          <p class="alert" role="alert">{{ mensaje }}</p>
+        }
+        <button class="button button--soft" type="button" [disabled]="push.activando()" (click)="activar()">Intentar de nuevo</button>
+      </section>
+    }
+    @case ('bloqueado') {
+      <section class="card avisos__dispositivo" aria-label="Avisos en este dispositivo">
+        <h2 class="avisos__titulo">Los avisos están bloqueados en este navegador</h2>
+        <p class="subtitle">
+          Negaste el permiso de notificaciones. Permítelas para este sitio en la configuración del navegador y vuelve aquí. Mientras tanto, tus avisos se ven en esta pantalla.
+        </p>
+        <button class="button button--soft" type="button" (click)="reintentarLosAvisosDelDispositivo()">Ya los permití</button>
+      </section>
+    }
+    @case ('activado') {
+      <section class="card avisos__dispositivo avisos__dispositivo--activo" aria-label="Avisos en este dispositivo">
+        <h2 class="avisos__titulo">Los avisos llegan a este dispositivo</h2>
+        <p class="subtitle">Aunque la aplicación esté cerrada.</p>
+      </section>
+    }
+    @case ('no_disponible') {
+      <p class="subtitle avisos__nota">Los avisos al dispositivo no están disponibles aquí. Los verás siempre en esta pantalla.</p>
+    }
+  }
+
+  @if (cargando()) {
+    <p class="subtitle">Buscando tus avisos…</p>
+  } @else if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+    <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
+  } @else if (avisos().length === 0) {
+    <section class="card avisos__vacio" aria-label="No tienes avisos">
+      <h2 class="avisos__titulo">No tienes avisos</h2>
+      <p class="subtitle">Te avisaremos antes de que venza un pendiente.</p>
+    </section>
+  } @else {
+    @if (sinLeer() > 0) {
+      <button class="button button--outline" type="button" [disabled]="ocupado()" (click)="marcarTodos()">
+        Marcar todos como leídos ({{ sinLeer() }})
+      </button>
+    }
+    <ul class="avisos__lista" aria-label="Tus avisos">
+      @for (aviso of avisos(); track aviso.id) {
+        <li class="card avisos__item" [class.avisos__item--sin-leer]="!aviso.leido">
+          <div class="avisos__cabecera">
+            <h2 class="avisos__titulo">{{ aviso.titulo }}</h2>
+            @if (!aviso.leido) {
+              <span class="badge badge--ok">Nuevo</span>
+            }
+          </div>
+          <p class="avisos__mensaje">{{ aviso.mensaje }}</p>
+          <p class="avisos__fecha">{{ fecha(aviso) }}</p>
+          <div class="avisos__acciones">
+            <a class="button button--outline" [routerLink]="destino(aviso).ruta">{{ destino(aviso).texto }}</a>
+            <button class="button button--soft avisos__marcar" type="button" [disabled]="ocupado()" (click)="alternar(aviso)">
+              {{ aviso.leido ? 'Marcar como no leído' : 'Marcar como leído' }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</main>
