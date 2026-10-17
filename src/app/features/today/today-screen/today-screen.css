@@ -178,7 +178,8 @@
   background: var(--color-background);
 }
 
-.hoy__por-atender {
+.hoy__por-atender,
+.hoy__brujula {
   display: flex;
   flex-direction: column;
   gap: 10px;

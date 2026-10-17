@@ -28,6 +28,8 @@ import { DiaRepository } from './data-access/dia.repository';
 import { PendienteRepository } from './data-access/pendiente.repository';
 import { DiaHttpRepository } from './data-access/http/dia-http.repository';
 import { PendienteHttpRepository } from './data-access/http/pendiente-http.repository';
+import { BrujulaRepository } from './data-access/brujula.repository';
+import { BrujulaHttpRepository } from './data-access/http/brujula-http.repository';
 import { ProyeccionRepository } from './data-access/proyeccion.repository';
 import { ProyeccionHttpRepository } from './data-access/http/proyeccion-http.repository';
 import { ImportacionDeHorarioRepository } from './data-access/importacion-de-horario.repository';
@@ -50,6 +52,7 @@ export const appConfig: ApplicationConfig = {
     { provide: DiaRepository, useClass: DiaHttpRepository },
     { provide: PendienteRepository, useClass: PendienteHttpRepository },
     { provide: ProyeccionRepository, useClass: ProyeccionHttpRepository },
+    { provide: BrujulaRepository, useClass: BrujulaHttpRepository },
     { provide: AvanceRepository, useClass: AvanceHttpRepository },
     { provide: ImportacionDeHorarioRepository, useClass: ImportacionDeHorarioHttpRepository },
     { provide: EvaluacionRepository, useClass: EvaluacionHttpRepository },

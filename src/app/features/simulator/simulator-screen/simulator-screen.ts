@@ -18,24 +18,13 @@ import {
   ProyeccionDeNota,
   ProyeccionRepository,
 } from '../../../data-access/proyeccion.repository';
+import { leerNumero } from '../../../shared/leer-numero';
 
 /** Pausa tras la última tecla antes de preguntarle al servidor: el resultado se siente inmediato sin una petición por letra. */
 const PAUSA_AL_ESCRIBIR_EN_MS = 300;
 
 const SIN_CONEXION =
   'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.';
-
-/**
- * Lee un número escrito por una persona, con coma o con punto. Vacío es `null` (no probó nada) y lo
- * que no es un número es `NaN`; que esté entre 0.0 y 5.0 lo dice el servidor.
- */
-function leerNumero(texto: string): number | null {
-  const limpio = texto.trim().replace(',', '.');
-  if (limpio === '') {
-    return null;
-  }
-  return /^\d+(\.\d+)?$/.test(limpio) ? Number(limpio) : Number.NaN;
-}
 
 /**
  * El simulador de calificaciones (RF08, SCRUM-33 y SCRUM-34): qué nota necesito en lo que falta y qué
