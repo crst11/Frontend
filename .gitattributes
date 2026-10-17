@@ -2,3 +2,6 @@ Dockerfile text eol=lf
 *.sh text eol=lf
 *.yml text eol=lf
 *.template text eol=lf
+
+# Los modelos del OCR son binarios: que Git no les toque los saltos de linea.
+public/ocr/*.tar binary
