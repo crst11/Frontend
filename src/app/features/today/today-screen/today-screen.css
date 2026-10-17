@@ -177,3 +177,42 @@
   border-radius: 14px;
   background: var(--color-background);
 }
+
+.hoy__por-atender {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hoy__por-atender-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hoy__por-atender-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hoy__por-atender-nombre {
+  font-weight: 700;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.hoy__por-atender-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.hoy__por-atender-vencido {
+  color: var(--color-danger);
+}

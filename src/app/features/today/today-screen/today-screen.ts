@@ -6,7 +6,20 @@ import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
+import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.repository';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
+
+/** Cuántos pendientes por atender se muestran en Hoy; el resto se ve en Mis pendientes. */
+const PENDIENTES_QUE_SE_MUESTRAN = 3;
+
+const FORMATO_DE_PENDIENTE = new Intl.DateTimeFormat('es-CO', {
+  timeZone: 'America/Bogota',
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
+});
 
 /** Cada cuánto se vuelve a preguntar: es lo que mantiene la próxima clase y el cambio de día al día. */
 const CADA_CUANTO_SE_ACTUALIZA_EN_MS = 60_000;
@@ -41,8 +54,11 @@ export class TodayScreen {
   private readonly repositorio = inject(DiaRepository);
   private readonly avances = inject(AvanceRepository);
   private readonly notificador = inject(NotifierService);
+  private readonly pendientesRepositorio = inject(PendienteRepository);
   private readonly documento = inject(DOCUMENT);
 
+  /** Los pendientes que piden atención hoy (vencidos y por vencer), como los clasifica el servidor. */
+  protected readonly pendientes = signal<Pendiente[]>([]);
   protected readonly dia = signal<MiDia | null>(null);
   /** Cuánta información lleva subida; es una ayuda, así que si no llega la pantalla sigue sin ella. */
   protected readonly avance = signal<AvanceDeInformacion | null>(null);
@@ -73,7 +89,21 @@ export class TodayScreen {
     });
   }
 
+  private cargarPendientes(): void {
+    // Es una ayuda: si no llega, el día se muestra igual y se conserva lo último que hubo.
+    this.pendientesRepositorio.listar().subscribe({
+      next: (lista) =>
+        this.pendientes.set(
+          lista
+            .filter((p) => p.situacion === 'vencido' || p.situacion === 'urgente')
+            .slice(0, PENDIENTES_QUE_SE_MUESTRAN),
+        ),
+      error: () => undefined,
+    });
+  }
+
   private cargar(): void {
+    this.cargarPendientes();
     this.repositorio.miDia().subscribe({
       next: (dia) => {
         this.dia.set(dia);
@@ -115,6 +145,10 @@ export class TodayScreen {
     const diferencia = diasEntre(dia.fecha, siguiente.fecha);
     const fecha = this.fechaLarga(siguiente.fecha, siguiente.dia);
     return diferencia === 1 ? `Mañana · ${fecha}` : `Próximo día con clases · ${fecha}`;
+  }
+
+  protected fechaDelPendiente(pendiente: Pendiente): string {
+    return FORMATO_DE_PENDIENTE.format(new Date(pendiente.fechaLimite));
   }
 
   protected lugarDe(clase: ClaseDelDia): string {
