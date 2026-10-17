@@ -1,4 +1,6 @@
 <main class="screen avisos">
+  <a class="avisos__configurar" routerLink="/avisos/configuracion">Configurar mis avisos</a>
+
   @switch (push.estado()) {
     @case ('instalar_en_ios') {
       <app-ios-install-guide />

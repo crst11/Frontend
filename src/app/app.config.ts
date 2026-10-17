@@ -31,6 +31,8 @@ import { PendienteHttpRepository } from './data-access/http/pendiente-http.repos
 import { AvisoRepository } from './data-access/aviso.repository';
 import { AvisoHttpRepository } from './data-access/http/aviso-http.repository';
 import { DispositivoRepository } from './data-access/dispositivo.repository';
+import { PreferenciasDeAvisosHttpRepository } from './data-access/http/preferencias-de-avisos-http.repository';
+import { PreferenciasDeAvisosRepository } from './data-access/preferencias-de-avisos.repository';
 import { DispositivoHttpRepository } from './data-access/http/dispositivo-http.repository';
 import { BrujulaRepository } from './data-access/brujula.repository';
 import { BrujulaHttpRepository } from './data-access/http/brujula-http.repository';
@@ -59,6 +61,7 @@ export const appConfig: ApplicationConfig = {
     { provide: BrujulaRepository, useClass: BrujulaHttpRepository },
     { provide: AvisoRepository, useClass: AvisoHttpRepository },
     { provide: DispositivoRepository, useClass: DispositivoHttpRepository },
+    { provide: PreferenciasDeAvisosRepository, useClass: PreferenciasDeAvisosHttpRepository },
     { provide: AvanceRepository, useClass: AvanceHttpRepository },
     { provide: ImportacionDeHorarioRepository, useClass: ImportacionDeHorarioHttpRepository },
     { provide: EvaluacionRepository, useClass: EvaluacionHttpRepository },

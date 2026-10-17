@@ -30,4 +30,8 @@ export abstract class DispositivoRepository {
   abstract llavePublica(): Observable<LlaveDePush>;
   /** Activa los avisos en este dispositivo; volver a suscribir el mismo navegador no lo duplica. */
   abstract suscribir(suscripcion: SuscripcionPush): Observable<DispositivoConAvisos>;
+  /** Los dispositivos que hoy reciben mis avisos (SCRUM-38). */
+  abstract misDispositivos(): Observable<DispositivoConAvisos[]>;
+  /** Deja de mandar avisos a un dispositivo: el servidor borra su suscripción. */
+  abstract quitar(consecutivo: number): Observable<void>;
 }
