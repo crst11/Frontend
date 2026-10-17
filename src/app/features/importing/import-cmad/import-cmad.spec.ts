@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
 import { ImportCmad } from './import-cmad';
-import { LectorDeImagen } from './lector-de-imagen';
+import { AvanceDeLaLectura, LectorDeImagen } from './lector-de-imagen';
 
 describe('ImportCmad', () => {
   const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn(), confirmar: vi.fn() };
@@ -332,6 +332,40 @@ describe('ImportCmad', () => {
       expect(leer).toHaveBeenCalled();
       expect(html.textContent).toContain('Esto encontramos en el CMAD');
       expect(html.textContent).toContain('Leímos la tabla de una imagen');
+    });
+
+    it('cuenta en qué parte va cuando la captura es larga y se lee por partes', async () => {
+      let terminar: (texto: string) => void = () => undefined;
+      const leer = vi.fn().mockImplementation((_: File, alAvanzar: (avance: AvanceDeLaLectura) => void) => {
+        alAvanzar({ etapa: 'leyendo', franja: 2, franjas: 5 });
+        return new Promise<string>((resolver) => (terminar = resolver));
+      });
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      fixture.detectChanges();
+
+      expect(html.querySelector('[role="status"]')?.textContent).toContain('parte 2 de 5');
+
+      terminar(TEXTO);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(html.textContent).not.toContain('parte 2 de 5');
+    });
+
+    it('antes de empezar a leer avisa que prepara el lector', () => {
+      const leer = vi.fn().mockImplementation((_: File, alAvanzar: (avance: AvanceDeLaLectura) => void) => {
+        alAvanzar({ etapa: 'preparando', franja: 0, franjas: 0 });
+        return new Promise<string>(() => undefined);
+      });
+      TestBed.overrideProvider(LectorDeImagen, { useValue: { leer } });
+      const { fixture, html } = crear();
+
+      soltar(html, new File(['x'], 'captura.png', { type: 'image/png' }));
+      fixture.detectChanges();
+
+      expect(html.querySelector('[role="status"]')?.textContent).toContain('Preparando el lector');
     });
 
     it('una nota a la que el OCR le perdió la coma («41») se corrige a 4.1 y se deja revisar', async () => {

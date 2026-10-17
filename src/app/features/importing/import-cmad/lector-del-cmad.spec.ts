@@ -435,6 +435,23 @@ describe('una captura de la página de calificaciones (foto o pantallazo)', () =
     expect(leerTextoDelCmad(CAPTURA_DE_LA_PAGINA).totalDelCurso).toBe(2.1);
   });
 
+  it('lee la nota aunque el OCR la haya leído con los tres puntos de la actividad pegados («√5.0…»)', () => {
+    const captura = [
+      'CUESTIONARIO',
+      'R1-A1-S4 Evaluación de\t14.29 %',
+      '国\tPensamiento y Actitud\t14.29 %\t√5.0…\t0-5\t100.0 %\t14.3 %',
+      'Estratégica.',
+      'TAREA',
+      'R2-A1-S11 Radar\t14.29 %\t0-5\t0.0 %',
+    ].join('\n');
+
+    const { filas } = leerTextoDelCmad(captura);
+
+    expect(filas[0].nombre).toBe('R1-A1-S4 Evaluación de Pensamiento y Actitud Estratégica.');
+    expect(filas[0].nota).toBe(5);
+    expect(filas[1].nota).toBeNull();
+  });
+
   it('no trae la retroalimentación del docente en los nombres ni lo que hay debajo de la tabla', () => {
     const { filas } = leerTextoDelCmad(CAPTURA_DE_LA_PAGINA);
     const todo = JSON.stringify(filas);
