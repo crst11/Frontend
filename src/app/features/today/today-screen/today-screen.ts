@@ -8,10 +8,15 @@ import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avan
 import { BrujulaRepository, NivelDeRiesgo, RiesgoDeAsignatura } from '../../../data-access/brujula.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.repository';
+import { EntornoDelNavegador } from '../../../core/push/entorno-del-navegador';
+import { IosInstallGuide } from '../../../shared/ios-install-guide/ios-install-guide';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
 
 /** Cuántos pendientes por atender se muestran en Hoy; el resto se ve en Mis pendientes. */
 const PENDIENTES_QUE_SE_MUESTRAN = 3;
+
+/** La marca que deja «Entendido» para no volver a mostrar la guía de instalación en iOS (SCRUM-37). */
+const GUIA_DE_IOS_VISTA = 'cundiapp.guia-ios-vista';
 
 /** Cuántas asignaturas en riesgo se muestran en Hoy; el resto se ve en la Brújula. */
 const ASIGNATURAS_EN_RIESGO_QUE_SE_MUESTRAN = 3;
@@ -50,7 +55,7 @@ const DIAS: Record<string, string> = {
  */
 @Component({
   selector: 'app-today-screen',
-  imports: [RouterLink, PendingActivities],
+  imports: [RouterLink, PendingActivities, IosInstallGuide],
   templateUrl: './today-screen.html',
   styleUrl: './today-screen.css',
 })
@@ -61,6 +66,7 @@ export class TodayScreen {
   private readonly pendientesRepositorio = inject(PendienteRepository);
   private readonly brujulaRepositorio = inject(BrujulaRepository);
   private readonly documento = inject(DOCUMENT);
+  private readonly entorno = inject(EntornoDelNavegador);
 
   /** Los pendientes que piden atención hoy (vencidos y por vencer), como los clasifica el servidor. */
   protected readonly pendientes = signal<Pendiente[]>([]);
@@ -71,6 +77,13 @@ export class TodayScreen {
   protected readonly avance = signal<AvanceDeInformacion | null>(null);
   /** Las clases desplegadas, por `idMatricula-horaInicio`: sobrevive a las actualizaciones de cada minuto. */
   protected readonly abiertas = signal<ReadonlySet<string>>(new Set());
+  /**
+   * En el primer ingreso desde un iPhone o iPad con la aplicación en una pestaña: ahí los avisos no llegan hasta
+   * instalarla (SCRUM-37). Una vez descartada no vuelve.
+   */
+  protected readonly mostrarGuiaIos = signal(
+    this.entorno.esIos() && !this.entorno.estaInstalada() && !this.guiaDeIosYaVista(),
+  );
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
 
@@ -151,6 +164,23 @@ export class TodayScreen {
         }
       },
     });
+  }
+
+  protected descartarGuiaIos(): void {
+    this.mostrarGuiaIos.set(false);
+    try {
+      this.documento.defaultView?.localStorage.setItem(GUIA_DE_IOS_VISTA, '1');
+    } catch {
+      // Sin almacenamiento (navegación privada) la guía vuelve a salir al abrir: es un fastidio, no un fallo.
+    }
+  }
+
+  private guiaDeIosYaVista(): boolean {
+    try {
+      return this.documento.defaultView?.localStorage.getItem(GUIA_DE_IOS_VISTA) === '1';
+    } catch {
+      return false;
+    }
   }
 
   protected reintentar(): void {

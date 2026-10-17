@@ -6,6 +6,7 @@ import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 import { EvaluacionRepository } from '../../../data-access/evaluacion.repository';
+import { EntornoDelNavegador } from '../../../core/push/entorno-del-navegador';
 import { BrujulaRepository, RiesgoDeAsignatura } from '../../../data-access/brujula.repository';
 import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.repository';
 import { TodayScreen } from './today-screen';
@@ -77,6 +78,7 @@ describe('TodayScreen', () => {
     estructuraDe = vi.fn().mockReturnValue(of(SIN_ACTIVIDADES)),
     pendientes: Pendiente[] = [],
     brujula: RiesgoDeAsignatura[] = [],
+    navegador: Partial<EntornoDelNavegador> = {},
   ) {
     TestBed.configureTestingModule({
       imports: [TodayScreen],
@@ -91,6 +93,10 @@ describe('TodayScreen', () => {
           useValue: { miBrujula: vi.fn().mockReturnValue(of({ meta: 3, umbrales: { medio: 3.5, alto: 4.5 }, asignaturas: brujula })) },
         },
         { provide: NotifierService, useValue: notificador },
+        {
+          provide: EntornoDelNavegador,
+          useValue: { esIos: () => false, estaInstalada: () => false, permisoDeNotificaciones: () => 'default', ...navegador },
+        },
       ],
     });
     const fixture = TestBed.createComponent(TodayScreen);
@@ -341,6 +347,46 @@ describe('TodayScreen', () => {
       const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [base]);
 
       expect(html.querySelector<HTMLAnchorElement>('.hoy__por-atender a')?.getAttribute('href')).toBe('/pendientes');
+    });
+  });
+
+  describe('guía para recibir avisos en iOS (SCRUM-37)', () => {
+    const sinEstructura = () => vi.fn().mockReturnValue(of({ categorias: [] }));
+    const iphone = { esIos: () => true, estaInstalada: () => false };
+
+    beforeEach(() => localStorage.removeItem('cundiapp.guia-ios-vista'));
+    afterEach(() => localStorage.removeItem('cundiapp.guia-ios-vista'));
+
+    it('en un iPhone con la aplicación en una pestaña explica cómo instalarla', () => {
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [], iphone);
+
+      const guia = html.querySelector('app-ios-install-guide');
+      expect(guia?.textContent).toContain('Añadir a pantalla de inicio');
+      expect(guia?.textContent).toContain('Entendido');
+    });
+
+    it('una vez entendida no vuelve a salir', () => {
+      const { fixture, html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [], iphone);
+
+      html.querySelector<HTMLButtonElement>('app-ios-install-guide button')!.click();
+      fixture.detectChanges();
+
+      expect(html.querySelector('app-ios-install-guide')).toBeNull();
+      TestBed.resetTestingModule();
+      const otraVez = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [], iphone);
+      expect(otraVez.html.querySelector('app-ios-install-guide')).toBeNull();
+    });
+
+    it('si la aplicación ya está instalada no la muestra', () => {
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [], { ...iphone, estaInstalada: () => true });
+
+      expect(html.querySelector('app-ios-install-guide')).toBeNull();
+    });
+
+    it('fuera de iOS no la muestra', () => {
+      const { html } = crear();
+
+      expect(html.querySelector('app-ios-install-guide')).toBeNull();
     });
   });
 
