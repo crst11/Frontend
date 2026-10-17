@@ -26,6 +26,10 @@
       }
     }
 
+    @if (mostrarGuiaIos()) {
+      <app-ios-install-guide [descartable]="true" (descartada)="descartarGuiaIos()" />
+    }
+
     @if (pendientes().length > 0) {
       <section class="card hoy__por-atender" aria-label="Pendientes por atender">
         <h2 class="hoy__titulo">Pendientes por atender</h2>
