@@ -80,6 +80,11 @@ export const routes: Routes = [
       loadComponent: () => import('./features/simulator/simulator-screen/simulator-screen').then((m) => m.SimulatorScreen),
       },
       {
+        path: 'brujula',
+        data: { titulo: 'Brújula Académica' },
+      loadComponent: () => import('./features/compass/compass-screen/compass-screen').then((m) => m.CompassScreen),
+      },
+      {
         path: 'pendientes',
         data: { titulo: 'Mis pendientes' },
       loadComponent: () => import('./features/tasks/my-tasks/my-tasks').then((m) => m.MyTasks),

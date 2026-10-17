@@ -5,12 +5,16 @@ import { RouterLink } from '@angular/router';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
+import { BrujulaRepository, NivelDeRiesgo, RiesgoDeAsignatura } from '../../../data-access/brujula.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.repository';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
 
 /** Cuántos pendientes por atender se muestran en Hoy; el resto se ve en Mis pendientes. */
 const PENDIENTES_QUE_SE_MUESTRAN = 3;
+
+/** Cuántas asignaturas en riesgo se muestran en Hoy; el resto se ve en la Brújula. */
+const ASIGNATURAS_EN_RIESGO_QUE_SE_MUESTRAN = 3;
 
 const FORMATO_DE_PENDIENTE = new Intl.DateTimeFormat('es-CO', {
   timeZone: 'America/Bogota',
@@ -55,10 +59,13 @@ export class TodayScreen {
   private readonly avances = inject(AvanceRepository);
   private readonly notificador = inject(NotifierService);
   private readonly pendientesRepositorio = inject(PendienteRepository);
+  private readonly brujulaRepositorio = inject(BrujulaRepository);
   private readonly documento = inject(DOCUMENT);
 
   /** Los pendientes que piden atención hoy (vencidos y por vencer), como los clasifica el servidor. */
   protected readonly pendientes = signal<Pendiente[]>([]);
+  /** Las asignaturas en riesgo alto o medio, de la Brújula; si no hay ninguna, el bloque no sale. */
+  protected readonly enRiesgo = signal<RiesgoDeAsignatura[]>([]);
   protected readonly dia = signal<MiDia | null>(null);
   /** Cuánta información lleva subida; es una ayuda, así que si no llega la pantalla sigue sin ella. */
   protected readonly avance = signal<AvanceDeInformacion | null>(null);
@@ -75,11 +82,13 @@ export class TodayScreen {
 
   constructor() {
     this.cargar();
+    this.cargarBrujula();
     this.avances.miAvance().subscribe({ next: (avance) => this.avance.set(avance), error: () => undefined });
     const intervalo = setInterval(() => this.cargar(), CADA_CUANTO_SE_ACTUALIZA_EN_MS);
     const alVolver = () => {
       if (this.documento.visibilityState === 'visible') {
         this.cargar();
+        this.cargarBrujula();
       }
     };
     this.documento.addEventListener('visibilitychange', alVolver);
@@ -87,6 +96,24 @@ export class TodayScreen {
       clearInterval(intervalo);
       this.documento.removeEventListener('visibilitychange', alVolver);
     });
+  }
+
+  /** No depende de la hora, así que se pide al abrir y al volver a la pestaña, no cada minuto. */
+  private cargarBrujula(): void {
+    // Es una ayuda: si no llega, el día se muestra igual y se conserva lo último que hubo.
+    this.brujulaRepositorio.miBrujula().subscribe({
+      next: (brujula) =>
+        this.enRiesgo.set(
+          brujula.asignaturas
+            .filter((a) => a.nivel === 'alto' || a.nivel === 'medio')
+            .slice(0, ASIGNATURAS_EN_RIESGO_QUE_SE_MUESTRAN),
+        ),
+      error: () => undefined,
+    });
+  }
+
+  protected etiquetaDeRiesgo(nivel: NivelDeRiesgo): string {
+    return nivel === 'alto' ? 'Riesgo alto' : 'Riesgo medio';
   }
 
   private cargarPendientes(): void {

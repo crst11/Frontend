@@ -38,6 +38,7 @@ export class AppShell {
     { ruta: '/horario', texto: 'Mi horario' },
     { ruta: '/calificaciones/mis-notas', texto: 'Mis notas' },
     { ruta: '/simulador', texto: 'Simulador' },
+    { ruta: '/brujula', texto: 'Brújula Académica' },
     { ruta: '/pendientes', texto: 'Mis pendientes' },
     { ruta: '/cuenta/historial', texto: 'Mi historial y promedios' },
     { ruta: '/cuenta/plan-de-estudios', texto: 'Mi plan de estudios' },
