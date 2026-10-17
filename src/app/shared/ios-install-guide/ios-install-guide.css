@@ -1,0 +1,21 @@
+.guia-ios {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.guia-ios__titulo {
+  margin: 0;
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.05rem;
+  color: var(--color-ink);
+}
+
+.guia-ios__pasos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--color-text);
+}

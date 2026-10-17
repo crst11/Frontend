@@ -80,6 +80,12 @@ export const routes: Routes = [
       loadComponent: () => import('./features/simulator/simulator-screen/simulator-screen').then((m) => m.SimulatorScreen),
       },
       {
+        path: 'avisos',
+        data: { titulo: 'Avisos' },
+      loadComponent: () =>
+        import('./features/notifications/notifications-screen/notifications-screen').then((m) => m.NotificationsScreen),
+      },
+      {
         path: 'brujula',
         data: { titulo: 'Brújula Académica' },
       loadComponent: () => import('./features/compass/compass-screen/compass-screen').then((m) => m.CompassScreen),
