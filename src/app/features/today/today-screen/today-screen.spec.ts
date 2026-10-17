@@ -6,6 +6,7 @@ import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 import { EvaluacionRepository } from '../../../data-access/evaluacion.repository';
+import { BrujulaRepository, RiesgoDeAsignatura } from '../../../data-access/brujula.repository';
 import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.repository';
 import { TodayScreen } from './today-screen';
 
@@ -75,6 +76,7 @@ describe('TodayScreen', () => {
     avance: AvanceDeInformacion = AVANCE_A_MEDIAS,
     estructuraDe = vi.fn().mockReturnValue(of(SIN_ACTIVIDADES)),
     pendientes: Pendiente[] = [],
+    brujula: RiesgoDeAsignatura[] = [],
   ) {
     TestBed.configureTestingModule({
       imports: [TodayScreen],
@@ -84,6 +86,10 @@ describe('TodayScreen', () => {
         { provide: AvanceRepository, useValue: { miAvance: vi.fn().mockReturnValue(of(avance)) } },
         { provide: EvaluacionRepository, useValue: { estructuraDe } },
         { provide: PendienteRepository, useValue: { listar: vi.fn().mockReturnValue(of(pendientes)) } },
+        {
+          provide: BrujulaRepository,
+          useValue: { miBrujula: vi.fn().mockReturnValue(of({ meta: 3, umbrales: { medio: 3.5, alto: 4.5 }, asignaturas: brujula })) },
+        },
         { provide: NotifierService, useValue: notificador },
       ],
     });
@@ -335,6 +341,54 @@ describe('TodayScreen', () => {
       const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [base]);
 
       expect(html.querySelector<HTMLAnchorElement>('.hoy__por-atender a')?.getAttribute('href')).toBe('/pendientes');
+    });
+  });
+
+  describe('Brújula Académica', () => {
+    const sinEstructura = () => vi.fn().mockReturnValue(of({ categorias: [] }));
+    const riesgo = (id: number, nombre: string, nivel: RiesgoDeAsignatura['nivel']): RiesgoDeAsignatura => ({
+      asignatura: { idMatricula: id, nombre } as RiesgoDeAsignatura['asignatura'],
+      nivel,
+      motivo: 'x',
+      explicacion: `Explicación de ${nombre}`,
+      notaRequerida: null,
+      maximoPosible: null,
+    });
+
+    it('muestra solo las asignaturas en riesgo alto o medio, con su nivel escrito y por qué', () => {
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [
+        riesgo(1, 'Cálculo', 'alto'),
+        riesgo(2, 'Redes', 'medio'),
+        riesgo(3, 'Física', 'bajo'),
+        riesgo(4, 'Ética', 'sin_datos'),
+      ]);
+
+      const items = html.querySelectorAll('.hoy__brujula .hoy__por-atender-item');
+      expect(items).toHaveLength(2);
+      expect(items[0].textContent).toContain('Cálculo');
+      expect(items[0].textContent).toContain('Riesgo alto');
+      expect(items[0].textContent).toContain('Explicación de Cálculo');
+      expect(items[1].textContent).toContain('Riesgo medio');
+      expect(html.textContent).not.toContain('Física');
+    });
+
+    it('muestra a lo sumo tres', () => {
+      const cuatro = [1, 2, 3, 4].map((id) => riesgo(id, `Asignatura ${id}`, 'alto'));
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], cuatro);
+
+      expect(html.querySelectorAll('.hoy__brujula .hoy__por-atender-item')).toHaveLength(3);
+    });
+
+    it('si nada está en riesgo no muestra el bloque', () => {
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [riesgo(1, 'Cálculo', 'bajo')]);
+
+      expect(html.querySelector('.hoy__brujula')).toBeNull();
+    });
+
+    it('lleva a la Brújula', () => {
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [riesgo(1, 'Cálculo', 'alto')]);
+
+      expect(html.querySelector<HTMLAnchorElement>('.hoy__brujula a')?.getAttribute('href')).toBe('/brujula');
     });
   });
 });
