@@ -12,7 +12,6 @@ import {
 } from '../../../data-access/evaluacion.repository';
 import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { origenDeLaImportacion } from '../origen-de-la-importacion';
-import { AvanceDeLaLectura, LectorDeImagen } from './lector-de-imagen';
 import { extraerHtmlDeMhtml } from './mhtml';
 import {
   TablaDelCmad,
@@ -21,7 +20,6 @@ import {
   CategoriaDelCmad,
   aNumero,
   leerHtmlDelCmad,
-  leerTextoDelCmad,
 } from './lector-del-cmad';
 
 /** Una actividad de la tabla en revisión: el estudiante puede cambiarle el nombre, la nota o dejarla fuera. */
@@ -72,7 +70,6 @@ const TOLERANCIA_DEL_TOTAL = 0.06;
 export class ImportCmad {
   private readonly repositorio = inject(EvaluacionRepository);
   private readonly notificador = inject(NotifierService);
-  private readonly lectorDeImagen = inject(LectorDeImagen);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
 
@@ -82,29 +79,13 @@ export class ImportCmad {
   protected readonly asignaturas = signal<AsignaturaMatriculada[]>([]);
   protected readonly cargando = signal(true);
   protected readonly idElegido = signal<number | null>(null);
-  protected readonly textoPegado = signal('');
   protected readonly error = signal<string | null>(null);
   protected readonly tabla = signal<TablaDelCmad | null>(null);
   protected readonly filas = signal<FilaEnRevision[]>([]);
   protected readonly avisoDeCurso = signal<string | null>(null);
   protected readonly guardando = signal(false);
   protected readonly resultado = signal<Resultado | null>(null);
-  protected readonly guiaAbierta = signal(false);
-  /** Verdadero mientras se lee una imagen con OCR. */
-  protected readonly leyendoImagen = signal(false);
-  /** En qué va la lectura de la imagen; una captura larga se lee por partes y se cuenta cuál. */
-  protected readonly avanceDeLaImagen = signal<AvanceDeLaLectura | null>(null);
-  protected readonly textoDelAvance = computed(() => {
-    const avance = this.avanceDeLaImagen();
-    if (!avance || avance.etapa === 'preparando') {
-      return 'Preparando el lector… la primera vez baja unos 6 MB; las siguientes ya lo tiene.';
-    }
-    return avance.franjas > 1
-      ? `Leyendo la imagen… parte ${avance.franja} de ${avance.franjas}. Una captura larga tarda un poco más.`
-      : 'Leyendo la imagen…';
-  });
-  /** Lo detectado salió de una imagen: el OCR puede equivocarse, así que se avisa que se revise. */
-  protected readonly vieneDeImagen = signal(false);
+  protected readonly guiaAbierta = signal(true);
   /** Lo que la asignatura ya tiene guardado, para decir qué cambia al subir de nuevo. */
   private readonly guardadas = signal<{ nombre: string; nota: number | null }[]>([]);
 
@@ -162,10 +143,6 @@ export class ImportCmad {
     this.idElegido.set(Number((evento.target as HTMLSelectElement).value));
   }
 
-  protected escribirTexto(evento: Event): void {
-    this.textoPegado.set((evento.target as HTMLTextAreaElement).value);
-  }
-
   /** Elegir un archivo con el selector. */
   protected async archivoElegido(evento: Event): Promise<void> {
     const entrada = evento.target as HTMLInputElement;
@@ -182,41 +159,19 @@ export class ImportCmad {
     return this.procesar(archivo);
   }
 
-  /** Una imagen se lee con OCR y lo demás es la página guardada (.html o .mht); todo en el navegador, nada se sube. */
+  /** La página guardada del CMAD (.html, o .mht si viene del teléfono); todo en el navegador, nada se sube. */
   private async procesar(archivo: File): Promise<void> {
-    if (this.leyendoImagen()) {
-      return;
-    }
     if (archivo.type.startsWith('image/')) {
-      await this.leerImagen(archivo);
+      this.tabla.set(null);
+      this.guiaAbierta.set(true);
+      this.error.set(
+        'Las fotos y capturas no se leen: con el texto tan chico se confunden los números, y una nota mal leída es peor que ninguna. Guarda la página del CMAD o copia la tabla; la guía de arriba te dice cómo, en el computador y en el teléfono.',
+      );
       return;
     }
     // En el teléfono, Chrome guarda la página como .mht (MHTML): se toma de ahí la parte HTML.
     const contenido = extraerHtmlDeMhtml(await archivo.text());
-    this.vieneDeImagen.set(false);
     this.leer(() => leerHtmlDelCmad(contenido), contenido);
-  }
-
-  private async leerImagen(imagen: File): Promise<void> {
-    this.error.set(null);
-    this.leyendoImagen.set(true);
-    try {
-      const texto = await this.lectorDeImagen.leer(imagen, (avance) => this.avanceDeLaImagen.set(avance));
-      this.leer(() => leerTextoDelCmad(texto), texto);
-      this.vieneDeImagen.set(this.tabla() !== null);
-      // El OCR suele perder la coma decimal: «41» no es una nota válida y casi seguro era «4,1».
-      this.filas.update((filas) => filas.map((f) => ({ ...f, nota: f.nota.replace(/^([0-5])(\d)$/, '$1.$2') })));
-    } catch {
-      this.error.set('No pudimos leer la imagen. Prueba con una captura más nítida o pega la tabla.');
-    } finally {
-      this.leyendoImagen.set(false);
-      this.avanceDeLaImagen.set(null);
-    }
-  }
-
-  protected leerLoPegado(): void {
-    const texto = this.textoPegado();
-    this.leer(() => leerTextoDelCmad(texto), texto);
   }
 
   private leer(lectura: () => TablaDelCmad, original: string): void {
@@ -274,7 +229,6 @@ export class ImportCmad {
     this.filas.set([]);
     this.error.set(null);
     this.avisoDeCurso.set(null);
-    this.vieneDeImagen.set(false);
     this.guardadas.set([]);
     this.resultado.set(null);
   }
