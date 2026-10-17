@@ -75,6 +75,11 @@ export const routes: Routes = [
       loadComponent: () => import('./features/schedule/my-schedule/my-schedule').then((m) => m.MySchedule),
       },
       {
+        path: 'simulador',
+        data: { titulo: 'Simulador' },
+      loadComponent: () => import('./features/simulator/simulator-screen/simulator-screen').then((m) => m.SimulatorScreen),
+      },
+      {
         path: 'pendientes',
         data: { titulo: 'Mis pendientes' },
       loadComponent: () => import('./features/tasks/my-tasks/my-tasks').then((m) => m.MyTasks),
