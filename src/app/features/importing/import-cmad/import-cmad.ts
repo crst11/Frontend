@@ -18,6 +18,7 @@ import {
   TablaDelCmad,
   TablaDelCmadNoLegible,
   armarLosCortes,
+  CategoriaDelCmad,
   aNumero,
   leerHtmlDelCmad,
   leerTextoDelCmad,
@@ -35,6 +36,8 @@ interface FilaEnRevision {
   ponderacion: number;
   /** Lo que escribió, tal cual: puede traer coma. Vacío es «sin nota». */
   nota: string;
+  /** La categoría de Moodle (REA 1…) si el curso las tiene: de ella salen los cortes. */
+  categoria?: CategoriaDelCmad;
 }
 
 /** Lo que dice la comprobación después de guardar. */
@@ -209,7 +212,7 @@ export class ImportCmad {
     try {
       const tabla = lectura();
       this.tabla.set(tabla);
-      this.filas.set(tabla.filas.map((f) => ({ incluir: true, nombre: f.nombre, ponderacion: f.ponderacion, nota: this.notaVisible(f.nota) })));
+      this.filas.set(tabla.filas.map((f) => ({ incluir: true, nombre: f.nombre, ponderacion: f.ponderacion, nota: this.notaVisible(f.nota), categoria: f.categoria })));
       this.avisoDeCurso.set(this.compararConLaAsignatura(original, tabla));
       this.cargarLoGuardado();
     } catch (error) {
@@ -292,7 +295,7 @@ export class ImportCmad {
 
   private aFila(fila: FilaEnRevision) {
     const nota = this.notaEscrita(fila) === 'valida' ? aNumero(fila.nota) : null;
-    return { nombre: fila.nombre.trim() || 'Actividad', ponderacion: fila.ponderacion, nota };
+    return { nombre: fila.nombre.trim() || 'Actividad', ponderacion: fila.ponderacion, nota, categoria: fila.categoria };
   }
 
   protected textoDeLasActividades(cantidad: number): string {
