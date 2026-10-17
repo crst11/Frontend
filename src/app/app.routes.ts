@@ -86,6 +86,12 @@ export const routes: Routes = [
         import('./features/notifications/notifications-screen/notifications-screen').then((m) => m.NotificationsScreen),
       },
       {
+        path: 'avisos/configuracion',
+        data: { titulo: 'Configurar avisos' },
+      loadComponent: () =>
+        import('./features/notifications/notification-settings/notification-settings').then((m) => m.NotificationSettings),
+      },
+      {
         path: 'brujula',
         data: { titulo: 'Brújula Académica' },
       loadComponent: () => import('./features/compass/compass-screen/compass-screen').then((m) => m.CompassScreen),
