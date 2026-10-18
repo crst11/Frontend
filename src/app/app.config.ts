@@ -40,6 +40,8 @@ import { DispositivoHttpRepository } from './data-access/http/dispositivo-http.r
 import { BrujulaRepository } from './data-access/brujula.repository';
 import { BrujulaHttpRepository } from './data-access/http/brujula-http.repository';
 import { ProyeccionRepository } from './data-access/proyeccion.repository';
+import { PropuestaDeHorarioRepository } from './data-access/propuesta-de-horario.repository';
+import { PropuestaDeHorarioHttpRepository } from './data-access/http/propuesta-de-horario-http.repository';
 import { ProyeccionHttpRepository } from './data-access/http/proyeccion-http.repository';
 import { ImportacionDeHorarioRepository } from './data-access/importacion-de-horario.repository';
 import { ImportacionDeHorarioHttpRepository } from './data-access/http/importacion-de-horario-http.repository';
@@ -63,6 +65,7 @@ export const appConfig: ApplicationConfig = {
     { provide: DiaRepository, useClass: DiaHttpRepository },
     { provide: PendienteRepository, useClass: PendienteHttpRepository },
     { provide: ProyeccionRepository, useClass: ProyeccionHttpRepository },
+    { provide: PropuestaDeHorarioRepository, useClass: PropuestaDeHorarioHttpRepository },
     { provide: BrujulaRepository, useClass: BrujulaHttpRepository },
     { provide: AvisoRepository, useClass: AvisoHttpRepository },
     { provide: DispositivoRepository, useClass: DispositivoHttpRepository },

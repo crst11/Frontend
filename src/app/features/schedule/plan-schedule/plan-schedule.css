@@ -1,0 +1,144 @@
+.armar {
+  gap: 1rem;
+}
+
+.armar__volver {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.armar__seccion {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.15rem;
+  color: var(--color-ink);
+}
+
+.armar__materia {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.armar__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.armar__grupo-cabecera {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.armar__codigo {
+  flex: 1;
+  min-width: 0;
+}
+
+.armar__bloque {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto 1fr auto;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Desde 360 px el día ocupa una fila y las horas otra, para que nada quede apretado. */
+@media (max-width: 480px) {
+  .armar__bloque {
+    grid-template-columns: 1fr auto 1fr auto;
+  }
+
+  .armar__dia {
+    grid-column: 1 / -1;
+  }
+}
+
+.armar__a {
+  color: var(--color-muted);
+}
+
+.armar__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.armar__chico {
+  width: auto;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.armar__preferencias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.armar__preferencias .field__label {
+  margin: 0.25rem 0 0;
+}
+
+.armar__huecos {
+  margin: 0.25rem 0;
+}
+
+.armar__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.armar__opcion-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.armar__opcion-titulo {
+  margin: 0;
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.05rem;
+  color: var(--color-ink);
+}
+
+.armar__etiqueta {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.armar__lista {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--color-text);
+}
+
+.armar__dia-resumen {
+  margin-top: 0.25rem;
+}
+
+.armar__dia-titulo {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.armar__hora {
+  font-weight: 600;
+  white-space: nowrap;
+}
