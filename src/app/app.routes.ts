@@ -75,6 +75,11 @@ export const routes: Routes = [
       loadComponent: () => import('./features/schedule/my-schedule/my-schedule').then((m) => m.MySchedule),
       },
       {
+        path: 'horario/armar',
+        data: { titulo: 'Armar mi horario' },
+      loadComponent: () => import('./features/schedule/plan-schedule/plan-schedule').then((m) => m.PlanSchedule),
+      },
+      {
         path: 'simulador',
         data: { titulo: 'Simulador' },
       loadComponent: () => import('./features/simulator/simulator-screen/simulator-screen').then((m) => m.SimulatorScreen),

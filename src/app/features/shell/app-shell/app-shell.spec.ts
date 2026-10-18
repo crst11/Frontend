@@ -124,6 +124,7 @@ describe('AppShell', () => {
       expect(enlaces).toEqual([
         'Hoy',
         'Mi horario',
+        'Armar mi horario',
         'Mis notas',
         'Simulador',
         'Brújula Académica',

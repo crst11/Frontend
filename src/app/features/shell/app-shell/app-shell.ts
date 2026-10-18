@@ -41,6 +41,7 @@ export class AppShell {
   protected readonly secciones: Seccion[] = [
     { ruta: '/inicio', texto: 'Hoy' },
     { ruta: '/horario', texto: 'Mi horario' },
+    { ruta: '/horario/armar', texto: 'Armar mi horario' },
     { ruta: '/calificaciones/mis-notas', texto: 'Mis notas' },
     { ruta: '/simulador', texto: 'Simulador' },
     { ruta: '/brujula', texto: 'Brújula Académica' },
