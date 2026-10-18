@@ -61,15 +61,13 @@ jobs:
       # Comprueba que el Dockerfile sigue construyendo. La imagen se queda en el ejecutor y se descarta:
       # desarrollo no publica nada ni toca AWS.
       - uses: docker/setup-buildx-action@v4
-      - uses: docker/build-push-action@v7
+      # La accion compuesta prueba otro registro si public.ecr.aws limita las descargas (SCRUM-202).
+      - uses: ./.github/actions/construir-imagen
         with:
-          context: .
-          push: false
-          load: true
-          build-args: CONFIGURACION=dev
+          load: 'true'
+          configuracion: dev
           tags: cundiapp-frontend:dev-${{ github.sha }}
-          cache-from: type=gha,scope=frontend-dev
-          cache-to: type=gha,scope=frontend-dev,mode=max
+          cache-scope: frontend-dev
 
   publicar:
     name: Publicar en ${{ needs.contexto.outputs.entorno }}
