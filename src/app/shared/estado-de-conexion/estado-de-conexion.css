@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+/* Sin nada que decir, la franja no ocupa lugar. */
+.conexion:empty {
+  display: none;
+}
+
+.conexion {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+.conexion__texto {
+  margin: 0;
+}
+
+.conexion--sin {
+  padding-block: 0.6rem;
+  font-size: 0.875rem;
+  color: var(--color-ink);
+  background: var(--color-primary-soft);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.conexion__icono {
+  flex: none;
+}
