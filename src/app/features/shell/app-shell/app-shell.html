@@ -43,7 +43,7 @@
     <ul class="shell__lista">
       @for (seccion of secciones; track seccion.ruta) {
         <li>
-          <a class="shell__enlace" [routerLink]="seccion.ruta" routerLinkActive="shell__enlace--activo" ariaCurrentWhenActive="page">
+          <a class="shell__enlace" [routerLink]="seccion.ruta" routerLinkActive="shell__enlace--activo" [routerLinkActiveOptions]="{ exact: seccion.ruta === '/horario' }" ariaCurrentWhenActive="page">
             {{ seccion.texto }}
           </a>
         </li>
