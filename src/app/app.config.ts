@@ -12,6 +12,9 @@ import { routes } from './app.routes';
 import { SessionService } from './core/session/session.service';
 import { verificacionHumanaInterceptor } from './core/humano/verificacion-humana.interceptor';
 import { sessionInterceptor } from './core/session/session.interceptor';
+import { lecturasSinConexionInterceptor } from './core/offline/lecturas-sin-conexion.interceptor';
+import { CopiaLocalRepository } from './data-access/copia-local.repository';
+import { CopiaLocalIndexedDbRepository } from './data-access/indexeddb/copia-local-indexeddb.repository';
 import { EstudianteRepository } from './data-access/estudiante.repository';
 import { EstudianteHttpRepository } from './data-access/http/estudiante-http.repository';
 import { GuiaRepository } from './data-access/guia.repository';
@@ -49,7 +52,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([verificacionHumanaInterceptor, sessionInterceptor])),
+    // La copia para consultar sin conexión va después de la sesión: un 401 se renueva antes de mirar la copia.
+    provideHttpClient(withInterceptors([verificacionHumanaInterceptor, sessionInterceptor, lecturasSinConexionInterceptor])),
+    { provide: CopiaLocalRepository, useClass: CopiaLocalIndexedDbRepository },
     { provide: GuiaRepository, useClass: GuiaHttpRepository },
     { provide: EstudianteRepository, useClass: EstudianteHttpRepository },
     { provide: PlanDeEstudiosRepository, useClass: PlanDeEstudiosHttpRepository },
