@@ -6,6 +6,7 @@ import { filter, map } from 'rxjs';
 import { AvisosSinLeer } from '../../../core/notifications/avisos-sin-leer.service';
 import { CierreDeSesion } from '../../../core/session/cierre-de-sesion.service';
 import { SessionService } from '../../../core/session/session.service';
+import { EstadoDeConexion } from '../../../shared/estado-de-conexion/estado-de-conexion';
 
 interface Seccion {
   ruta: string;
@@ -25,7 +26,7 @@ const CADA_CUANTO_SE_REVISAN_LOS_AVISOS_EN_MS = 60_000;
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, EstadoDeConexion],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
 })
