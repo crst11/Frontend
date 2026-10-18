@@ -1,0 +1,162 @@
+<main class="screen hoy">
+  @if (cargando()) {
+    <p class="subtitle">Armando tu día…</p>
+  } @else if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+    <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
+  } @else if (dia(); as hoy) {
+    <h1 class="hoy__fecha">{{ fechaLarga(hoy.fecha, hoy.dia) }}</h1>
+
+    @if (avance(); as progreso) {
+      @if (progreso.porcentaje < 100) {
+        <a class="card hoy__avance" routerLink="/importar" [state]="{ origen: '/inicio' }">
+          <span class="hoy__avance-titulo">Tu información está al {{ progreso.porcentaje }} %</span>
+          <span
+            class="hoy__avance-barra"
+            role="progressbar"
+            aria-label="Avance de tu información"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="progreso.porcentaje"
+          >
+            <span class="hoy__avance-relleno" [style.width.%]="progreso.porcentaje"></span>
+          </span>
+          <span class="hoy__avance-ayuda">Sube lo que falta y aquí verás tus clases, actividades y notas.</span>
+        </a>
+      }
+    }
+
+    @if (mostrarGuiaIos()) {
+      <app-ios-install-guide [descartable]="true" (descartada)="descartarGuiaIos()" />
+    }
+
+    @if (pendientes().length > 0) {
+      <section class="card hoy__por-atender" aria-label="Pendientes por atender">
+        <h2 class="hoy__titulo">Pendientes por atender</h2>
+        <ul class="hoy__por-atender-lista">
+          @for (pendiente of pendientes(); track pendiente.id) {
+            <li class="hoy__por-atender-item">
+              <span class="hoy__por-atender-nombre">{{ pendiente.titulo }}</span>
+              <span class="hoy__por-atender-datos">
+                <span>{{ fechaDelPendiente(pendiente) }}</span>
+                <strong [class.hoy__por-atender-vencido]="pendiente.situacion === 'vencido'">
+                  {{ pendiente.situacion === 'vencido' ? 'Vencido' : 'Vence pronto' }}
+                </strong>
+              </span>
+            </li>
+          }
+        </ul>
+        <a class="button button--outline" routerLink="/pendientes">Ver mis pendientes</a>
+      </section>
+    }
+
+    @if (enRiesgo().length > 0) {
+      <section class="card hoy__brujula" aria-label="Brújula Académica">
+        <h2 class="hoy__titulo">Brújula Académica</h2>
+        <ul class="hoy__por-atender-lista">
+          @for (riesgo of enRiesgo(); track riesgo.asignatura.idMatricula) {
+            <li class="hoy__por-atender-item">
+              <span class="hoy__por-atender-nombre">{{ riesgo.asignatura.nombre }}</span>
+              <span class="hoy__por-atender-datos">
+                <strong [class.hoy__por-atender-vencido]="riesgo.nivel === 'alto'">{{ etiquetaDeRiesgo(riesgo.nivel) }}</strong>
+                <span>{{ riesgo.explicacion }}</span>
+              </span>
+            </li>
+          }
+        </ul>
+        <a class="button button--outline" routerLink="/brujula">Ver mi Brújula</a>
+      </section>
+    }
+
+    @if (sinHorario()) {
+      <section class="card hoy__vacio" aria-label="Todavía no hay información">
+        <h2 class="hoy__titulo">Aquí se verá tu información después de subirla</h2>
+        <p class="subtitle">Sube tu Reporte de Horario y verás cada día las materias que te tocan.</p>
+        <a class="button button--primary" routerLink="/cuenta/importar-horario" [state]="{ origen: '/inicio' }">Importar mi horario</a>
+      </section>
+    } @else {
+      @if (hoy.tipo === 'festivo') {
+        <section class="card hoy__descanso" aria-label="Hoy no hay clases">
+          <h2 class="hoy__titulo">Hoy es festivo: descansa</h2>
+          <p class="subtitle">{{ hoy.festivo }}. No hay clases.</p>
+        </section>
+      } @else if (hoy.tipo === 'fuera_de_periodo') {
+        <section class="card hoy__descanso" aria-label="Hoy no hay clases">
+          <h2 class="hoy__titulo">Estás entre semestres</h2>
+          <p class="subtitle">Hoy no hay clases.</p>
+        </section>
+      } @else if (hoy.clases.length === 0) {
+        <section class="card hoy__descanso" aria-label="Hoy no hay clases">
+          <h2 class="hoy__titulo">Hoy no tienes clases</h2>
+          <p class="subtitle">Tu horario no tiene nada para este día.</p>
+        </section>
+      } @else {
+        <ul class="hoy__clases" aria-label="Tus clases de hoy">
+          @for (clase of hoy.clases; track clase.idMatricula + clase.horaInicio) {
+            <li>
+              <button
+                class="card hoy__clase"
+                type="button"
+                [class.hoy__clase--en-curso]="clase.estado === 'en_curso'"
+                [class.hoy__clase--proxima]="clase.estado === 'proxima'"
+                [class.hoy__clase--pasada]="clase.estado === 'pasada'"
+                [attr.aria-expanded]="estaAbierta(clase)"
+                [attr.aria-controls]="'pendientes-' + claveDe(clase)"
+                (click)="alternar(clase)"
+              >
+                <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
+                @if (etiquetaDeEstado(clase); as etiqueta) {
+                  <span class="hoy__estado">{{ etiqueta }}</span>
+                }
+                <span class="hoy__asignatura">{{ clase.asignatura }}</span>
+                @if (lugarDe(clase); as lugar) {
+                  <span class="hoy__detalle">{{ lugar }}</span>
+                }
+                @if (docenteDe(clase); as docente) {
+                  <span class="hoy__detalle">{{ docente }}</span>
+                }
+                <span class="hoy__actividades" [class.hoy__actividades--faltan]="clase.actividades === 0">
+                  {{ textoDeActividades(clase) }}
+                </span>
+              </button>
+              @if (estaAbierta(clase)) {
+                <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
+                  <app-pending-activities [idMatricula]="clase.idMatricula" origen="/inicio" />
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (hoy.siguiente; as siguiente) {
+        <h2 class="hoy__siguiente">{{ tituloDelSiguiente(hoy) }}</h2>
+        <ul class="hoy__clases hoy__clases--siguiente" aria-label="Tus clases del próximo día">
+          @for (clase of siguiente.clases; track clase.idMatricula + clase.horaInicio) {
+            <li>
+              <button
+                class="card hoy__clase"
+                type="button"
+                [attr.aria-expanded]="estaAbierta(clase)"
+                [attr.aria-controls]="'pendientes-' + claveDe(clase)"
+                (click)="alternar(clase)"
+              >
+                <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
+                <span class="hoy__asignatura">{{ clase.asignatura }}</span>
+                @if (lugarDe(clase); as lugar) {
+                  <span class="hoy__detalle">{{ lugar }}</span>
+                }
+              </button>
+              @if (estaAbierta(clase)) {
+                <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
+                  <app-pending-activities [idMatricula]="clase.idMatricula" origen="/inicio" />
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    }
+
+  }
+</main>

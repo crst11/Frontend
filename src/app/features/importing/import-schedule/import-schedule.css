@@ -1,0 +1,37 @@
+/* Lo demás sale de import-report.css: la zona de carga, la guía, las tarjetas y las filas son las mismas. */
+.horario-import__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.horario-import__titulo {
+  min-width: 0;
+}
+
+/* El estado de la asignatura es una etiqueta, no una línea suelta pegada al borde. */
+.horario-import__estado {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.horario-import__estado--fuera {
+  background: var(--color-background);
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.horario-import__sin-clases {
+  margin: 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border);
+  font-size: 14px;
+  color: var(--color-muted);
+}

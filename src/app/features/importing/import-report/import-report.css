@@ -45,6 +45,12 @@
   background: var(--color-primary-soft);
 }
 
+.import__zona--sobre {
+  border-color: var(--color-primary);
+  border-style: solid;
+  background: var(--color-primary-soft);
+}
+
 .import__zona--ocupada {
   cursor: progress;
   opacity: 0.7;

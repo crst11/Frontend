@@ -26,9 +26,9 @@ describe('Welcome', () => {
     ]);
   });
 
-  it('si ya hay sesión lleva directo a la cuenta', () => {
+  it('si ya hay sesión lleva directo a su día', () => {
     expect(enlaces(crear(true))).toEqual([
-      ['Ir a mi cuenta', '/cuenta/mi-cuenta'],
+      ['Ir a mi día', '/inicio'],
       ['Consultar guía institucional', '/guia'],
     ]);
   });

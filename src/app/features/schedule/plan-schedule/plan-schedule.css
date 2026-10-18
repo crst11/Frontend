@@ -1,0 +1,155 @@
+.armar {
+  gap: 1rem;
+}
+
+.armar__volver {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.armar__seccion {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.15rem;
+  color: var(--color-ink);
+}
+
+.armar__materia {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.armar__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.armar__grupo-cabecera {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.armar__codigo {
+  flex: 1;
+  min-width: 0;
+}
+
+/* El día va en su fila y las horas en otra. Un campo de hora no se encoge por debajo de lo que mide, así que si
+   no caben las dos juntas la de fin baja a la línea siguiente en vez de salirse de la tarjeta. */
+.armar__bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.armar__bloque-dia,
+.armar__bloque-horas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.armar__bloque-dia .armar__dia {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.armar__bloque-horas .field__input {
+  flex: 1 1 9rem;
+  min-width: 0;
+  width: auto;
+}
+
+.armar__a {
+  color: var(--color-muted);
+}
+
+.armar__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.armar__chico {
+  width: auto;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.armar__preferencias {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.armar__preferencias .field__label {
+  margin: 0.25rem 0 0;
+}
+
+.armar__huecos {
+  margin: 0.25rem 0;
+}
+
+.armar__opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.armar__opcion-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.armar__opcion-titulo {
+  margin: 0;
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.05rem;
+  color: var(--color-ink);
+}
+
+.armar__etiqueta {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.armar__lista {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--color-text);
+}
+
+.armar__dia-resumen {
+  margin-top: 0.25rem;
+}
+
+.armar__dia-titulo {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.armar__hora {
+  font-weight: 600;
+  white-space: nowrap;
+}

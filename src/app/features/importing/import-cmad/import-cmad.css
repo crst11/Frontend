@@ -1,0 +1,48 @@
+/* Lo demás sale de import-report.css: la zona de carga, la guía, las tarjetas y las filas son las mismas. */
+.cmad__fila {
+  display: grid;
+  grid-template-columns: auto 1fr 76px;
+  align-items: start;
+  gap: 10px;
+}
+
+.cmad__incluir {
+  width: 20px;
+  height: 20px;
+  margin-top: 12px;
+}
+
+.cmad__campos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cmad__nota {
+  text-align: center;
+}
+
+
+.import__comparacion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.import__cambios {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+/* El nombre de cada dispositivo en la guía: alineado con el texto de los pasos de abajo. */
+.import__dispositivo {
+  margin: 16px 16px 8px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-ink);
+}

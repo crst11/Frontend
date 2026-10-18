@@ -1,0 +1,82 @@
+<main class="screen brujula">
+  @if (cargando()) {
+    <p class="subtitle">Calculando tu Brújula…</p>
+  } @else if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+    <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
+  } @else if (brujula(); as b) {
+    <p class="subtitle">
+      Qué tan comprometida está cada asignatura que cursas, según la nota que necesitas en lo que falta para llegar a
+      {{ b.meta | number: '1.1-2' }}.
+    </p>
+
+    @if (b.asignaturas.length === 0) {
+      <section class="card brujula__vacio" aria-label="No hay asignaturas en curso">
+        <h2 class="brujula__titulo">No tienes asignaturas en curso</h2>
+        <p class="subtitle">Importa tu horario y aquí verás cómo vas en cada una.</p>
+        <a class="button button--primary" routerLink="/importar">Importar mis archivos</a>
+      </section>
+    } @else {
+      <ul class="brujula__lista" aria-label="Tus asignaturas por riesgo">
+        @for (item of b.asignaturas; track item.asignatura.idMatricula) {
+          <li class="card brujula__item" [class]="'brujula__item--' + item.nivel">
+            <div class="brujula__cabecera">
+              <h2 class="brujula__nombre">{{ item.asignatura.nombre }}</h2>
+              <span class="badge brujula__nivel" [class]="'brujula__nivel--' + item.nivel">{{ etiqueta(item.nivel) }}</span>
+            </div>
+            <p class="brujula__explicacion">{{ item.explicacion }}</p>
+            @if (item.nivel === 'sin_datos') {
+              <a class="button button--soft" routerLink="/calificaciones/mis-notas">Definir cómo me evalúan</a>
+            } @else {
+              <a
+                class="button button--outline"
+                routerLink="/simulador"
+                [queryParams]="{ asignatura: item.asignatura.idMatricula }"
+              >
+                Simular lo que me falta
+              </a>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    <section class="card brujula__umbrales" aria-label="Mis umbrales">
+      <h2 class="brujula__titulo">Mis umbrales</h2>
+      <p class="subtitle">
+        Una asignatura pasa a riesgo medio cuando la nota que necesitas supera el primer umbral, y a riesgo alto cuando
+        supera el segundo (o cuando ya no se alcanza tu meta).
+      </p>
+      <form class="brujula__formulario" (submit)="$event.preventDefault(); guardarUmbrales()">
+        <div class="field">
+          <label class="field__label" for="umbral-medio">Riesgo medio desde</label>
+          <input
+            id="umbral-medio"
+            class="field__input"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            [value]="medioTexto()"
+            (input)="medioTexto.set($any($event.target).value)"
+          />
+        </div>
+        <div class="field">
+          <label class="field__label" for="umbral-alto">Riesgo alto desde</label>
+          <input
+            id="umbral-alto"
+            class="field__input"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            [value]="altoTexto()"
+            (input)="altoTexto.set($any($event.target).value)"
+          />
+        </div>
+        @if (errorDeUmbrales(); as mensaje) {
+          <p class="field__error" role="alert">{{ mensaje }}</p>
+        }
+        <button class="button button--primary" type="submit" [disabled]="guardando()">Guardar umbrales</button>
+      </form>
+    </section>
+  }
+</main>

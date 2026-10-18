@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import {
   Asignatura,
@@ -22,7 +21,6 @@ interface CampoDeAprendizaje {
  */
 @Component({
   selector: 'app-study-plan',
-  imports: [RouterLink],
   templateUrl: './study-plan.html',
   styleUrl: './study-plan.css',
 })

@@ -23,7 +23,9 @@ Ofrecer al estudiante, desde el celular o el computador, su horario, sus notas, 
 | Mi plan de estudios (protegida) | `/cuenta/plan-de-estudios` | Hecho: elegir programa y ver las asignaturas de cada semestre |
 | Mi historial y promedios (protegida) | `/cuenta/historial` | Hecho: notas por período, promedios y avance en la carrera |
 | Importar mi reporte (protegida) | `/cuenta/importar-reporte` | Hecho: subir el Registro Académico Extendido, confirmar lo detectado y deshacer la última carga |
+| Mi horario (protegida) | `/horario` | Hecho: ver las clases por día y por semana con salón, bloque, sede y docente, agregarlas a mano o importarlas del Reporte de Horario en PDF, y filtrarlas y ordenarlas con una vista que se guarda |
 | Mis notas (protegida) | `/calificaciones/mis-notas` | Hecho: definir las categorías y actividades de cada asignatura con sus porcentajes |
+| Mis notas (protegida) | `/calificaciones/mis-notas` | Hecho: definir las categorías y actividades de cada asignatura con sus porcentajes, y anotar la nota de cada actividad con lo que se lleva acumulado |
 
 La sesión se mantiene sola: el token de acceso vive en memoria y, cuando vence, se renueva con la cookie de refresco que maneja el navegador.
 
@@ -97,3 +99,12 @@ El código fluye de la rama de la incidencia a `desarrollo`, luego a `preproducc
 
 - Cristian Albeiro Morales Urrea
 - Naomi Xannathl Ochoa Trejo
+
+## Dependencias y avisos de seguridad
+
+El CI tiene un trabajo, *Dependencias sin vulnerabilidades altas ni críticas*, que corre `npm audit --omit=dev --audit-level=high` y falla si lo que llega al navegador tiene una. Para atender un aviso:
+
+1. Correr `npm audit` y leer qué paquete es y cuál es la versión corregida.
+2. Subirlo. Los paquetes `@angular/*` se suben juntos con `npx ng update @angular/core @angular/cli @angular/build`, porque cada uno exige la misma versión de los demás (`npm install` suelto falla con ERESOLVE). Lo demás, con `npm audit fix` o `npm install paquete@versión`.
+3. Correr `npm run lint`, `npm test` y `npm run build`: una versión nueva del router o del compilador puede endurecer una prueba.
+4. Si un aviso no se puede corregir todavía, se deja constancia en el pull request con el motivo y la fecha en que se vuelve a mirar.

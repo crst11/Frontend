@@ -49,8 +49,8 @@ jobs:
     if: needs.contexto.outputs.entorno == 'dev' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
           cache: npm
@@ -60,16 +60,14 @@ jobs:
       - run: npm run build:dev
       # Comprueba que el Dockerfile sigue construyendo. La imagen se queda en el ejecutor y se descarta:
       # desarrollo no publica nada ni toca AWS.
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: docker/setup-buildx-action@v4
+      # La accion compuesta prueba otro registro si public.ecr.aws limita las descargas (SCRUM-202).
+      - uses: ./.github/actions/construir-imagen
         with:
-          context: .
-          push: false
-          load: true
-          build-args: CONFIGURACION=dev
+          load: 'true'
+          configuracion: dev
           tags: cundiapp-frontend:dev-${{ github.sha }}
-          cache-from: type=gha,scope=frontend-dev
-          cache-to: type=gha,scope=frontend-dev,mode=max
+          cache-scope: frontend-dev
 
   publicar:
     name: Publicar en ${{ needs.contexto.outputs.entorno }}
@@ -88,7 +86,7 @@ jobs:
       S_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       S_AWS_REGION: ${{ secrets.AWS_REGION }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -104,7 +102,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
           cache: npm
@@ -114,7 +112,7 @@ jobs:
       - name: Compilar
         run: npx ng build --configuration "$CONFIGURACION"
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
