@@ -22,7 +22,7 @@
             type="text"
             maxlength="80"
             autocomplete="off"
-            placeholder="Por ejemplo, Cálculo diferencial"
+            placeholder="Por ejemplo, Ecuaciones diferenciales"
             [value]="asignatura.nombre"
             (input)="cambiarNombre(i, $any($event.target).value)"
           />
@@ -32,14 +32,14 @@
           <div class="armar__grupo">
             <div class="armar__grupo-cabecera">
               <div class="field armar__codigo">
-                <label class="field__label" [for]="'grupo-' + i + '-' + g">Grupo</label>
+                <label class="field__label" [for]="'grupo-' + i + '-' + g">Grupo, como sale en la plataforma</label>
                 <input
                   class="field__input"
                   [id]="'grupo-' + i + '-' + g"
                   type="text"
                   maxlength="20"
                   autocomplete="off"
-                  placeholder="1"
+                  placeholder="Por ejemplo, 501M o LE3-M1"
                   [value]="grupo.codigo"
                   (input)="cambiarCodigo(i, g, $any($event.target).value)"
                 />
@@ -58,33 +58,37 @@
 
             @for (bloque of grupo.bloques; track $index; let b = $index) {
               <div class="armar__bloque">
-                <select
-                  class="field__input armar__dia"
-                  [attr.aria-label]="'Día del bloque ' + (b + 1) + ' del grupo ' + (grupo.codigo || g + 1)"
-                  (change)="cambiarBloque(i, g, b, { dia: $any($event.target).value })"
-                >
-                  @for (dia of dias; track dia.valor) {
-                    <option [value]="dia.valor" [selected]="dia.valor === bloque.dia">{{ dia.texto }}</option>
+                <div class="armar__bloque-dia">
+                  <select
+                    class="field__input armar__dia"
+                    [attr.aria-label]="'Día del bloque ' + (b + 1) + ' del grupo ' + (grupo.codigo || g + 1)"
+                    (change)="cambiarBloque(i, g, b, { dia: $any($event.target).value })"
+                  >
+                    @for (dia of dias; track dia.valor) {
+                      <option [value]="dia.valor" [selected]="dia.valor === bloque.dia">{{ dia.texto }}</option>
+                    }
+                  </select>
+                  @if (grupo.bloques.length > 1) {
+                    <button class="icon-button" type="button" aria-label="Quitar este bloque" (click)="quitarBloque(i, g, b)">×</button>
                   }
-                </select>
-                <input
-                  class="field__input"
-                  type="time"
-                  aria-label="Hora de inicio"
-                  [value]="bloque.inicio"
-                  (change)="cambiarBloque(i, g, b, { inicio: $any($event.target).value })"
-                />
-                <span class="armar__a" aria-hidden="true">a</span>
-                <input
-                  class="field__input"
-                  type="time"
-                  aria-label="Hora de fin"
-                  [value]="bloque.fin"
-                  (change)="cambiarBloque(i, g, b, { fin: $any($event.target).value })"
-                />
-                @if (grupo.bloques.length > 1) {
-                  <button class="icon-button" type="button" aria-label="Quitar este bloque" (click)="quitarBloque(i, g, b)">×</button>
-                }
+                </div>
+                <div class="armar__bloque-horas">
+                  <input
+                    class="field__input"
+                    type="time"
+                    aria-label="Hora de inicio"
+                    [value]="bloque.inicio"
+                    (change)="cambiarBloque(i, g, b, { inicio: $any($event.target).value })"
+                  />
+                  <span class="armar__a" aria-hidden="true">a</span>
+                  <input
+                    class="field__input"
+                    type="time"
+                    aria-label="Hora de fin"
+                    [value]="bloque.fin"
+                    (change)="cambiarBloque(i, g, b, { fin: $any($event.target).value })"
+                  />
+                </div>
               </div>
             }
 

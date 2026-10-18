@@ -43,22 +43,33 @@
   min-width: 0;
 }
 
+/* El día va en su fila y las horas en otra. Un campo de hora no se encoge por debajo de lo que mide, así que si
+   no caben las dos juntas la de fin baja a la línea siguiente en vez de salirse de la tarjeta. */
 .armar__bloque {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto 1fr auto;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   gap: 0.35rem;
+  min-width: 0;
 }
 
-/* Desde 360 px el día ocupa una fila y las horas otra, para que nada quede apretado. */
-@media (max-width: 480px) {
-  .armar__bloque {
-    grid-template-columns: 1fr auto 1fr auto;
-  }
+.armar__bloque-dia,
+.armar__bloque-horas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
 
-  .armar__dia {
-    grid-column: 1 / -1;
-  }
+.armar__bloque-dia .armar__dia {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.armar__bloque-horas .field__input {
+  flex: 1 1 9rem;
+  min-width: 0;
+  width: auto;
 }
 
 .armar__a {
