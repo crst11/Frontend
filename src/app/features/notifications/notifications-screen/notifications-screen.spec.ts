@@ -86,11 +86,19 @@ describe('NotificationsScreen', () => {
   });
 
   it('cada aviso lleva a lo que avisa', () => {
-    repositorio.misAvisos.mockReturnValue(of(respuesta([SIN_LEER, DE_RIESGO])));
+    const vencido: Aviso = {
+      ...SIN_LEER,
+      id: 4,
+      tipo: 'pendiente_vencido',
+      titulo: 'Se venció',
+      mensaje: '«Informe» se venció ayer a las 11:59 p. m.',
+    };
+    repositorio.misAvisos.mockReturnValue(of(respuesta([SIN_LEER, vencido, DE_RIESGO])));
     const { html } = crear();
 
     const enlaces = Array.from(html.querySelectorAll<HTMLAnchorElement>('.avisos__item a')).map((a) => a.getAttribute('href'));
-    expect(enlaces).toEqual(['/pendientes', '/brujula']);
+    expect(enlaces).toEqual(['/pendientes', '/pendientes', '/brujula']);
+    expect(html.textContent).toContain('«Informe» se venció ayer a las 11:59 p. m.');
   });
 
   it('marcar un aviso como leído lo pide, vuelve a traer la lista y actualiza la campana', () => {
