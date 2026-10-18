@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-/** Qué avisa un aviso (RF10): un pendiente por vencer o un cambio en el riesgo de una asignatura. */
-export type TipoDeAviso = 'vencimiento_proximo' | 'cambio_riesgo';
+/**
+ * Qué avisa un aviso (RF10): un pendiente por vencer o ya vencido, o un cambio en el riesgo de una asignatura.
+ */
+export type TipoDeAviso = 'vencimiento_proximo' | 'pendiente_vencido' | 'cambio_riesgo';
 
 /** Un aviso, con el texto ya escrito por el servidor: la pantalla solo lo muestra. */
 export interface Aviso {

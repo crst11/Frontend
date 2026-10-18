@@ -85,11 +85,11 @@ export class NotificationsScreen {
     return FORMATO_DE_AVISO.format(new Date(aviso.fecha));
   }
 
-  /** A dónde lleva cada aviso: el pendiente que vence o la Brújula en la que cambió el riesgo. */
+  /** A dónde lleva cada aviso: el pendiente que vence o se venció, o la Brújula en la que cambió el riesgo. */
   protected destino(aviso: Aviso): { ruta: string; texto: string } {
-    return aviso.tipo === 'vencimiento_proximo'
-      ? { ruta: '/pendientes', texto: 'Ver mis pendientes' }
-      : { ruta: '/brujula', texto: 'Ver mi Brújula' };
+    return aviso.tipo === 'cambio_riesgo'
+      ? { ruta: '/brujula', texto: 'Ver mi Brújula' }
+      : { ruta: '/pendientes', texto: 'Ver mis pendientes' };
   }
 
   private alCambiar(): void {
