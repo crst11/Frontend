@@ -102,7 +102,7 @@ El código fluye de la rama de la incidencia a `desarrollo`, luego a `preproducc
 
 ## Dependencias y avisos de seguridad
 
-El CI tiene un trabajo, *Dependencias sin vulnerabilidades altas ni críticas*, que corre `npm audit --omit=dev --audit-level=high` y falla si lo que llega al navegador tiene una. Dependabot abre un pull request semanal con las actualizaciones. Para atender un aviso:
+El CI tiene un trabajo, *Dependencias sin vulnerabilidades altas ni críticas*, que corre `npm audit --omit=dev --audit-level=high` y falla si lo que llega al navegador tiene una. Para atender un aviso:
 
 1. Correr `npm audit` y leer qué paquete es y cuál es la versión corregida.
 2. Subirlo. Los paquetes `@angular/*` se suben juntos con `npx ng update @angular/core @angular/cli @angular/build`, porque cada uno exige la misma versión de los demás (`npm install` suelto falla con ERESOLVE). Lo demás, con `npm audit fix` o `npm install paquete@versión`.
