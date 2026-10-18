@@ -1,0 +1,17 @@
+<div class="conexion" [class.conexion--sin]="sinConexion()" role="status" aria-live="polite">
+  @if (sinConexion()) {
+    <svg class="conexion__icono" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M2 2l20 20M8.5 16.4a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 4.2-2.6M10.7 5.1A15 15 0 0 1 22 8.8M5 12.9a10 10 0 0 1 5.2-2.7M19 12.9a10 10 0 0 0-2.3-1.8M12 20h.01" />
+    </svg>
+    <p class="conexion__texto">
+      <strong>Sin conexión.</strong>
+      @if (fecha(); as cuandoSeGuardo) {
+        Solo puedes consultar lo que ya guardaste. Última actualización: {{ cuandoSeGuardo }}
+      } @else {
+        Solo puedes consultar lo que ya cargaste.
+      }
+    </p>
+  } @else if (fecha(); as cuandoSeActualizo) {
+    <p class="conexion__texto">Actualizado {{ cuandoSeActualizo }}</p>
+  }
+</div>
