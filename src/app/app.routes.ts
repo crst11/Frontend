@@ -75,6 +75,33 @@ export const routes: Routes = [
       loadComponent: () => import('./features/schedule/my-schedule/my-schedule').then((m) => m.MySchedule),
       },
       {
+        path: 'simulador',
+        data: { titulo: 'Simulador' },
+      loadComponent: () => import('./features/simulator/simulator-screen/simulator-screen').then((m) => m.SimulatorScreen),
+      },
+      {
+        path: 'avisos',
+        data: { titulo: 'Avisos' },
+      loadComponent: () =>
+        import('./features/notifications/notifications-screen/notifications-screen').then((m) => m.NotificationsScreen),
+      },
+      {
+        path: 'avisos/configuracion',
+        data: { titulo: 'Configurar avisos' },
+      loadComponent: () =>
+        import('./features/notifications/notification-settings/notification-settings').then((m) => m.NotificationSettings),
+      },
+      {
+        path: 'brujula',
+        data: { titulo: 'Brújula Académica' },
+      loadComponent: () => import('./features/compass/compass-screen/compass-screen').then((m) => m.CompassScreen),
+      },
+      {
+        path: 'pendientes',
+        data: { titulo: 'Mis pendientes' },
+      loadComponent: () => import('./features/tasks/my-tasks/my-tasks').then((m) => m.MyTasks),
+      },
+      {
         path: 'importar',
         data: { titulo: 'Importar mis archivos' },
       loadComponent: () => import('./features/importing/import-all/import-all').then((m) => m.ImportAll),

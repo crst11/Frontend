@@ -1,0 +1,146 @@
+<main class="screen pendientes">
+  @if (cargando()) {
+    <p class="subtitle">Buscando tus pendientes…</p>
+  } @else if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+    <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
+  } @else {
+    <div class="pendientes__acciones">
+      <button class="button button--primary" type="button" [disabled]="agregando()" (click)="abrirFormulario()">
+        Agregar un pendiente
+      </button>
+      <label class="checkbox">
+        <input type="checkbox" [checked]="conCumplidos()" (change)="alternarCumplidos()" />
+        <span>Ver también los hechos</span>
+      </label>
+    </div>
+
+    @if (sinPendientes()) {
+      <section class="card pendientes__vacio" aria-label="No tienes pendientes">
+        <h2 class="pendientes__titulo">No tienes pendientes</h2>
+        <p class="subtitle">Escribe lo que tienes por hacer y aquí lo verás ordenado por fecha, con lo urgente al frente.</p>
+      </section>
+    } @else {
+      <ul class="pendientes__lista" aria-label="Tus pendientes">
+        @for (pendiente of pendientes(); track pendiente.id) {
+          <li
+            class="card pendientes__item"
+            [class.pendientes__item--vencido]="pendiente.situacion === 'vencido'"
+            [class.pendientes__item--urgente]="pendiente.situacion === 'urgente'"
+            [class.pendientes__item--hecho]="pendiente.situacion === 'cumplido'"
+          >
+            <input
+              class="pendientes__marca"
+              type="checkbox"
+              [checked]="pendiente.estado === 'cumplido'"
+              [disabled]="ocupado() !== null"
+              [attr.aria-label]="(pendiente.estado === 'cumplido' ? 'Reabrir ' : 'Marcar como hecho ') + pendiente.titulo"
+              (change)="marcar(pendiente)"
+            />
+            <div class="pendientes__cuerpo">
+              <span class="pendientes__nombre">{{ pendiente.titulo }}</span>
+              @if (pendiente.descripcion) {
+                <span class="pendientes__detalle">{{ pendiente.descripcion }}</span>
+              }
+              <span class="pendientes__fecha">{{ fechaDe(pendiente) }}</span>
+              @if (asignaturaDe(pendiente); as asignatura) {
+                <span class="pendientes__detalle">{{ asignatura }}</span>
+              }
+              <span class="pendientes__etiquetas">
+                @if (etiquetaDeSituacion(pendiente); as etiqueta) {
+                  <span [class]="'pendientes__situacion pendientes__situacion--' + pendiente.situacion">{{ etiqueta }}</span>
+                }
+                <span class="pendientes__prioridad">{{ etiquetaDePrioridad(pendiente) }}</span>
+              </span>
+            </div>
+            <button
+              class="icon-button pendientes__borrar"
+              type="button"
+              [disabled]="ocupado() !== null"
+              [attr.aria-label]="'Borrar ' + pendiente.titulo"
+              (click)="eliminar(pendiente)"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (agregando()) {
+      <form class="card pendientes__formulario" [formGroup]="formulario" (ngSubmit)="agregar()" aria-label="Agregar un pendiente">
+        <h2 class="pendientes__titulo">Agregar un pendiente</h2>
+
+        <label class="field">
+          <span class="field__label">¿Qué tienes que hacer?</span>
+          <input
+            class="field__input"
+            type="text"
+            maxlength="120"
+            formControlName="titulo"
+            [attr.aria-invalid]="formulario.controls.titulo.touched && formulario.controls.titulo.invalid"
+          />
+          @if (formulario.controls.titulo.touched && formulario.controls.titulo.invalid) {
+            <span class="field__error">Escribe un título para el pendiente.</span>
+          }
+        </label>
+
+        <label class="field">
+          <span class="field__label">Detalle (opcional)</span>
+          <textarea class="field__input" rows="2" maxlength="300" formControlName="descripcion"></textarea>
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Día límite</span>
+            <input
+              class="field__input"
+              type="date"
+              formControlName="fecha"
+              [attr.aria-invalid]="formulario.controls.fecha.touched && formulario.controls.fecha.invalid"
+            />
+            @if (formulario.controls.fecha.touched && formulario.controls.fecha.invalid) {
+              <span class="field__error">Elige el día límite.</span>
+            }
+          </label>
+          <label class="field">
+            <span class="field__label">Hora</span>
+            <input class="field__input" type="time" formControlName="hora" />
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Prioridad</span>
+          <select class="field__input" formControlName="prioridad">
+            @for (prioridad of prioridades; track prioridad.valor) {
+              <option [value]="prioridad.valor">{{ prioridad.texto }}</option>
+            }
+          </select>
+        </label>
+
+        @if (asignaturas().length > 0) {
+          <label class="field">
+            <span class="field__label">Asignatura (opcional)</span>
+            <select class="field__input" formControlName="idMatricula">
+              <option [ngValue]="0">Ninguna</option>
+              @for (asignatura of asignaturas(); track asignatura.idMatricula) {
+                <option [ngValue]="asignatura.idMatricula">{{ asignatura.nombre }}</option>
+              }
+            </select>
+          </label>
+        }
+
+        @if (errorDelFormulario(); as mensaje) {
+          <p class="alert" role="alert">{{ mensaje }}</p>
+        }
+
+        <button class="button button--primary" type="submit" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando…' : 'Guardar pendiente' }}
+        </button>
+        <button class="button button--outline" type="button" [disabled]="guardando()" (click)="cerrarFormulario()">
+          Cancelar
+        </button>
+      </form>
+    }
+  }
+</main>

@@ -1,0 +1,140 @@
+<main class="screen simulador">
+  @if (cargando()) {
+    <p class="subtitle">Preparando tu simulador…</p>
+  } @else if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+    <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
+  } @else if (asignaturas().length === 0) {
+    <section class="card simulador__vacio" aria-label="Todavía no hay con qué simular">
+      <h2 class="simulador__titulo">Primero cuéntanos cómo te evalúan</h2>
+      <p class="subtitle">
+        Para saber qué nota necesitas hace falta conocer el peso de cada actividad. Defínelo en una de tus asignaturas de este semestre y vuelve.
+      </p>
+      <a class="button button--primary" routerLink="/calificaciones/mis-notas">Ir a Mis notas</a>
+    </section>
+  } @else {
+    <div class="field">
+      <label class="field__label" for="simulador-asignatura">Asignatura</label>
+      <select
+        id="simulador-asignatura"
+        class="field__input"
+        [value]="seleccionada()"
+        (change)="elegirAsignatura($any($event.target).value)"
+      >
+        @for (asignatura of asignaturas(); track asignatura.idMatricula) {
+          <option [value]="asignatura.idMatricula" [selected]="asignatura.idMatricula === seleccionada()">
+            {{ asignatura.nombre }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="simulador-meta">Mi meta</label>
+      <input
+        id="simulador-meta"
+        class="field__input simulador__meta"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        [value]="metaTexto()"
+        [attr.aria-invalid]="metaInvalida()"
+        (input)="cambiarMetaEscrita($any($event.target).value)"
+      />
+      @if (metaInvalida()) {
+        <p class="field__error" role="alert">Escribe la meta como número, por ejemplo 3.5.</p>
+      } @else {
+        <p class="field__hint">La nota con la que quieres terminar la asignatura, de 0.0 a 5.0.</p>
+      }
+      @if (puedeGuardarLaMeta()) {
+        <button class="button button--soft simulador__guardar-meta" type="button" [disabled]="guardandoMeta()" (click)="guardarMeta()">
+          Guardar como mi meta
+        </button>
+      }
+    </div>
+
+    @if (proyeccion(); as p) {
+      <section class="card simulador__resultado" aria-live="polite" aria-label="Lo que necesitas">
+        @switch (p.situacion) {
+          @case ('alcanzada') {
+            <h2 class="simulador__titulo">Ya llegaste a tu meta de {{ p.meta | number: '1.1-2' }}</h2>
+            <p class="subtitle">Llevas {{ p.puntos | number: '1.2-2' }} de 5.0 en esta asignatura.</p>
+          }
+          @case ('alcanzable') {
+            <p class="simulador__necesitas">
+              <span class="simulador__numero">{{ p.notaRequerida | number: '1.2-2' }}</span>
+              <span class="simulador__de"> es lo que necesitas</span>
+            </p>
+            <p class="subtitle">
+              En el {{ p.porcentajeRestante | number: '1.0-2' }} % que falta para llegar a {{ p.meta | number: '1.1-2' }}.
+            </p>
+          }
+          @case ('inalcanzable') {
+            <h2 class="simulador__titulo">Con lo que llevas ya no se llega a {{ p.meta | number: '1.1-2' }}</h2>
+            <p class="subtitle">
+              Aun sacando 5.0 en todo lo que falta llegarías a {{ p.maximoPosible | number: '1.2-2' }}.
+            </p>
+          }
+        }
+        <p class="simulador__detalle">
+          Llevas {{ p.puntos | number: '1.2-2' }} de 5.0 con el {{ p.porcentajeEvaluado | number: '1.0-2' }} % evaluado.
+          @if (p.situacion === 'alcanzable') {
+            Lo máximo que puedes sacar es {{ p.maximoPosible | number: '1.2-2' }}.
+          }
+        </p>
+        @if (hayNotasProbadas()) {
+          <p class="simulador__detalle">Incluye las notas que estás probando. No se guardan.</p>
+        }
+      </section>
+    }
+
+    @if (errorDelCalculo(); as mensaje) {
+      <p class="alert" role="alert">{{ mensaje }}</p>
+    }
+
+    @if (estructura(); as e) {
+      <h2 class="simulador__subtitulo">Prueba una nota</h2>
+      <p class="subtitle">Escribe la nota que crees sacar en una actividad y mira qué cambia. Lo que ya tiene nota no se puede probar.</p>
+      @if (hayNotasProbadas()) {
+        <button class="button button--outline" type="button" (click)="limpiarNotasProbadas()">Borrar lo que probé</button>
+      }
+      @for (categoria of e.categorias; track categoria.consecutivo) {
+        @if (categoria.actividades.length > 0) {
+          <section class="card simulador__categoria" [attr.aria-label]="categoria.nombre">
+            <h3 class="simulador__categoria-titulo">
+              {{ categoria.nombre }} <span class="simulador__peso">{{ categoria.porcentaje | number: '1.0-2' }} %</span>
+            </h3>
+            <ul class="simulador__actividades">
+              @for (actividad of categoria.actividades; track actividad.consecutivo) {
+                <li class="simulador__actividad">
+                  <label class="simulador__nombre" [for]="'prueba-' + clave(categoria, actividad)">
+                    {{ actividad.nombre }}
+                    <span class="simulador__peso">{{ actividad.porcentaje | number: '1.0-2' }} % del corte</span>
+                  </label>
+                  @if (actividad.nota !== null) {
+                    <span class="simulador__real">Ya tienes {{ actividad.nota | number: '1.1-2' }}</span>
+                  } @else {
+                    <input
+                      class="field__input simulador__nota"
+                      type="text"
+                      inputmode="decimal"
+                      autocomplete="off"
+                      placeholder="Ej. 3.5"
+                      [id]="'prueba-' + clave(categoria, actividad)"
+                      [value]="valorProbado(categoria, actividad)"
+                      [attr.aria-invalid]="esInvalida(categoria, actividad)"
+                      (input)="probarNota(categoria, actividad, $any($event.target).value)"
+                    />
+                    @if (esInvalida(categoria, actividad)) {
+                      <p class="field__error" role="alert">Escribe la nota como número, por ejemplo 3.5.</p>
+                    }
+                  }
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    }
+  }
+</main>

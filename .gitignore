@@ -6,6 +6,7 @@
 # Guía de trabajo interna: no va en el repositorio público
 CLAUDE.md
 .claude/
+.claudeignore
 
 # IDE y sistema
 .idea/

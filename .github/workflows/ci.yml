@@ -37,6 +37,6 @@ jobs:
       - run: npm ci
 
       # Lo que va en el paquete final (sin las herramientas de desarrollo): falla con una vulnerabilidad
-      # alta o critica. Las de desarrollo no llegan al navegador y las atiende Dependabot.
+      # alta o critica. Las de desarrollo no llegan al navegador.
       - name: npm audit
         run: npm audit --omit=dev --audit-level=high

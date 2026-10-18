@@ -1,0 +1,87 @@
+name: Construir la imagen del frontend
+description: >-
+  Construye el Dockerfile y, si se pide, lo publica. Si el registro de las imagenes base limita las descargas
+  (toomanyrequests, que pasa en los ejecutores compartidos de GitHub), repite la construccion con otro registro.
+
+# Por que existe (SCRUM-202): el Dockerfile baja node y nginx de public.ecr.aws sin autenticarse, y los ejecutores
+# de GitHub comparten IP, asi que a veces el limite anonimo ya esta agotado y el job falla antes de construir nada.
+# Es el mismo arreglo que el del backend (.github/actions/construir-imagen en ese repositorio).
+#
+# Los tres registros publican las mismas imagenes oficiales, y ninguno pide credenciales:
+#   1. public.ecr.aws   el de siempre (el que usa el Dockerfile por defecto)
+#   2. mirror.gcr.io    espejo de Docker Hub de Google
+#   3. docker.io        Docker Hub
+# Fallar al bajar una imagen no cuesta nada (falla al resolver los metadatos, antes de construir), asi que
+# probar el siguiente es barato. Si los tres fallan, el paso falla y el error es el del ultimo intento.
+
+inputs:
+  tags:
+    description: Etiqueta(s) de la imagen.
+    required: true
+  configuracion:
+    description: Configuracion de angular.json con la que se compila (dev, pre o production).
+    required: true
+  push:
+    description: Publicar la imagen en el registro de la etiqueta.
+    default: 'false'
+  load:
+    description: Dejar la imagen en el Docker del ejecutor (solo para comprobar que construye).
+    default: 'false'
+  cache-scope:
+    description: Nombre del cache de capas (gha).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - id: ecr
+      uses: docker/build-push-action@v7
+      continue-on-error: true
+      with:
+        context: .
+        push: ${{ inputs.push }}
+        load: ${{ inputs.load }}
+        build-args: CONFIGURACION=${{ inputs.configuracion }}
+        tags: ${{ inputs.tags }}
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,scope=${{ inputs.cache-scope }},mode=max
+
+    - id: espejo
+      if: steps.ecr.outcome == 'failure'
+      uses: docker/build-push-action@v7
+      continue-on-error: true
+      with:
+        context: .
+        push: ${{ inputs.push }}
+        load: ${{ inputs.load }}
+        build-args: |
+          CONFIGURACION=${{ inputs.configuracion }}
+          REGISTRO=mirror.gcr.io/library
+          REGISTRO_NGINX=mirror.gcr.io/nginxinc
+        tags: ${{ inputs.tags }}
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,scope=${{ inputs.cache-scope }},mode=max
+
+    - id: dockerhub
+      if: steps.ecr.outcome == 'failure' && steps.espejo.outcome == 'failure'
+      uses: docker/build-push-action@v7
+      with:
+        context: .
+        push: ${{ inputs.push }}
+        load: ${{ inputs.load }}
+        build-args: |
+          CONFIGURACION=${{ inputs.configuracion }}
+          REGISTRO=docker.io/library
+          REGISTRO_NGINX=docker.io/nginxinc
+        tags: ${{ inputs.tags }}
+        cache-from: type=gha,scope=${{ inputs.cache-scope }}
+        cache-to: type=gha,scope=${{ inputs.cache-scope }},mode=max
+
+    - name: Decir que registro se uso cuando no fue el de siempre
+      if: steps.ecr.outcome == 'failure'
+      shell: bash
+      env:
+        ESPEJO: ${{ steps.espejo.outcome }}
+      run: |
+        if [ "$ESPEJO" = "success" ]; then usado="mirror.gcr.io"; else usado="Docker Hub"; fi
+        echo "::warning::public.ecr.aws limito las descargas (toomanyrequests); las imagenes base salieron de $usado."

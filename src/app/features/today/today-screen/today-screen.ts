@@ -5,8 +5,30 @@ import { RouterLink } from '@angular/router';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
+import { BrujulaRepository, NivelDeRiesgo, RiesgoDeAsignatura } from '../../../data-access/brujula.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
+import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.repository';
+import { EntornoDelNavegador } from '../../../core/push/entorno-del-navegador';
+import { IosInstallGuide } from '../../../shared/ios-install-guide/ios-install-guide';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
+
+/** Cuántos pendientes por atender se muestran en Hoy; el resto se ve en Mis pendientes. */
+const PENDIENTES_QUE_SE_MUESTRAN = 3;
+
+/** La marca que deja «Entendido» para no volver a mostrar la guía de instalación en iOS (SCRUM-37). */
+const GUIA_DE_IOS_VISTA = 'cundiapp.guia-ios-vista';
+
+/** Cuántas asignaturas en riesgo se muestran en Hoy; el resto se ve en la Brújula. */
+const ASIGNATURAS_EN_RIESGO_QUE_SE_MUESTRAN = 3;
+
+const FORMATO_DE_PENDIENTE = new Intl.DateTimeFormat('es-CO', {
+  timeZone: 'America/Bogota',
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
+});
 
 /** Cada cuánto se vuelve a preguntar: es lo que mantiene la próxima clase y el cambio de día al día. */
 const CADA_CUANTO_SE_ACTUALIZA_EN_MS = 60_000;
@@ -33,7 +55,7 @@ const DIAS: Record<string, string> = {
  */
 @Component({
   selector: 'app-today-screen',
-  imports: [RouterLink, PendingActivities],
+  imports: [RouterLink, PendingActivities, IosInstallGuide],
   templateUrl: './today-screen.html',
   styleUrl: './today-screen.css',
 })
@@ -41,13 +63,27 @@ export class TodayScreen {
   private readonly repositorio = inject(DiaRepository);
   private readonly avances = inject(AvanceRepository);
   private readonly notificador = inject(NotifierService);
+  private readonly pendientesRepositorio = inject(PendienteRepository);
+  private readonly brujulaRepositorio = inject(BrujulaRepository);
   private readonly documento = inject(DOCUMENT);
+  private readonly entorno = inject(EntornoDelNavegador);
 
+  /** Los pendientes que piden atención hoy (vencidos y por vencer), como los clasifica el servidor. */
+  protected readonly pendientes = signal<Pendiente[]>([]);
+  /** Las asignaturas en riesgo alto o medio, de la Brújula; si no hay ninguna, el bloque no sale. */
+  protected readonly enRiesgo = signal<RiesgoDeAsignatura[]>([]);
   protected readonly dia = signal<MiDia | null>(null);
   /** Cuánta información lleva subida; es una ayuda, así que si no llega la pantalla sigue sin ella. */
   protected readonly avance = signal<AvanceDeInformacion | null>(null);
   /** Las clases desplegadas, por `idMatricula-horaInicio`: sobrevive a las actualizaciones de cada minuto. */
   protected readonly abiertas = signal<ReadonlySet<string>>(new Set());
+  /**
+   * En el primer ingreso desde un iPhone o iPad con la aplicación en una pestaña: ahí los avisos no llegan hasta
+   * instalarla (SCRUM-37). Una vez descartada no vuelve.
+   */
+  protected readonly mostrarGuiaIos = signal(
+    this.entorno.esIos() && !this.entorno.estaInstalada() && !this.guiaDeIosYaVista(),
+  );
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
 
@@ -59,11 +95,13 @@ export class TodayScreen {
 
   constructor() {
     this.cargar();
+    this.cargarBrujula();
     this.avances.miAvance().subscribe({ next: (avance) => this.avance.set(avance), error: () => undefined });
     const intervalo = setInterval(() => this.cargar(), CADA_CUANTO_SE_ACTUALIZA_EN_MS);
     const alVolver = () => {
       if (this.documento.visibilityState === 'visible') {
         this.cargar();
+        this.cargarBrujula();
       }
     };
     this.documento.addEventListener('visibilitychange', alVolver);
@@ -73,7 +111,39 @@ export class TodayScreen {
     });
   }
 
+  /** No depende de la hora, así que se pide al abrir y al volver a la pestaña, no cada minuto. */
+  private cargarBrujula(): void {
+    // Es una ayuda: si no llega, el día se muestra igual y se conserva lo último que hubo.
+    this.brujulaRepositorio.miBrujula().subscribe({
+      next: (brujula) =>
+        this.enRiesgo.set(
+          brujula.asignaturas
+            .filter((a) => a.nivel === 'alto' || a.nivel === 'medio')
+            .slice(0, ASIGNATURAS_EN_RIESGO_QUE_SE_MUESTRAN),
+        ),
+      error: () => undefined,
+    });
+  }
+
+  protected etiquetaDeRiesgo(nivel: NivelDeRiesgo): string {
+    return nivel === 'alto' ? 'Riesgo alto' : 'Riesgo medio';
+  }
+
+  private cargarPendientes(): void {
+    // Es una ayuda: si no llega, el día se muestra igual y se conserva lo último que hubo.
+    this.pendientesRepositorio.listar().subscribe({
+      next: (lista) =>
+        this.pendientes.set(
+          lista
+            .filter((p) => p.situacion === 'vencido' || p.situacion === 'urgente')
+            .slice(0, PENDIENTES_QUE_SE_MUESTRAN),
+        ),
+      error: () => undefined,
+    });
+  }
+
   private cargar(): void {
+    this.cargarPendientes();
     this.repositorio.miDia().subscribe({
       next: (dia) => {
         this.dia.set(dia);
@@ -96,6 +166,23 @@ export class TodayScreen {
     });
   }
 
+  protected descartarGuiaIos(): void {
+    this.mostrarGuiaIos.set(false);
+    try {
+      this.documento.defaultView?.localStorage.setItem(GUIA_DE_IOS_VISTA, '1');
+    } catch {
+      // Sin almacenamiento (navegación privada) la guía vuelve a salir al abrir: es un fastidio, no un fallo.
+    }
+  }
+
+  private guiaDeIosYaVista(): boolean {
+    try {
+      return this.documento.defaultView?.localStorage.getItem(GUIA_DE_IOS_VISTA) === '1';
+    } catch {
+      return false;
+    }
+  }
+
   protected reintentar(): void {
     this.cargando.set(true);
     this.cargar();
@@ -115,6 +202,10 @@ export class TodayScreen {
     const diferencia = diasEntre(dia.fecha, siguiente.fecha);
     const fecha = this.fechaLarga(siguiente.fecha, siguiente.dia);
     return diferencia === 1 ? `Mañana · ${fecha}` : `Próximo día con clases · ${fecha}`;
+  }
+
+  protected fechaDelPendiente(pendiente: Pendiente): string {
+    return FORMATO_DE_PENDIENTE.format(new Date(pendiente.fechaLimite));
   }
 
   protected lugarDe(clase: ClaseDelDia): string {

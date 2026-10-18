@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { vi } from 'vitest';
+import { of } from 'rxjs';
+import { AvisoRepository } from '../../../data-access/aviso.repository';
 import { CierreDeSesion } from '../../../core/session/cierre-de-sesion.service';
 import { SessionService } from '../../../core/session/session.service';
 import { AppShell } from './app-shell';
@@ -13,11 +15,14 @@ class Hija {}
 describe('AppShell', () => {
   const cierre = { conConfirmacion: vi.fn() };
 
-  async function crear(cuenta: { nombres: string; apellidos: string; correo: string } | null = {
-    nombres: 'Cristian Albeiro',
-    apellidos: 'Morales Urrea',
-    correo: 'calbeiromorales@ucundinamarca.edu.co',
-  }) {
+  async function crear(
+    cuenta: { nombres: string; apellidos: string; correo: string } | null = {
+      nombres: 'Cristian Albeiro',
+      apellidos: 'Morales Urrea',
+      correo: 'calbeiromorales@ucundinamarca.edu.co',
+    },
+    sinLeer = 0,
+  ) {
     cierre.conConfirmacion.mockReset().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
@@ -33,6 +38,7 @@ describe('AppShell', () => {
         ]),
         { provide: SessionService, useValue: { cuenta: signal(cuenta) } },
         { provide: CierreDeSesion, useValue: cierre },
+        { provide: AvisoRepository, useValue: { misAvisos: vi.fn().mockReturnValue(of({ sinLeer, avisos: [] })) } },
       ],
     });
     const arnes = await RouterTestingHarness.create('/inicio');
@@ -68,6 +74,33 @@ describe('AppShell', () => {
     expect(botonDelAvatar(html).getAttribute('aria-label')).toContain('Cristian Albeiro Morales Urrea');
   });
 
+  describe('la campana de avisos', () => {
+    const campana = (html: HTMLElement) => html.querySelector<HTMLAnchorElement>('a.shell__campana')!;
+
+    it('lleva a los avisos y, sin nada por leer, no muestra número', async () => {
+      const { html } = await crear();
+
+      expect(campana(html).getAttribute('href')).toBe('/avisos');
+      expect(campana(html).getAttribute('aria-label')).toBe('Avisos');
+      expect(html.querySelector('.shell__insignia')).toBeNull();
+    });
+
+    it('muestra cuántos avisos faltan por leer, también en su etiqueta para quien no la ve', async () => {
+      const { arnes, html } = await crear(undefined, 3);
+      arnes.detectChanges();
+
+      expect(html.querySelector('.shell__insignia')?.textContent).toContain('3');
+      expect(campana(html).getAttribute('aria-label')).toBe('Avisos: 3 sin leer');
+    });
+
+    it('con más de nueve dice 9+', async () => {
+      const { arnes, html } = await crear(undefined, 14);
+      arnes.detectChanges();
+
+      expect(html.querySelector('.shell__insignia')?.textContent).toContain('9+');
+    });
+  });
+
   describe('el menú de las tres barritas', () => {
     it('empieza cerrado y se abre con el botón de la izquierda', async () => {
       const { arnes, html } = await crear();
@@ -92,6 +125,10 @@ describe('AppShell', () => {
         'Hoy',
         'Mi horario',
         'Mis notas',
+        'Simulador',
+        'Brújula Académica',
+        'Avisos',
+        'Mis pendientes',
         'Mi historial y promedios',
         'Mi plan de estudios',
         'Importar mis archivos',

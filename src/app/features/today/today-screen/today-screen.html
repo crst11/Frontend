@@ -26,6 +26,48 @@
       }
     }
 
+    @if (mostrarGuiaIos()) {
+      <app-ios-install-guide [descartable]="true" (descartada)="descartarGuiaIos()" />
+    }
+
+    @if (pendientes().length > 0) {
+      <section class="card hoy__por-atender" aria-label="Pendientes por atender">
+        <h2 class="hoy__titulo">Pendientes por atender</h2>
+        <ul class="hoy__por-atender-lista">
+          @for (pendiente of pendientes(); track pendiente.id) {
+            <li class="hoy__por-atender-item">
+              <span class="hoy__por-atender-nombre">{{ pendiente.titulo }}</span>
+              <span class="hoy__por-atender-datos">
+                <span>{{ fechaDelPendiente(pendiente) }}</span>
+                <strong [class.hoy__por-atender-vencido]="pendiente.situacion === 'vencido'">
+                  {{ pendiente.situacion === 'vencido' ? 'Vencido' : 'Vence pronto' }}
+                </strong>
+              </span>
+            </li>
+          }
+        </ul>
+        <a class="button button--outline" routerLink="/pendientes">Ver mis pendientes</a>
+      </section>
+    }
+
+    @if (enRiesgo().length > 0) {
+      <section class="card hoy__brujula" aria-label="Brújula Académica">
+        <h2 class="hoy__titulo">Brújula Académica</h2>
+        <ul class="hoy__por-atender-lista">
+          @for (riesgo of enRiesgo(); track riesgo.asignatura.idMatricula) {
+            <li class="hoy__por-atender-item">
+              <span class="hoy__por-atender-nombre">{{ riesgo.asignatura.nombre }}</span>
+              <span class="hoy__por-atender-datos">
+                <strong [class.hoy__por-atender-vencido]="riesgo.nivel === 'alto'">{{ etiquetaDeRiesgo(riesgo.nivel) }}</strong>
+                <span>{{ riesgo.explicacion }}</span>
+              </span>
+            </li>
+          }
+        </ul>
+        <a class="button button--outline" routerLink="/brujula">Ver mi Brújula</a>
+      </section>
+    }
+
     @if (sinHorario()) {
       <section class="card hoy__vacio" aria-label="Todavía no hay información">
         <h2 class="hoy__titulo">Aquí se verá tu información después de subirla</h2>

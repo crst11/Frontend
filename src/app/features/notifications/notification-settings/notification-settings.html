@@ -1,0 +1,88 @@
+<main class="screen configuracion">
+  <a class="button button--outline" routerLink="/avisos">Volver a mis avisos</a>
+
+  @if (cargando()) {
+    <p class="subtitle">Buscando tus preferencias…</p>
+  } @else if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+    <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
+  } @else {
+    <section class="card configuracion__bloque" aria-label="Qué avisos recibo">
+      <h2 class="configuracion__titulo">Qué avisos recibo</h2>
+      <form class="configuracion__formulario" (submit)="$event.preventDefault(); guardar()">
+        <label class="checkbox">
+          <input id="avisos-activos" type="checkbox" [checked]="activos()" (change)="activos.set($any($event.target).checked)" />
+          <span>Recibir avisos</span>
+        </label>
+        @if (!activos()) {
+          <p class="subtitle">Con este interruptor apagado no te llega ningún aviso, sin importar los de abajo.</p>
+        }
+        <label class="checkbox">
+          <input
+            id="avisos-vencimientos"
+            type="checkbox"
+            [checked]="vencimientos()"
+            [disabled]="!activos()"
+            (change)="vencimientos.set($any($event.target).checked)"
+          />
+          <span>Cuando un pendiente está por vencer</span>
+        </label>
+        <label class="checkbox">
+          <input
+            id="avisos-riesgo"
+            type="checkbox"
+            [checked]="cambioDeRiesgo()"
+            [disabled]="!activos()"
+            (change)="cambioDeRiesgo.set($any($event.target).checked)"
+          />
+          <span>Cuando cambia el riesgo de una asignatura</span>
+        </label>
+
+        <div class="field">
+          <label class="field__label" for="avisos-horas">Avisarme con esta anticipación (horas)</label>
+          <input
+            id="avisos-horas"
+            class="field__input"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            [value]="horasTexto()"
+            [disabled]="!activos() || !vencimientos()"
+            (input)="horasTexto.set($any($event.target).value)"
+          />
+          <p class="field__hint">De 1 a 168 horas (una semana). Por ejemplo, 24 avisa un día antes.</p>
+        </div>
+        @if (errorDeHoras(); as mensaje) {
+          <p class="field__error" role="alert">{{ mensaje }}</p>
+        }
+        <button class="button button--primary" type="submit" [disabled]="guardando()">Guardar preferencias</button>
+      </form>
+    </section>
+
+    <section class="card configuracion__bloque" aria-label="Dispositivos que reciben mis avisos">
+      <h2 class="configuracion__titulo">Dispositivos que reciben mis avisos</h2>
+      @if (errorDeDispositivos(); as mensaje) {
+        <p class="alert" role="alert">{{ mensaje }}</p>
+      }
+      @if (dispositivos().length === 0) {
+        <p class="subtitle">Ningún dispositivo recibe avisos fuera de la aplicación. Actívalos desde la pantalla de avisos.</p>
+      } @else {
+        <ul class="configuracion__dispositivos" aria-label="Mis dispositivos">
+          @for (dispositivo of dispositivos(); track dispositivo.consecutivo) {
+            <li class="configuracion__dispositivo">
+              <div>
+                <p class="configuracion__nombre">{{ dispositivo.nombre }}</p>
+                @if (desde(dispositivo); as fecha) {
+                  <p class="configuracion__fecha">Activado el {{ fecha }}</p>
+                }
+              </div>
+              <button class="button button--outline" type="button" [disabled]="quitando()" (click)="quitar(dispositivo)">
+                Quitar
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+</main>

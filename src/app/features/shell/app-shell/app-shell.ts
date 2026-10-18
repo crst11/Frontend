@@ -1,15 +1,20 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, computed, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { AvisosSinLeer } from '../../../core/notifications/avisos-sin-leer.service';
 import { CierreDeSesion } from '../../../core/session/cierre-de-sesion.service';
 import { SessionService } from '../../../core/session/session.service';
+import { EstadoDeConexion } from '../../../shared/estado-de-conexion/estado-de-conexion';
 
 interface Seccion {
   ruta: string;
   texto: string;
 }
+
+/** Cada cuánto se vuelve a preguntar cuántos avisos faltan por leer, además de al volver a la pestaña. */
+const CADA_CUANTO_SE_REVISAN_LOS_AVISOS_EN_MS = 60_000;
 
 /**
  * El marco de la app una vez dentro (RF02, SCRUM-83): una barra con el menú de las secciones a la
@@ -21,7 +26,7 @@ interface Seccion {
  */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, EstadoDeConexion],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
 })
@@ -37,6 +42,10 @@ export class AppShell {
     { ruta: '/inicio', texto: 'Hoy' },
     { ruta: '/horario', texto: 'Mi horario' },
     { ruta: '/calificaciones/mis-notas', texto: 'Mis notas' },
+    { ruta: '/simulador', texto: 'Simulador' },
+    { ruta: '/brujula', texto: 'Brújula Académica' },
+    { ruta: '/avisos', texto: 'Avisos' },
+    { ruta: '/pendientes', texto: 'Mis pendientes' },
     { ruta: '/cuenta/historial', texto: 'Mi historial y promedios' },
     { ruta: '/cuenta/plan-de-estudios', texto: 'Mi plan de estudios' },
     { ruta: '/importar', texto: 'Importar mis archivos' },
@@ -52,6 +61,15 @@ export class AppShell {
     ),
     { initialValue: this.tituloDeLaRuta() },
   );
+
+  private readonly avisos = inject(AvisosSinLeer);
+  /** La campana: cuántos avisos faltan por leer, escrito en su etiqueta para quien no la ve. */
+  protected readonly etiquetaDeAvisos = computed(() => {
+    const cantidad = this.avisos.cantidad();
+    return cantidad === 0 ? 'Avisos' : `Avisos: ${cantidad} sin leer`;
+  });
+  protected readonly numeroDeLaCampana = computed(() => (this.avisos.cantidad() > 9 ? '9+' : String(this.avisos.cantidad())));
+  protected readonly hayAvisosSinLeer = computed(() => this.avisos.cantidad() > 0);
 
   protected readonly cuenta = this.sesion.cuenta;
   protected readonly iniciales = computed(() => {
@@ -69,6 +87,16 @@ export class AppShell {
       this.menuAbierto.set(false);
       this.perfilAbierto.set(false);
     });
+    this.avisos.refrescar();
+    const intervalo = setInterval(() => this.avisos.refrescar(), CADA_CUANTO_SE_REVISAN_LOS_AVISOS_EN_MS);
+    inject(DestroyRef).onDestroy(() => clearInterval(intervalo));
+  }
+
+  @HostListener('document:visibilitychange')
+  protected alVolverALaPestana(): void {
+    if (this.documento.visibilityState === 'visible') {
+      this.avisos.refrescar();
+    }
   }
 
   private tituloDeLaRuta(): string {
