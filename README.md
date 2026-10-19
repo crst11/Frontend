@@ -55,7 +55,7 @@ src/styles.css      sistema visual compartido (colores, tipografías, campos, bo
 
 Las pantallas siguen el diseño móvil del equipo; las piezas visuales y sus reglas están en la sección "Diseño visual" de la [guía del proyecto](docs/guia-proyecto.md).
 
-Los componentes nunca usan `HttpClient` directamente: piden los datos a un servicio de `data-access`, que es el único que conoce las URLs (salen de `src/environments/`).
+Los componentes nunca usan `HttpClient` directamente: piden los datos a un servicio de `data-access`, que es el único que conoce las URLs (salen de `src/environments/environment.production.ts` y, al arrancar, de `/config.json`).
 
 ## Requisitos previos
 

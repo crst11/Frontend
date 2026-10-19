@@ -5,7 +5,8 @@ import { environment } from '../../../environments/environment';
 import { VerificacionHumana } from './verificacion-humana.service';
 
 /** Las tres rutas públicas donde el backend pide la prueba (SCRUM-92): no la confirmación de la recuperación. */
-const RUTAS_CON_PRUEBA = ['registro', 'login', 'recuperacion'].map((ruta) => `${environment.apiUrl}/publico/auth/${ruta}`);
+/** Es una funcion y no una constante: `apiUrl` se lee de config.json al arrancar (SCRUM-218), despues de importar este modulo. */
+const rutasConPrueba = (): string[] => ['registro', 'login', 'recuperacion'].map((ruta) => `${environment.apiUrl}/publico/auth/${ruta}`);
 
 /**
  * Agrega la prueba de persona al registro, al inicio de sesión y a la recuperación de la contraseña, en el
@@ -14,7 +15,7 @@ const RUTAS_CON_PRUEBA = ['registro', 'login', 'recuperacion'].map((ruta) => `${
  */
 export const verificacionHumanaInterceptor: HttpInterceptorFn = (peticion, siguiente) => {
   const humana = inject(VerificacionHumana);
-  if (!humana.disponible || peticion.method !== 'POST' || !RUTAS_CON_PRUEBA.includes(peticion.url)) {
+  if (!humana.disponible || peticion.method !== 'POST' || !rutasConPrueba().includes(peticion.url)) {
     return siguiente(peticion);
   }
   return from(humana.obtenerPrueba()).pipe(
