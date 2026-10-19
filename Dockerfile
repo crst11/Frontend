@@ -12,8 +12,13 @@
 ARG REGISTRO=public.ecr.aws/docker/library
 ARG REGISTRO_NGINX=public.ecr.aws/nginx
 
+# Las imagenes base van fijadas por digest (12 factores, factor 2, SCRUM-214): el mismo commit construye siempre lo
+# mismo. El digest es el de la lista multiplataforma y es identico en los tres registros del encadenamiento (ECR
+# Publico, mirror.gcr.io y Docker Hub); scripts/actualizar-imagenes-base.sh lo comprueba al refrescarlo. Sin
+# Dependabot el digest NO se actualiza solo: refrescarlo cuando salga un parche de seguridad de Node o de nginx.
+
 # ---- Etapa 1: compilar ----------------------------------------------------------------------------
-FROM ${REGISTRO}/node:24-alpine AS compilar
+FROM ${REGISTRO}/node:24-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS compilar
 WORKDIR /src
 
 # Primero solo lo que define las dependencias: mientras no cambien, esta capa (la lenta) se reusa.
@@ -25,7 +30,7 @@ ARG CONFIGURACION=dev
 RUN npx ng build --configuration "${CONFIGURACION}"
 
 # ---- Etapa 2: servir ------------------------------------------------------------------------------
-FROM ${REGISTRO_NGINX}/nginx-unprivileged:alpine
+FROM ${REGISTRO_NGINX}/nginx-unprivileged:alpine@sha256:378d0c32f6562f7fd9629170797f57d2b953aa09be983b3daaf4809bb039ca00
 
 # Solo el resultado de la compilacion: index.html, los chunks con hash y el service worker.
 COPY --from=compilar /src/dist/cundiapp/browser /usr/share/nginx/html
