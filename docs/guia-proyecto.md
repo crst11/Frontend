@@ -203,25 +203,22 @@ Una historia entra al sprint solo si tiene criterios de aceptación claros, esti
 
 Las URLs de PRE y PROD se definen cuando se decida el hosting.
 
-Archivos de `src/environments/`:
+Archivos de `src/environments/` (SCRUM-218: una sola compilación para todos los ambientes):
 
 ```
-environment.ts        (DEV)
-environment.pre.ts    (PRE)
-environment.prod.ts   (PROD)
+environment.ts             (ng serve: el backend en localhost:8080)
+environment.production.ts  (cualquier compilación: dev, pre y prod comparten este archivo)
 ```
 
 ```ts
-export const environment = {
-  production: false,
-  nombreAmbiente: 'DEV',
+export const environment: ConfiguracionDeEjecucion = {
   apiUrl: 'http://localhost:8080/api',
-  googleClientId: '', // es público: el client ID de Google no es un secreto
-  vapidPublica: ''    // la llave VAPID pública también es pública
+  googleClientId: '...', // es público: el client ID de Google no es un secreto
+  turnstileLlave: '',    // la llave pública de Turnstile; vacía = verificación de bots apagada
 };
 ```
 
-Se configuran `fileReplacements` en `angular.json` para las configuraciones `pre` y `production`, y los scripts `npm run build:pre` y `npm run build:prod`. Nada secreto va aquí: todo lo que llega al navegador se puede inspeccionar.
+`angular.json` reemplaza `environment.ts` por `environment.production.ts` en las configuraciones `production`, `pre` y `dev` (las dos últimas son alias de la primera: compilan exactamente lo mismo). Lo que cambia entre ambientes no se compila: la app lee `/config.json` antes de arrancar (`apiUrl`, `googleClientId`, `turnstileLlave`) y esos valores mandan sobre los de la compilación. El despliegue lo escribe desde las variables del Environment `API_URL`, `GOOGLE_CLIENT_ID` y `TURNSTILE_LLAVE` (vacía o ausente = se usa el valor de la compilación). Nada secreto va en ninguno de los dos sitios: todo lo que llega al navegador se puede inspeccionar.
 
 ## 8. Estructura y reglas de Angular
 
