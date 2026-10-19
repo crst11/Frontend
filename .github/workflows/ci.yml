@@ -40,3 +40,12 @@ jobs:
       # alta o critica. Las de desarrollo no llegan al navegador.
       - name: npm audit
         run: npm audit --omit=dev --audit-level=high
+
+  imagenes-fijadas:
+    name: Imagenes base fijadas por digest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Sin red: solo mira que ningun "FROM" haya vuelto a quedar con una etiqueta a secas (SCRUM-214). Si el digest
+      # esta al dia lo dice scripts/actualizar-imagenes-base.sh --ver, que se corre a mano.
+      - run: bash scripts/comprobar-imagenes-fijadas.sh
