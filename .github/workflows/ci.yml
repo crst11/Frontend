@@ -49,3 +49,12 @@ jobs:
       # Sin red: solo mira que ningun "FROM" haya vuelto a quedar con una etiqueta a secas (SCRUM-214). Si el digest
       # esta al dia lo dice scripts/actualizar-imagenes-base.sh --ver, que se corre a mano.
       - run: bash scripts/comprobar-imagenes-fijadas.sh
+
+  compilacion-unica:
+    name: Una sola compilacion para todos los ambientes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Sin compilar: que ninguna configuracion de angular.json use un archivo de entorno distinto (SCRUM-218). Lo que
+      # cambia entre ambientes se lee de /config.json al arrancar.
+      - run: bash scripts/comprobar-compilacion-unica.sh
