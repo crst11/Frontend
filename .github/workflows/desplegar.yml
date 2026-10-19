@@ -35,8 +35,9 @@ jobs:
       - id: c
         run: |
           case "$GITHUB_REF_NAME" in
-            desarrollo)    entorno=dev;     configuracion=dev ;;
-            preproduccion) entorno=preprod; configuracion=pre ;;
+            # La misma compilacion para los tres (SCRUM-218): lo que difiere entre ambientes va en config.json.
+            desarrollo)    entorno=dev;     configuracion=production ;;
+            preproduccion) entorno=preprod; configuracion=production ;;
             produccion)    entorno=prod;    configuracion=production ;;
             *) echo "Rama sin ambiente: $GITHUB_REF_NAME"; exit 1 ;;
           esac
@@ -112,6 +113,21 @@ jobs:
       - name: Compilar
         run: npx ng build --configuration "$CONFIGURACION"
 
+      # SCRUM-218: lo que cambia entre ambientes se lee al arrancar de /config.json, no se compila. Son variables del
+      # Environment (Settings > Environments > Variables), no secretos: todo lo que llega al navegador es publico.
+      # Una variable vacia o ausente = se usa el valor con que se compilo.
+      - name: Escribir config.json del ambiente
+        env:
+          API_URL: ${{ vars.API_URL }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          TURNSTILE_LLAVE: ${{ vars.TURNSTILE_LLAVE }}
+        run: |
+          jq -n --arg api "$API_URL" --arg google "$GOOGLE_CLIENT_ID" --arg turnstile "$TURNSTILE_LLAVE" \
+            '{ apiUrl: $api, googleClientId: $google, turnstileLlave: $turnstile } | with_entries(select(.value != ""))' \
+            > "$SALIDA/config.json"
+          echo "config.json de $ENTORNO:"
+          cat "$SALIDA/config.json"
+
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -149,13 +165,14 @@ jobs:
             --cache-control "public,max-age=31536000,immutable"
           # 2) Iconos y demas: conservan su nombre aunque cambien, un dia de cache y no un anio.
           aws s3 sync "$SALIDA" "s3://$BUCKET" --size-only --only-show-errors \
-            --exclude "*.js" --exclude "*.css" --exclude index.html --exclude ngsw.json --exclude manifest.webmanifest \
+            --exclude "*.js" --exclude "*.css" --exclude index.html --exclude ngsw.json --exclude manifest.webmanifest --exclude config.json \
             --cache-control "public,max-age=86400"
           # 3) Lo que nunca se cachea, AL FINAL: es lo que hace que el navegador vea la version nueva.
-          for archivo in ngsw-worker.js safety-worker.js worker-basic.min.js ngsw.json manifest.webmanifest index.html; do
+          for archivo in ngsw-worker.js safety-worker.js worker-basic.min.js ngsw.json manifest.webmanifest config.json index.html; do
             [ -f "$SALIDA/$archivo" ] || continue
             tipo=""
             [ "$archivo" = "manifest.webmanifest" ] && tipo="application/manifest+json"
+            [ "$archivo" = "config.json" ] && tipo="application/json"
             aws s3 cp "$SALIDA/$archivo" "s3://$BUCKET/$archivo" --only-show-errors \
               --cache-control "no-cache, no-store, must-revalidate" ${tipo:+--content-type "$tipo"}
           done
@@ -186,6 +203,7 @@ jobs:
           verificar / text/html
           verificar /cuenta/entrar text/html     # ruta de Angular: la funcion de CloudFront debe devolver index.html
           verificar /ngsw.json json
+          verificar /config.json json            # si falta, el hosting devolveria index.html (text/html) y esto fallaria
           # Atraviesa CloudFront hasta el backend y la base de datos: prueba que /api llega a donde debe.
           verificar /api/publico/guia/categorias json
           # Un error real de la API no debe volverse index.html con 200.
