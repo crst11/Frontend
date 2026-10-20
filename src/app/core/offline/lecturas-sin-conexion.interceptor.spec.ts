@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { Cuenta } from '../../data-access/estudiante.repository';
 import { CopiaLocalRepository } from '../../data-access/copia-local.repository';
 import { CopiaLocalEnMemoriaRepository } from '../../data-access/memoria/copia-local-en-memoria.repository';
+import { DispositivoDeLaSesion } from '../session/dispositivo-de-la-sesion';
 import { SessionService } from '../session/session.service';
 import { Conexion } from './conexion.service';
 import { PLAZO_DE_UNA_LECTURA_EN_MS, lecturasSinConexionInterceptor } from './lecturas-sin-conexion.interceptor';
@@ -247,5 +248,16 @@ describe('lecturasSinConexionInterceptor', () => {
 
       expect(resultado.valor).toEqual({ dias: ['guardado'] });
     });
+  });
+
+  it('en un equipo compartido no guarda la lectura (SCRUM-231)', async () => {
+    TestBed.inject(DispositivoDeLaSesion).marcar(false);
+
+    http.get(HORARIO).subscribe();
+    backend.expectOne(HORARIO).flush({ bloques: ['lunes'] });
+    await Promise.resolve();
+
+    expect(await copia.leer(`${ana.id}|${HORARIO}`)).toBeNull();
+    localStorage.clear();
   });
 });

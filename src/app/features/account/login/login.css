@@ -35,3 +35,8 @@
 .login__google-hint {
   text-align: center;
 }
+
+.login__dispositivo-ayuda {
+  display: block;
+  margin-top: 4px;
+}

@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, TimeoutError, finalize, firstValueFrom, map, shareReplay, tap, timeout } from 'rxjs';
 import { CopiaLocalRepository } from '../../data-access/copia-local.repository';
 import { Cuenta, EstudianteRepository, SesionIniciada } from '../../data-access/estudiante.repository';
+import { DispositivoDeLaSesion } from './dispositivo-de-la-sesion';
 import { esFalloDelServidor } from '../feedback/server-failure';
 
 /** Dónde se guarda en el dispositivo la cuenta de la última sesión, para poder abrir la app sin conexión. */
@@ -26,6 +27,7 @@ const PLAZO_PARA_RESTAURAR_EN_MS = 4_000;
 export class SessionService {
   private readonly repositorio = inject(EstudianteRepository);
   private readonly copiaLocal = inject(CopiaLocalRepository);
+  private readonly dispositivo = inject(DispositivoDeLaSesion);
   private readonly tokenDeAcceso = signal<string | null>(null);
   private readonly cuentaActual = signal<Cuenta | null>(null);
   private readonly enModoConsulta = signal(false);
@@ -38,17 +40,18 @@ export class SessionService {
     return this.tokenDeAcceso();
   }
 
-  iniciar(correo: string, contrasena: string): Observable<Cuenta> {
+  /** `esPersonal` falso = un equipo compartido: nada se guarda para consultar sin conexión y la sesión se cierra por inactividad. */
+  iniciar(correo: string, contrasena: string, esPersonal = true): Observable<Cuenta> {
     return this.repositorio.iniciarSesion(correo, contrasena).pipe(
-      tap((sesion) => this.guardar(sesion)),
+      tap((sesion) => this.alIniciar(sesion, esPersonal)),
       map((sesion) => sesion.cuenta),
     );
   }
 
   /** Entrar con un toque: el ID token de Google lo valida el backend y la sesión queda igual que con contraseña. */
-  iniciarConGoogle(idToken: string): Observable<Cuenta> {
+  iniciarConGoogle(idToken: string, esPersonal = true): Observable<Cuenta> {
     return this.repositorio.iniciarSesionConGoogle(idToken).pipe(
-      tap((sesion) => this.guardar(sesion)),
+      tap((sesion) => this.alIniciar(sesion, esPersonal)),
       map((sesion) => sesion.cuenta),
     );
   }
@@ -69,6 +72,10 @@ export class SessionService {
    * de una sesión previa (la cookie XSRF-TOKEN solo existe tras iniciar sesión), no molesta al backend.
    */
   restaurar(): Promise<void> {
+    // Un equipo compartido que lleva más del plazo sin actividad: la sesión que dejó la persona anterior no es de quien llega ahora.
+    if (this.dispositivo.estaInactivo()) {
+      return this.cerrarPorInactividad();
+    }
     if (!document.cookie.split('; ').some((c) => c.startsWith('XSRF-TOKEN='))) {
       return Promise.resolve();
     }
@@ -95,6 +102,16 @@ export class SessionService {
     this.limpiar();
   }
 
+  /**
+   * La sesión de un equipo compartido se quedó sin actividad (SCRUM-231). La cookie de refresco es lo que la sostiene: se revoca en el
+   * servidor para que no siga abierta, y se borra todo lo local. Sin red igual se borra lo local: lo que importa es que quien llega
+   * ahora no entre con lo de la persona anterior.
+   */
+  private async cerrarPorInactividad(): Promise<void> {
+    await firstValueFrom(this.repositorio.cerrarSesion().pipe(timeout({ first: PLAZO_PARA_RESTAURAR_EN_MS }))).catch(() => undefined);
+    this.limpiar();
+  }
+
   cerrar(): Observable<void> {
     return this.repositorio.cerrarSesion().pipe(finalize(() => this.limpiar()));
   }
@@ -105,14 +122,27 @@ export class SessionService {
     this.enModoConsulta.set(false);
     // Lo guardado para consultar sin conexión es información personal: no se queda en un dispositivo sin sesión.
     void this.copiaLocal.borrarTodo();
+    this.dispositivo.olvidar();
     // Sin esto, una sesión que ya no existe en el servidor se reintentaría en cada carga de la app.
     document.cookie = 'XSRF-TOKEN=; Max-Age=0; path=/';
+  }
+
+  /** Lo que eligió la persona al entrar: en un equipo compartido, lo que hubiera quedado de otra persona se borra antes de empezar. */
+  private alIniciar(sesion: SesionIniciada, esPersonal: boolean): void {
+    this.dispositivo.marcar(esPersonal);
+    if (!esPersonal) {
+      void this.copiaLocal.borrarTodo();
+    }
+    this.guardar(sesion);
   }
 
   private guardar(sesion: SesionIniciada): void {
     this.tokenDeAcceso.set(sesion.tokenDeAcceso);
     this.cuentaActual.set(sesion.cuenta);
     this.enModoConsulta.set(false);
-    void this.copiaLocal.guardar(CLAVE_DE_LA_CUENTA, sesion.cuenta, Date.now());
+    // En un equipo compartido no se guarda nada para consultar sin conexión: lo vería la persona que llegue después.
+    if (this.dispositivo.permiteCopiaLocal()) {
+      void this.copiaLocal.guardar(CLAVE_DE_LA_CUENTA, sesion.cuenta, Date.now());
+    }
   }
 }
