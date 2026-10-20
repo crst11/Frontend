@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { CopiaLocalRepository } from '../../data-access/copia-local.repository';
 import { EstudianteRepository, SesionIniciada } from '../../data-access/estudiante.repository';
 import { CopiaLocalEnMemoriaRepository } from '../../data-access/memoria/copia-local-en-memoria.repository';
+import { DispositivoDeLaSesion } from './dispositivo-de-la-sesion';
 import { SessionService } from './session.service';
 
 describe('SessionService', () => {
@@ -232,5 +233,121 @@ describe('SessionService', () => {
       expect(await copia.leer('cuenta')).toBeNull();
       expect(await copia.leer('1|/api/mis/pendientes')).toBeNull();
     });
+  });
+});
+
+describe('SessionService en un equipo compartido (SCRUM-231)', () => {
+  const cuenta = { id: 1, correo: 'ana.diaz@ucundinamarca.edu.co', nombres: 'Ana', apellidos: 'Díaz', estado: 'activa' };
+  const sesion = (token: string): SesionIniciada => ({ tokenDeAcceso: token, tipo: 'Bearer', expiraEnSegundos: 1200, cuenta });
+  const PLAZO = 15 * 60_000;
+
+  function crear(repositorio: Partial<EstudianteRepository>) {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: EstudianteRepository, useValue: repositorio },
+        { provide: CopiaLocalRepository, useClass: CopiaLocalEnMemoriaRepository },
+      ],
+    });
+    return {
+      servicio: TestBed.inject(SessionService),
+      copia: TestBed.inject(CopiaLocalRepository),
+      dispositivo: TestBed.inject(DispositivoDeLaSesion),
+    };
+  }
+
+  beforeEach(() => localStorage.clear());
+  afterEach(() => {
+    localStorage.clear();
+    document.cookie = 'XSRF-TOKEN=; Max-Age=0; path=/';
+  });
+
+  it('en un dispositivo personal guarda la cuenta para consultar sin conexión, como siempre', async () => {
+    const { servicio, copia } = crear({ iniciarSesion: vi.fn().mockReturnValue(of(sesion('jwt-1'))) });
+
+    servicio.iniciar(cuenta.correo, 'claveSegura1').subscribe();
+
+    expect((await copia.leer('cuenta'))?.valor).toEqual(cuenta);
+  });
+
+  it('en un equipo compartido NO guarda nada para consultar sin conexión', async () => {
+    const { servicio, copia, dispositivo } = crear({ iniciarSesion: vi.fn().mockReturnValue(of(sesion('jwt-1'))) });
+
+    servicio.iniciar(cuenta.correo, 'claveSegura1', false).subscribe();
+
+    expect(servicio.estaAutenticada()).toBe(true);
+    expect(dispositivo.esCompartido()).toBe(true);
+    expect(await copia.leer('cuenta')).toBeNull();
+  });
+
+  it('al entrar en un equipo compartido se borra lo que dejó otra persona', async () => {
+    const { servicio, copia } = crear({ iniciarSesion: vi.fn().mockReturnValue(of(sesion('jwt-1'))) });
+    await copia.guardar('7|/api/mis/horario', { de: 'otra persona' }, Date.now());
+
+    servicio.iniciar(cuenta.correo, 'claveSegura1', false).subscribe();
+
+    expect(await copia.leer('7|/api/mis/horario')).toBeNull();
+  });
+
+  it('con Google la elección también cuenta', async () => {
+    const { servicio, copia } = crear({ iniciarSesionConGoogle: vi.fn().mockReturnValue(of(sesion('jwt-g'))) });
+
+    servicio.iniciarConGoogle('id-token', false).subscribe();
+
+    expect(await copia.leer('cuenta')).toBeNull();
+  });
+
+  it('cerrar sesión borra también la elección del dispositivo', () => {
+    const { servicio, dispositivo } = crear({
+      iniciarSesion: vi.fn().mockReturnValue(of(sesion('jwt-1'))),
+      cerrarSesion: vi.fn().mockReturnValue(of(undefined)),
+    });
+    servicio.iniciar(cuenta.correo, 'claveSegura1', false).subscribe();
+
+    servicio.cerrar().subscribe();
+
+    expect(dispositivo.esCompartido()).toBe(false);
+    expect(localStorage.getItem('cundiapp.dispositivo')).toBeNull();
+  });
+
+  it('al reabrir la app pasado el plazo sin actividad, revoca la sesión y borra todo en vez de restaurarla', async () => {
+    const cerrarSesion = vi.fn().mockReturnValue(of(undefined));
+    const renovarSesion = vi.fn().mockReturnValue(of(sesion('jwt-renovado')));
+    const { servicio, copia, dispositivo } = crear({ cerrarSesion, renovarSesion });
+    document.cookie = 'XSRF-TOKEN=abc; path=/';
+    dispositivo.marcar(false, Date.now() - PLAZO - 1_000);
+    await copia.guardar('cuenta', cuenta, Date.now());
+
+    await servicio.restaurar();
+
+    expect(cerrarSesion).toHaveBeenCalledTimes(1);
+    expect(renovarSesion).not.toHaveBeenCalled();
+    expect(servicio.estaAutenticada()).toBe(false);
+    expect(await copia.leer('cuenta')).toBeNull();
+    expect(dispositivo.esCompartido()).toBe(false);
+  });
+
+  it('pasado el plazo y sin red, igual borra lo local (quien llega no entra con lo de la persona anterior)', async () => {
+    const cerrarSesion = vi.fn().mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    const { servicio, copia, dispositivo } = crear({ cerrarSesion });
+    dispositivo.marcar(false, Date.now() - PLAZO - 1_000);
+    await copia.guardar('cuenta', cuenta, Date.now());
+
+    await servicio.restaurar();
+
+    expect(servicio.estaAutenticada()).toBe(false);
+    expect(await copia.leer('cuenta')).toBeNull();
+  });
+
+  it('dentro del plazo restaura la sesión con normalidad', async () => {
+    const renovarSesion = vi.fn().mockReturnValue(of(sesion('jwt-renovado')));
+    const cerrarSesion = vi.fn();
+    const { servicio, dispositivo } = crear({ renovarSesion, cerrarSesion });
+    document.cookie = 'XSRF-TOKEN=abc; path=/';
+    dispositivo.marcar(false, Date.now() - 60_000);
+
+    await servicio.restaurar();
+
+    expect(cerrarSesion).not.toHaveBeenCalled();
+    expect(servicio.token()).toBe('jwt-renovado');
   });
 });

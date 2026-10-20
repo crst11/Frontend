@@ -26,6 +26,9 @@ export class Login {
   protected readonly formulario = this.fb.nonNullable.group({
     correo: ['', [Validators.required, Validators.email]],
     contrasena: ['', Validators.required],
+    // Desmarcada = un equipo compartido (una sala de cómputo): no se guarda nada para consultar sin conexión y la sesión se cierra
+    // sola tras 15 minutos sin actividad (SCRUM-231). Marcada por defecto: la mayoría entra desde su celular.
+    esPersonal: [true],
   });
 
   protected readonly enviando = signal(false);
@@ -51,11 +54,11 @@ export class Login {
       return;
     }
 
-    const { correo, contrasena } = this.formulario.getRawValue();
+    const { correo, contrasena, esPersonal } = this.formulario.getRawValue();
     this.enviando.set(true);
     this.error.set(null);
     this.cuentaPendiente.set(false);
-    this.sesion.iniciar(correo, contrasena).subscribe({
+    this.sesion.iniciar(correo, contrasena, esPersonal).subscribe({
       next: () => this.alEntrar(),
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);
@@ -76,7 +79,7 @@ export class Login {
     this.enviando.set(true);
     this.error.set(null);
     this.cuentaPendiente.set(false);
-    this.sesion.iniciarConGoogle(idToken).subscribe({
+    this.sesion.iniciarConGoogle(idToken, this.formulario.controls.esPersonal.value).subscribe({
       next: () => this.alEntrar(),
       error: (err: HttpErrorResponse) => {
         this.enviando.set(false);

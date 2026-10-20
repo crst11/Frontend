@@ -4,6 +4,7 @@ import { TimeoutError, catchError, from, of, switchMap, tap, throwError, timeout
 import { environment } from '../../../environments/environment';
 import { CopiaLocalRepository } from '../../data-access/copia-local.repository';
 import { esFalloDelServidor } from '../feedback/server-failure';
+import { DispositivoDeLaSesion } from '../session/dispositivo-de-la-sesion';
 import { SessionService } from '../session/session.service';
 import { Conexion } from './conexion.service';
 import { esLecturaGuardable, esSondeoDeFondo } from './lecturas-guardables';
@@ -41,7 +42,8 @@ export const lecturasSinConexionInterceptor: HttpInterceptorFn = (peticion, sigu
   const cuenta = inject(SessionService).cuenta();
   // Una dirección escrita con su `?` dentro también cuenta: la ruta es lo que va antes de los parámetros.
   const ruta = peticion.url.slice(environment.apiUrl.length).split('?')[0];
-  if (!cuenta || !esLecturaGuardable(ruta)) {
+  // En un equipo compartido no se guarda nada para consultar sin conexión (SCRUM-231): lo vería la persona que llegue después.
+  if (!cuenta || !esLecturaGuardable(ruta) || !inject(DispositivoDeLaSesion).permiteCopiaLocal()) {
     return siguiente(peticion);
   }
 

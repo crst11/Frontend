@@ -10,6 +10,7 @@ import { provideRouter } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
 import { SessionService } from './core/session/session.service';
+import { VigilanteDeInactividad } from './core/session/vigilante-de-inactividad';
 import { verificacionHumanaInterceptor } from './core/humano/verificacion-humana.interceptor';
 import { sessionInterceptor } from './core/session/session.interceptor';
 import { lecturasSinConexionInterceptor } from './core/offline/lecturas-sin-conexion.interceptor';
@@ -76,6 +77,10 @@ export const appConfig: ApplicationConfig = {
     { provide: HorarioRepository, useClass: HorarioHttpRepository },
     // Antes de mostrar la primera pantalla intenta recuperar la sesión con la cookie de refresco.
     provideAppInitializer(() => inject(SessionService).restaurar()),
+    // En un equipo compartido la sesión se cierra sola tras 15 minutos sin actividad (SCRUM-231).
+    provideAppInitializer(() => {
+      inject(VigilanteDeInactividad).iniciar();
+    }),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',

@@ -54,7 +54,7 @@ describe('Login', () => {
     enviar(fixture, 'ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
     await fixture.whenStable();
 
-    expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
+    expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1', true);
     expect(navegar).toHaveBeenCalledWith(['/inicio']);
     expect(notificador.aviso).toHaveBeenCalledWith('Sesión iniciada.');
   });
@@ -78,7 +78,7 @@ describe('Login', () => {
 
     enviar(fixture, 'ana.diaz', 'claveSegura1');
 
-    expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1');
+    expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1', true);
   });
 
   it('muestra el mensaje genérico del backend si las credenciales fallan', () => {
@@ -135,6 +135,38 @@ describe('Login', () => {
 
     expect(iniciar).not.toHaveBeenCalled();
   });
+
+  it('ofrece «Es mi dispositivo personal», marcada por defecto (SCRUM-231)', () => {
+    const fixture = crear(vi.fn());
+    const casilla = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type="checkbox"]');
+
+    expect(casilla).not.toBeNull();
+    expect(casilla!.checked).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Es mi dispositivo personal');
+  });
+
+  it('con la casilla marcada entra como dispositivo personal', () => {
+    const iniciar = vi.fn().mockReturnValue(of({ id: 1 }));
+    const fixture = crear(iniciar);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    enviar(fixture, 'ana.diaz', 'claveSegura1');
+
+    expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1', true);
+  });
+
+  it('con la casilla desmarcada entra como equipo compartido', () => {
+    const iniciar = vi.fn().mockReturnValue(of({ id: 1 }));
+    const fixture = crear(iniciar);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const casilla = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+    casilla.click();
+    fixture.detectChanges();
+
+    enviar(fixture, 'ana.diaz', 'claveSegura1');
+
+    expect(iniciar).toHaveBeenCalledWith('ana.diaz@ucundinamarca.edu.co', 'claveSegura1', false);
+  });
 });
 
 describe('Login con Google', () => {
@@ -183,7 +215,7 @@ describe('Login con Google', () => {
     alElegirCuenta('id-token-de-google');
     await fixture.whenStable();
 
-    expect(iniciarConGoogle).toHaveBeenCalledWith('id-token-de-google');
+    expect(iniciarConGoogle).toHaveBeenCalledWith('id-token-de-google', true);
     expect(navegar).toHaveBeenCalledWith(['/inicio']);
     expect(notificador.aviso).toHaveBeenCalledWith('Sesión iniciada.');
   });
