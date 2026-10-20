@@ -5,6 +5,8 @@
 #   bash e2e/ejecutar.sh                        todas las pruebas
 #   bash e2e/ejecutar.sh -- --grep pendientes   solo las que coinciden (lo que va despues de "--" se le pasa a Playwright)
 #   bash e2e/ejecutar.sh --conservar            deja el stack encendido al terminar
+#   bash e2e/ejecutar.sh --sin-lighthouse       solo Playwright (las pruebas de flujos, accesibilidad con axe y PWA)
+#   bash e2e/ejecutar.sh --solo-lighthouse      solo la auditoria de Lighthouse (rendimiento, accesibilidad, buenas practicas y SEO en movil)
 #
 # Hace falta Docker y el repositorio del Backend junto a este (../Backend) o en RUTA_BACKEND. Playwright corre dentro de su contenedor
 # oficial, fijado por digest: no hay que instalar navegadores. Los informes, trazas y videos quedan en e2e/resultados/.
@@ -18,15 +20,21 @@ IMAGEN_PLAYWRIGHT="mcr.microsoft.com/playwright:v1.64.1-noble@sha256:7852dc5a7d7
 PROYECTO="cundiapp-e2e"
 
 CONSERVAR=0
+LIGHTHOUSE=si
 ARGUMENTOS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --conservar) CONSERVAR=1 ;;
+    --sin-lighthouse) LIGHTHOUSE=no ;;
+    --solo-lighthouse) LIGHTHOUSE=solo ;;
     --) shift; ARGUMENTOS=("$@"); break ;;
     *) echo "Opcion desconocida: $1" >&2; exit 2 ;;
   esac
   shift
 done
+
+# Si se pide un subconjunto de Playwright (-- --grep ...), la auditoria de Lighthouse no corre sola: se pide con --solo-lighthouse.
+if [[ ${#ARGUMENTOS[@]} -gt 0 && "$LIGHTHOUSE" == si ]]; then LIGHTHOUSE=no; fi
 
 # docker.exe (Git Bash en Windows) no entiende /d/...: se le pasa la ruta de Windows. En Linux, pwd -W no existe y se usa la misma.
 ruta_docker() { (cd "$1" && { pwd -W 2> /dev/null || pwd; }); }
@@ -116,9 +124,9 @@ docker run --rm --network "container:$FRONTEND" --ipc=host \
   -v "$(ruta_docker "$AQUI")":/e2e \
   -v "$RUTA_BACKEND/docs/postman/ejemplos":/ejemplos:ro \
   -w /e2e \
-  -e CI="${CI:-}" -e BASE_URL=http://localhost:8080 -e MAILPIT_URL=http://correo:8025 -e EJEMPLOS=/ejemplos \
+  -e CI="${CI:-}" -e LIGHTHOUSE="$LIGHTHOUSE" -e BASE_URL=http://localhost:8080 -e MAILPIT_URL=http://correo:8025 -e EJEMPLOS=/ejemplos \
   "$IMAGEN_PLAYWRIGHT" \
-  sh -c 'npm ci --no-audit --no-fund --loglevel=error && npm run typecheck --silent && npx playwright test "$@"' sh "${ARGUMENTOS[@]}" || estado=$?
+  sh -c 'npm ci --no-audit --no-fund --loglevel=error || exit 1; npm run typecheck --silent || exit 1; r=0; if [ "$LIGHTHOUSE" != solo ]; then npx playwright test "$@" || r=1; fi; if [ "$LIGHTHOUSE" != no ]; then node lighthouse.mjs || r=1; fi; exit $r' sh "${ARGUMENTOS[@]}" || estado=$?
 
 echo "==> Estado del backend despues de las pruebas"
 BACKEND="$(compose ps -q backend)"
