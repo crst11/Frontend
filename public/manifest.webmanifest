@@ -1,9 +1,13 @@
 {
-  "name": "cundiapp",
-  "short_name": "cundiapp",
+  "name": "CundiApp",
+  "short_name": "CundiApp",
+  "description": "Tu semestre en un solo lugar: horario, notas y pendientes de la Universidad de Cundinamarca.",
+  "lang": "es-CO",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
+  "theme_color": "#0a7a55",
+  "background_color": "#f7f8fa",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
