@@ -11,4 +11,9 @@ if grep -nE '^FROM .*\$\{REGISTRO[A-Z_]*\}' Dockerfile | grep -v '@sha256:[0-9a-
   echo "Fija la imagen: scripts/actualizar-imagenes-base.sh resuelve el digest y lo escribe." >&2
   exit 1
 fi
+# Pruebas end to end (SCRUM-235): la imagen de Playwright se descarga al correr e2e/ejecutar.sh.
+if grep -nE 'mcr.microsoft.com/playwright:' e2e/ejecutar.sh | grep -v '^[0-9]*:[[:space:]]*#' | grep -v '@sha256:[0-9a-f]\{64\}'; then
+  echo "^ e2e/ejecutar.sh: imagen de Playwright sin digest" >&2
+  exit 1
+fi
 echo "Todas las imagenes base van fijadas por digest."

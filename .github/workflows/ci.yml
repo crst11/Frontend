@@ -22,6 +22,41 @@ jobs:
       - run: npm test -- --watch=false
       - run: npm run build
 
+  # Un navegador real recorre los flujos criticos (registro con el codigo de Mailpit, inicio de sesion, pendientes, importar el Registro
+  # Academico, dispositivo compartido y consulta sin conexion) contra el Frontend de produccion servido por nginx y el backend real con los
+  # limites de produccion (SCRUM-235). El stack lo define el Backend (infra/pruebas/compose.yml): ambos repositorios son publicos, asi que se
+  # descarga sin llaves. Playwright corre en su contenedor oficial, fijado por digest.
+  e2e:
+    name: Pruebas end to end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Descargar el Backend (de ahi sale el stack de pruebas)
+        uses: actions/checkout@v7
+        with:
+          repository: crst11/Backend
+          ref: desarrollo
+          path: backend
+
+      - name: ShellCheck del script
+        run: shellcheck -x e2e/ejecutar.sh
+
+      - name: Correr las pruebas
+        env:
+          RUTA_BACKEND: ${{ github.workspace }}/backend
+        run: bash e2e/ejecutar.sh
+
+      - name: Guardar el informe, las trazas y los videos
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: resultados-e2e
+          path: e2e/resultados/
+          if-no-files-found: ignore
+          retention-days: 14
+
   dependencias:
     name: Dependencias sin vulnerabilidades altas ni criticas
     runs-on: ubuntu-latest

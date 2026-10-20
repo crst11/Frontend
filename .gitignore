@@ -20,5 +20,6 @@ node_modules/
 coverage/
 .angular/
 
-.claude/
-.claudeignore
+# Pruebas end to end (SCRUM-235)
+e2e/node_modules/
+e2e/resultados/
