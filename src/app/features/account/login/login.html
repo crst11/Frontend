@@ -31,6 +31,17 @@
       }
     </div>
 
+    <label class="checkbox">
+      <input type="checkbox" formControlName="esPersonal" />
+      <span>
+        Es mi dispositivo personal
+        <small class="field__hint login__dispositivo-ayuda">
+          Si estás en una sala de cómputo o en un equipo de otras personas, desmárcala: no guardaremos tus datos aquí y cerraremos tu
+          sesión tras 15 minutos sin actividad.
+        </small>
+      </span>
+    </label>
+
     @if (error()) {
       <p class="alert" role="alert">{{ error() }}</p>
     }

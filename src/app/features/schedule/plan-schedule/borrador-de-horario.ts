@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SessionService } from '../../../core/session/session.service';
+import { DispositivoDeLaSesion } from '../../../core/session/dispositivo-de-la-sesion';
 import { CopiaLocalRepository } from '../../../data-access/copia-local.repository';
 import {
   AsignaturaDeOferta,
@@ -27,6 +28,7 @@ export interface BorradorDeHorario {
 export class BorradorDeHorarioStore {
   private readonly copia = inject(CopiaLocalRepository);
   private readonly sesion = inject(SessionService);
+  private readonly dispositivo = inject(DispositivoDeLaSesion);
 
   /** El borrador guardado, o `null` si no hay sesión, no hay nada guardado o lo guardado no sirve. */
   async cargar(): Promise<BorradorDeHorario | null> {
@@ -56,7 +58,8 @@ export class BorradorDeHorarioStore {
 
   private clave(): string | null {
     const cuenta = this.sesion.cuenta();
-    return cuenta ? `${cuenta.id}|borrador-de-horario` : null;
+    // En un equipo compartido no se guarda el borrador (SCRUM-231): se pierde al salir, pero no lo ve la persona que llegue después.
+    return cuenta && this.dispositivo.permiteCopiaLocal() ? `${cuenta.id}|borrador-de-horario` : null;
   }
 }
 
