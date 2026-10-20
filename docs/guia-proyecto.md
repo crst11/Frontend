@@ -307,6 +307,7 @@ Reglas: errores junto al campo que los causa, además del mensaje del backend en
 - `ngsw-config.json`: `assetGroups` para el cascarón de la app (instalable y que abre sin red) y `dataGroups` con estrategia `freshness` para las consultas de solo lectura (horario, notas y fechas).
 - **RF12 (sprint 6):** el horario, las calificaciones registradas y las fechas previamente descargadas se consultan sin internet en solo lectura, desde IndexedDB; al volver la conexión se sincroniza.
 - **RF10 (sprint 6):** suscripción Web Push con la llave VAPID pública; el backend envía con la privada.
+- **Equipos compartidos (SCRUM-231).** El inicio de sesión pregunta «Es mi dispositivo personal» (marcada por defecto). Desmarcada, la consulta sin conexión se apaga (no se guarda nada en IndexedDB) y la sesión se cierra sola tras 15 minutos sin actividad, con la aplicación abierta o al reabrirla (`core/session`: `dispositivo-de-la-sesion.ts` y `vigilante-de-inactividad.ts`). Solo se guardan en `localStorage` la elección y el momento de la última actividad, nunca un token ni datos personales.
 - El service worker solo funciona en HTTPS o en `localhost`: se prueba con `ng build` y un servidor estático, no con `ng serve`.
 
 ## 10. Pruebas
