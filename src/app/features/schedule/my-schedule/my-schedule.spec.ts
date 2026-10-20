@@ -107,7 +107,7 @@ describe('MySchedule', () => {
   }
 
   function chipDelDia(html: HTMLElement, nombre: string): HTMLButtonElement {
-    return html.querySelector<HTMLButtonElement>(`.horario__dias button[aria-label="${nombre}"]`)!;
+    return html.querySelector<HTMLButtonElement>(`.horario__dias button[aria-label$=", ${nombre}"]`)!;
   }
 
   function escribir(html: HTMLElement, selector: string, valor: string): void {
@@ -115,6 +115,19 @@ describe('MySchedule', () => {
     campo.value = valor;
     campo.dispatchEvent(new Event(campo instanceof HTMLSelectElement ? 'change' : 'input'));
   }
+
+  it('el nombre accesible de cada día incluye el texto que se ve (WCAG 2.5.3)', () => {
+    const { html } = crear();
+
+    const chips = Array.from(html.querySelectorAll<HTMLButtonElement>('.horario__dias button'));
+
+    expect(chips).toHaveLength(7);
+    for (const chip of chips) {
+      const visible = (chip.textContent ?? '').trim();
+      const palabrasDelNombre = (chip.getAttribute('aria-label') ?? '').split(/[\s,]+/);
+      expect(palabrasDelNombre, `«${visible}» tiene que ser una palabra del nombre accesible`).toContain(visible);
+    }
+  });
 
   it('abre en el día de hoy y no muestra clases si ese día no hay', () => {
     const { html } = crear();

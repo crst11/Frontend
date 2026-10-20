@@ -24,7 +24,7 @@
     #botonDelAvatar
     class="shell__avatar"
     type="button"
-    [attr.aria-label]="'Mi perfil: ' + nombreCompleto()"
+    [attr.aria-label]="iniciales() + ', mi perfil: ' + nombreCompleto()"
     aria-haspopup="dialog"
     aria-controls="panel-del-perfil"
     [attr.aria-expanded]="perfilAbierto()"
