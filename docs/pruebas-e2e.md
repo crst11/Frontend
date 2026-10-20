@@ -7,8 +7,10 @@ Un navegador real (Chromium, emulando un Pixel 7 porque la app es móvil primero
 Hace falta Docker y el repositorio del Backend junto a este (`../Backend`) o en `RUTA_BACKEND`. No hay que instalar navegadores: Playwright corre dentro de su contenedor oficial, fijado por digest.
 
 ```bash
-bash e2e/ejecutar.sh                         # todas (unos 30 s, más la primera construcción de las imágenes)
-bash e2e/ejecutar.sh -- --grep pendientes    # solo las que coinciden (lo de después de "--" va a Playwright)
+bash e2e/ejecutar.sh                         # Playwright (flujos, accesibilidad y PWA) y Lighthouse: unos 2 minutos más la primera construcción
+bash e2e/ejecutar.sh -- --grep pendientes    # solo las pruebas de Playwright que coinciden (lo de después de "--" va a Playwright)
+bash e2e/ejecutar.sh --sin-lighthouse        # solo Playwright
+bash e2e/ejecutar.sh --solo-lighthouse       # solo la auditoría de Lighthouse
 bash e2e/ejecutar.sh --conservar             # deja el stack encendido para mirarlo a mano
 ```
 
@@ -25,8 +27,37 @@ En GitHub corre en cada pull request (job «Pruebas end to end (Playwright)» de
 | `importacion.e2e.ts` | Elegir el programa, importar el Registro Académico en PDF (se muestra lo detectado y no se guarda hasta confirmar) y ver el historial con su promedio y avance. Un archivo que no es PDF se rechaza |
 | `dispositivo-compartido.e2e.ts` | SCRUM-231: desmarcar «Es mi dispositivo personal» cierra la sesión tras 15 minutos sin actividad (se adelanta el reloj del navegador con `page.clock`); en uno personal no |
 | `sin-conexion.e2e.ts` | RF12: con el service worker ya instalado y sin red, la app abre y muestra la copia local. En un dispositivo compartido no queda ninguna fila en IndexedDB |
+| `accesibilidad.e2e.ts` | axe-core contra WCAG 2.2 AA a 360 px en 22 pantallas (públicas y con sesión, con datos importados) y en los estados con errores de validación, aviso emergente, panel del perfil y formulario abierto. Cero violaciones, sin lista de excepciones |
+| `pwa.e2e.ts` | Lo que hace instalable a la app: manifiesto completo (nombre, colores, idioma), íconos que existen y son del tamaño que dicen, service worker activo con su lista de archivos y un `robots.txt` de verdad |
 
 El PDF de la importación es el de ejemplo del Backend (`docs/postman/ejemplos/registro_academico_extendido_de_ejemplo.pdf`), con datos ficticios: ningún reporte real entra a los repositorios (Ley 1581 de 2012).
+
+## Accesibilidad y Lighthouse (SCRUM-237)
+
+**axe** va dentro de Playwright: cada pantalla se abre a 360 px y se revisa con las reglas A y AA de WCAG 2.0, 2.1 y 2.2. Una violación falla la prueba y el mensaje dice la regla, su gravedad, el elemento y el enlace a su explicación. No hay lista de excepciones: si una regla falla, se corrige la pantalla; si algún día hiciera falta una excepción, va en `accesibilidad.e2e.ts` con el motivo y la fecha en que se revisa. Una pantalla nueva entra a las listas de ese archivo.
+
+**Lighthouse** (`lighthouse.mjs`) audita en móvil (la emulación y la red lenta que trae por defecto) la entrada, la Guía y las pantallas de inicio de sesión y registro, sobre la compilación de producción. Usa el Chromium de Playwright, así que no hay otro Chrome que instalar. Falla si una categoría baja del mínimo de `lighthouse-presupuesto.json`: rendimiento 70; accesibilidad, buenas prácticas y SEO 95. El SEO solo se mide donde se quiere que los buscadores lleguen (la entrada y la Guía): `robots.txt` deja fuera `/cuenta/` a propósito y Lighthouse castiga una página que dice «no me indexes».
+
+Desde su versión 12 Lighthouse ya no puntúa la PWA; por eso existe `pwa.e2e.ts`.
+
+Resultados de referencia (20 de octubre de 2026, mismo equipo de las demás pruebas):
+
+| Pantalla | Rendimiento | Accesibilidad | Buenas prácticas | SEO |
+|---|---|---|---|---|
+| `/` | 98 | 100 | 100 | 100 |
+| `/guia` | 78 | 100 | 100 | 100 |
+| `/cuenta/entrar` | 89 | 100 | 100 | no aplica |
+| `/cuenta/registro` | 92 | 100 | 100 | no aplica |
+
+### Lo que encontraron y se corrigió
+
+- **«Etiqueta en el nombre» (WCAG 2.5.3)**, gravedad seria, en 15 pantallas: el avatar del encabezado mostraba «CM» pero su nombre accesible era «Mi perfil: …», y los días del horario mostraban «Lun» pero se llamaban «Lunes». axe pide que el texto visible sea una palabra del nombre accesible (quien maneja la pantalla por voz dice lo que ve). Ahora son «CM, mi perfil: …» y «Lun, Lunes». Cada uno tiene su prueba unitaria.
+- **Manifiesto incompleto**: sin `theme_color`, `background_color`, `lang` ni descripción, y con el nombre en minúsculas («cundiapp»). La app instalada abría con la barra y el fondo por defecto del sistema.
+- **Sin `robots.txt`**: nginx contestaba con el HTML de la app y Lighthouse lo marcaba como inválido. Ahora deja fuera `/api/` y `/cuenta/`.
+
+### Pendiente (decisión de producto)
+
+- **`/guia` pierde puntos por un desplazamiento de diseño (CLS 0,29; lo bueno es menos de 0,1).** Lo causa el cambio de fuente web (Outfit y DM Sans, de Google Fonts) al cargar: el contenedor de resultados se reacomoda. Las opciones son autoalojar las fuentes con precarga y métricas de respaldo ajustadas (de paso, no se le manda la IP de cada estudiante a Google), o `font-display: optional`, que evita el salto pero muestra la fuente de respaldo en la primera visita. El presupuesto de rendimiento (70) queda por debajo de lo medido a propósito, para que lo detecte si empeora.
 
 ## Cómo está armado
 
@@ -52,4 +83,5 @@ El PDF de la importación es el de ejemplo del Backend (`docs/postman/ejemplos/r
 
 - Solo Chromium móvil. No se prueba Safari ni Firefox.
 - No hay Google (es un servicio externo) ni envío real de Web Push: el servidor del stack no tiene llaves VAPID.
-- La accesibilidad automatizada (axe) y la auditoría PWA (Lighthouse) son la fase 3.
+- axe no sustituye una revisión con lector de pantalla (NVDA, TalkBack, VoiceOver): encuentra cerca de la mitad de los problemas. Conviene hacerla antes de una entrega grande.
+- Lighthouse audita las pantallas públicas; las que piden sesión se cubren con axe.
