@@ -71,11 +71,10 @@ test.describe('PWA instalable', () => {
 
   test('el service worker se activa y tiene su lista de archivos', async ({ page, request }) => {
     await page.goto('/');
-    const estado = await page.evaluate(async () => {
-      const registro = await navigator.serviceWorker.ready;
-      return registro.active?.state ?? 'ninguno';
-    });
-    expect(estado).toBe('activated');
+    // `ready` se cumple en cuanto existe el worker; activarse puede tardar unos instantes mas.
+    await expect
+      .poll(() => page.evaluate(async () => (await navigator.serviceWorker.ready).active?.state ?? 'ninguno'))
+      .toBe('activated');
 
     const ngsw = await request.get('/ngsw.json');
     expect(ngsw.status()).toBe(200);
