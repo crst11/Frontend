@@ -314,6 +314,7 @@ Reglas: errores junto al campo que los causa, además del mensaje del backend en
 
 - Pruebas de componentes y servicios con el runner que traiga el CLI.
 - Pruebas de extremo a extremo con Playwright (`e2e/`, SCRUM-235) contra el Frontend de producción y el backend real: registro con el código de Mailpit, inicio de sesión, pendientes, importar el Registro Académico, dispositivo compartido y consulta sin conexión. Corren en cada pull request. Cómo correrlas, cómo están armadas y cómo agregar una: `docs/pruebas-e2e.md`.
+- Accesibilidad (SCRUM-237): axe-core contra WCAG 2.2 AA a 360 px en cada pantalla, sin excepciones, y Lighthouse en móvil con un presupuesto mínimo; corren en el mismo job de cada pull request. Una pantalla nueva entra a la lista de `e2e/accesibilidad.e2e.ts`.
 - Antes de dar algo por terminado: `npm run lint`, `npm test` y `npm run build` en verde.
 
 ## 11. Integración continua y despliegue

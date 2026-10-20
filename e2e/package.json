@@ -5,11 +5,14 @@
   "description": "Pruebas end to end de CundiApp con Playwright (SCRUM-235). Corren dentro del contenedor oficial de Playwright: ver e2e/ejecutar.sh.",
   "scripts": {
     "test": "playwright test",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "lighthouse": "node lighthouse.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.64.1",
     "@types/node": "24.10.1",
+    "lighthouse": "13.5.0",
     "typescript": "~6.0.2"
   }
 }

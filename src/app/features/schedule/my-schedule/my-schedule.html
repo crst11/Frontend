@@ -118,7 +118,7 @@
               type="button"
               [class.chip--active]="diaElegido() === dia.valor"
               [attr.aria-pressed]="diaElegido() === dia.valor"
-              [attr.aria-label]="dia.texto"
+              [attr.aria-label]="dia.corto + ', ' + dia.texto"
               (click)="elegirDia(dia.valor)"
             >
               {{ dia.corto }}

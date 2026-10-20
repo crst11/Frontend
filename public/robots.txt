@@ -1,0 +1,4 @@
+# CundiApp: la Guia institucional (/guia) es publica; la API y las cuentas no tienen nada que los buscadores deban indexar.
+User-agent: *
+Disallow: /api/
+Disallow: /cuenta/

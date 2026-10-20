@@ -74,6 +74,16 @@ describe('AppShell', () => {
     expect(botonDelAvatar(html).getAttribute('aria-label')).toContain('Cristian Albeiro Morales Urrea');
   });
 
+  it('el nombre accesible del avatar incluye el texto que se ve, como palabra completa (WCAG 2.5.3)', async () => {
+    const { html } = await crear();
+
+    const visible = botonDelAvatar(html).textContent?.trim() ?? '';
+    const palabras = (botonDelAvatar(html).getAttribute('aria-label') ?? '').split(/[\s,:]+/);
+
+    expect(visible).toBe('CM');
+    expect(palabras).toContain(visible);
+  });
+
   describe('la campana de avisos', () => {
     const campana = (html: HTMLElement) => html.querySelector<HTMLAnchorElement>('a.shell__campana')!;
 
