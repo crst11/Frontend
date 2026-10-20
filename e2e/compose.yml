@@ -1,0 +1,24 @@
+# Stack de las pruebas end to end (SCRUM-235): el stack de pruebas del Backend (PostgreSQL 17, Mailpit y el backend con los limites de
+# produccion) mas el Frontend de produccion servido por nginx, tal como corre en la instancia. El navegador de Playwright (otro
+# contenedor, en esta misma red) habla con el Frontend por su nombre de servicio y este reenvia /api al backend, como en CloudFront.
+#
+# No se levanta a mano: lo hace e2e/ejecutar.sh, que genera los secretos y busca el Backend (RUTA_BACKEND, por defecto ../Backend).
+name: cundiapp-e2e
+
+include:
+  - path: ${RUTA_BACKEND:?lo pone ejecutar.sh}/infra/pruebas/compose.yml
+
+services:
+  frontend:
+    build:
+      context: ..
+      args:
+        REGISTRO: ${REGISTRO:-public.ecr.aws/docker/library}
+        REGISTRO_NGINX: ${REGISTRO_NGINX:-public.ecr.aws/nginx}
+        CONFIGURACION: dev
+    environment:
+      BACKEND_URL: http://backend:8080
+    mem_limit: 128m
+    depends_on:
+      backend:
+        condition: service_healthy
