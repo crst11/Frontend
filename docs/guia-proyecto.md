@@ -313,7 +313,7 @@ Reglas: errores junto al campo que los causa, además del mensaje del backend en
 ## 10. Pruebas
 
 - Pruebas de componentes y servicios con el runner que traiga el CLI.
-- De 3 a 5 pruebas de extremo a extremo con Playwright para los flujos clave: entrada pública, inicio de sesión, registrar una nota y ver la Brújula.
+- Pruebas de extremo a extremo con Playwright (`e2e/`, SCRUM-235) contra el Frontend de producción y el backend real: registro con el código de Mailpit, inicio de sesión, pendientes, importar el Registro Académico, dispositivo compartido y consulta sin conexión. Corren en cada pull request. Cómo correrlas, cómo están armadas y cómo agregar una: `docs/pruebas-e2e.md`.
 - Antes de dar algo por terminado: `npm run lint`, `npm test` y `npm run build` en verde.
 
 ## 11. Integración continua y despliegue
