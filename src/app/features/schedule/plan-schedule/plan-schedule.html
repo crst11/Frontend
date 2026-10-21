@@ -2,12 +2,14 @@
   <header>
     <h1 class="title">Armar mi horario</h1>
     <p class="subtitle">
-      Escribe las materias que quieres matricular con los grupos y horarios que ves en la plataforma de la
-      universidad. La app no se conecta a ella: tú escribes y ella te propone combinaciones sin choques. Nada de
-      esto se guarda en el servidor.
+      Sube la oferta de horarios que publica la universidad o escribe tú las materias que quieres matricular con
+      los grupos y horarios que ves en su plataforma. La app no se conecta a ella: tú aportas la oferta y ella te
+      propone combinaciones sin choques. Nada de esto se guarda en el servidor.
     </p>
     <a class="armar__volver" routerLink="/horario">Volver a Mi horario</a>
   </header>
+
+  <app-oferta-de-la-universidad (materiasElegidas)="usarOferta($event)" />
 
   <section aria-labelledby="armar-materias">
     <h2 id="armar-materias" class="armar__seccion">Mis materias</h2>
@@ -37,7 +39,7 @@
                   class="field__input"
                   [id]="'grupo-' + i + '-' + g"
                   type="text"
-                  maxlength="20"
+                  maxlength="30"
                   autocomplete="off"
                   placeholder="Por ejemplo, 501M o LE3-M1"
                   [value]="grupo.codigo"

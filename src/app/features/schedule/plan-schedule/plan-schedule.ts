@@ -17,6 +17,7 @@ import {
   PropuestasDeHorario,
 } from '../../../data-access/propuesta-de-horario.repository';
 import { BorradorDeHorario, BorradorDeHorarioStore } from './borrador-de-horario';
+import { OfertaDeLaUniversidad } from './oferta/oferta-de-la-universidad';
 
 /** Pausa tras la última tecla antes de guardar el borrador: una escritura por pausa y no una por letra. */
 const PAUSA_AL_ESCRIBIR_EN_MS = 500;
@@ -44,7 +45,7 @@ const FRANJAS: readonly { valor: FranjaPreferida; texto: string }[] = [
  * Los máximos que acepta el servidor. Aquí solo apagan el botón de agregar para no dejar escribir de más; quien
  * decide es el servidor, que además rechaza lo que se pase.
  */
-const MAXIMOS = { materias: 10, grupos: 12, bloques: 8 } as const;
+const MAXIMOS = { materias: 10, grupos: 20, bloques: 8 } as const;
 
 const NUEVO_BLOQUE: BloqueDeOferta = { dia: 'lunes', inicio: '08:00', fin: '10:00' };
 
@@ -79,7 +80,7 @@ interface OpcionParaMostrar {
  */
 @Component({
   selector: 'app-plan-schedule',
-  imports: [RouterLink],
+  imports: [RouterLink, OfertaDeLaUniversidad],
   templateUrl: './plan-schedule.html',
   styleUrl: './plan-schedule.css',
 })
@@ -165,6 +166,15 @@ export class PlanSchedule {
       ...grupo,
       bloques: grupo.bloques.map((bloque, posicion) => (posicion === b ? { ...bloque, ...cambio } : bloque)),
     }));
+  }
+
+  /**
+   * Las materias que la persona eligió de la oferta que subió (SCRUM-243) reemplazan lo que había; lo que ya se había
+   * propuesto deja de valer. Todo sigue siendo un borrador de este dispositivo.
+   */
+  protected usarOferta(materias: AsignaturaDeOferta[]): void {
+    this.resultado.set(null);
+    this.cambiarAsignaturas(() => materias);
   }
 
   // --- Preferencias ----------------------------------------------------------------------------------------
