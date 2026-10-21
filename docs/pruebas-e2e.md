@@ -28,6 +28,8 @@ En GitHub corre en cada pull request (job «Pruebas end to end (Playwright)» de
 | `dispositivo-compartido.e2e.ts` | SCRUM-231: desmarcar «Es mi dispositivo personal» cierra la sesión tras 15 minutos sin actividad (se adelanta el reloj del navegador con `page.clock`); en uno personal no |
 | `sin-conexion.e2e.ts` | RF12: con el service worker ya instalado y sin red, la app abre y muestra la copia local. En un dispositivo compartido no queda ninguna fila en IndexedDB |
 | `accesibilidad.e2e.ts` | axe-core contra WCAG 2.2 AA a 360 px en 22 pantallas (públicas y con sesión, con datos importados) y en los estados con errores de validación, aviso emergente, panel del perfil y formulario abierto. Cero violaciones, sin lista de excepciones |
+| `fuentes.e2e.ts` | SCRUM-237: las tipografías salen de la propia app (ninguna petición sale de su dominio) y las dos se cargan |
+| `guia.e2e.ts` | SCRUM-237: la Guía no se desplaza mientras llegan sus sugerencias, categorías y documentos (se retrasan 800 ms para que el salto se vea) |
 | `pwa.e2e.ts` | Lo que hace instalable a la app: manifiesto completo (nombre, colores, idioma), íconos que existen y son del tamaño que dicen, service worker activo con su lista de archivos y un `robots.txt` de verdad |
 
 El PDF de la importación es el de ejemplo del Backend (`docs/postman/ejemplos/registro_academico_extendido_de_ejemplo.pdf`), con datos ficticios: ningún reporte real entra a los repositorios (Ley 1581 de 2012).
@@ -45,7 +47,7 @@ Resultados de referencia (20 de octubre de 2026, mismo equipo de las demás prue
 | Pantalla | Rendimiento | Accesibilidad | Buenas prácticas | SEO |
 |---|---|---|---|---|
 | `/` | 98 | 100 | 100 | 100 |
-| `/guia` | 78 | 100 | 100 | 100 |
+| `/guia` | 94 | 100 | 100 | 100 |
 | `/cuenta/entrar` | 89 | 100 | 100 | no aplica |
 | `/cuenta/registro` | 92 | 100 | 100 | no aplica |
 
@@ -55,9 +57,9 @@ Resultados de referencia (20 de octubre de 2026, mismo equipo de las demás prue
 - **Manifiesto incompleto**: sin `theme_color`, `background_color`, `lang` ni descripción, y con el nombre en minúsculas («cundiapp»). La app instalada abría con la barra y el fondo por defecto del sistema.
 - **Sin `robots.txt`**: nginx contestaba con el HTML de la app y Lighthouse lo marcaba como inválido. Ahora deja fuera `/api/` y `/cuenta/`.
 
-### Pendiente (decisión de producto)
+- **`/guia` con un desplazamiento de diseño de 0,29** (lo bueno es menos de 0,1). Se creyó que era el cambio de fuente web y se autoalojaron Outfit y DM Sans (con un respaldo de medidas ajustadas; de paso ya no se le manda la IP de cada estudiante a Google), pero el CLS siguió igual: el informe de Lighthouse (`e2e/resultados/lighthouse/guia.json`, auditoría `layout-shifts`) señalaba otra causa. Las sugerencias y las categorías llegan del servidor después de pintar y empujaban los resultados. Ahora se reserva su lugar y el aviso del final espera a los documentos: el CLS pasó de 0,29 a 0 y el rendimiento de `/guia` de 78 a 94. Moraleja: mirar qué elemento se movió antes de arreglar lo que se sospecha. `guia.e2e.ts` lo vigila retrasando esas respuestas.
 
-- **`/guia` pierde puntos por un desplazamiento de diseño (CLS 0,29; lo bueno es menos de 0,1).** Lo causa el cambio de fuente web (Outfit y DM Sans, de Google Fonts) al cargar: el contenedor de resultados se reacomoda. Las opciones son autoalojar las fuentes con precarga y métricas de respaldo ajustadas (de paso, no se le manda la IP de cada estudiante a Google), o `font-display: optional`, que evita el salto pero muestra la fuente de respaldo en la primera visita. El presupuesto de rendimiento (70) queda por debajo de lo medido a propósito, para que lo detecte si empeora.
+El presupuesto de rendimiento (70) queda por debajo de lo medido a propósito, para que lo detecte si empeora.
 
 ## Cómo está armado
 
