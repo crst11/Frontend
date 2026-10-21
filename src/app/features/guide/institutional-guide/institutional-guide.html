@@ -20,6 +20,9 @@
     }
   </form>
 
+  @if (!sugerenciasListas()) {
+    <div class="guide__reserva guide__reserva--sugerencias" aria-hidden="true"></div>
+  }
   @if (sugerenciasMostradas().length) {
     <section class="guide__block" aria-labelledby="titulo-sugerencias">
       <h2 id="titulo-sugerencias" class="guide__label">Búsquedas sugeridas</h2>
@@ -34,6 +37,9 @@
     </section>
   }
 
+  @if (!categoriasListas()) {
+    <div class="guide__reserva guide__reserva--categorias" aria-hidden="true"></div>
+  }
   @if (categorias().length) {
     <section class="guide__block" aria-labelledby="titulo-categorias">
       <h2 id="titulo-categorias" class="guide__label">Categorías</h2>
@@ -107,10 +113,13 @@
     }
   </div>
 
-  <p class="notice guide__source">
-    Contenido de apoyo: cada documento se abre en el portal oficial de la Universidad de Cundinamarca, que es
-    la fuente vigente.
-  </p>
+  <!-- No se muestra en la primera carga: antes de que lleguen los documentos quedaría pegado al «Buscando…» y saltaría al fondo. -->
+  @if (!cargando() || recursos().length) {
+    <p class="notice guide__source">
+      Contenido de apoyo: cada documento se abre en el portal oficial de la Universidad de Cundinamarca, que es
+      la fuente vigente.
+    </p>
+  }
 
   <!-- Solo mide lo justo para que el resultado buscado pueda subir hasta arriba: si ya llena la
        pantalla (por ejemplo, viendo todas las categorías) no deja ninguna zona vacía. -->
