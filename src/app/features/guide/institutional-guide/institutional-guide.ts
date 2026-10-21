@@ -47,6 +47,9 @@ export class InstitutionalGuide {
   protected readonly filtros = signal<Filtros>({ texto: '', idCategoria: null });
   protected readonly categorias = signal<CategoriaDeRecurso[]>([]);
   protected readonly sugerencias = signal<string[]>([]);
+  /** Si la ayuda ya respondió (o falló): mientras no, su lugar se reserva para que el resultado no salte al llegar. */
+  protected readonly sugerenciasListas = signal(false);
+  protected readonly categoriasListas = signal(false);
   protected readonly recursos = signal<RecursoInstitucional[]>([]);
   protected readonly cargando = signal(true);
   protected readonly error = signal(false);
@@ -107,8 +110,21 @@ export class InstitutionalGuide {
       .subscribe((texto) => this.buscar({ ...this.filtros(), texto }));
 
     // Las sugerencias y las categorías son ayudas: si fallan, la guía sigue funcionando sin ellas.
-    this.repositorio.sugerencias().subscribe({ next: (s) => this.sugerencias.set(s), error: () => undefined });
-    this.repositorio.categorias().subscribe({ next: (c) => this.categorias.set(c), error: () => undefined });
+    // Hasta que las dos responden (bien o mal) se reserva su espacio, para que al llegar no empujen el resultado.
+    this.repositorio.sugerencias().subscribe({
+      next: (s) => {
+        this.sugerencias.set(s);
+        this.sugerenciasListas.set(true);
+      },
+      error: () => this.sugerenciasListas.set(true),
+    });
+    this.repositorio.categorias().subscribe({
+      next: (c) => {
+        this.categorias.set(c);
+        this.categoriasListas.set(true);
+      },
+      error: () => this.categoriasListas.set(true),
+    });
     this.buscar(this.filtros());
   }
 
