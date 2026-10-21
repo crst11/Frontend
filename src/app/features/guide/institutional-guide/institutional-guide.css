@@ -56,6 +56,16 @@
   color: var(--color-ink);
 }
 
+/* Lugar de las sugerencias y las categorías mientras llegan del servidor: tienen la altura que ocupan ya cargadas (medidas a 412 px de ancho, el de un teléfono corriente),
+   así el resultado de abajo no salta cuando aparecen (CLS). */
+.guide__reserva--sugerencias {
+  min-height: 236px;
+}
+
+.guide__reserva--categorias {
+  min-height: 148px;
+}
+
 .guide__results {
   display: flex;
   flex-direction: column;

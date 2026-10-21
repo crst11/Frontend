@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
-import { GuiaRepository, RecursoInstitucional } from '../../../data-access/guia.repository';
+import { CategoriaDeRecurso, GuiaRepository, RecursoInstitucional } from '../../../data-access/guia.repository';
 import { InstitutionalGuide } from './institutional-guide';
 
 describe('InstitutionalGuide', () => {
@@ -70,6 +70,37 @@ describe('InstitutionalGuide', () => {
   function esperarElDesplazamiento(): Promise<void> {
     return new Promise((resolver) => setTimeout(() => setTimeout(resolver, 10), 10));
   }
+
+  it('reserva el lugar de las sugerencias y las categorías hasta que llegan, para que el resultado no salte', () => {
+    const sugerencias = new Subject<string[]>();
+    const categorias = new Subject<CategoriaDeRecurso[]>();
+    TestBed.configureTestingModule({
+      imports: [InstitutionalGuide],
+      providers: [
+        provideRouter([]),
+        {
+          provide: GuiaRepository,
+          useValue: { buscar: vi.fn().mockReturnValue(of([reglamento])), categorias: () => categorias, sugerencias: () => sugerencias },
+        },
+        { provide: NotifierService, useValue: notificador },
+      ],
+    });
+    const fixture = TestBed.createComponent(InstitutionalGuide);
+    const html = fixture.nativeElement as HTMLElement;
+    fixture.detectChanges();
+
+    expect(html.querySelector('.guide__reserva--sugerencias')).not.toBeNull();
+    expect(html.querySelector('.guide__reserva--categorias')).not.toBeNull();
+
+    sugerencias.next(['Plantillas']);
+    categorias.error({ status: 500 });
+    fixture.detectChanges();
+
+    // Llegue bien o falle, el lugar reservado se libera (si la ayuda falló, la guía sigue sin ella).
+    expect(html.querySelector('.guide__reserva--sugerencias')).toBeNull();
+    expect(html.querySelector('.guide__reserva--categorias')).toBeNull();
+    expect(html.textContent).toContain('Plantillas');
+  });
 
   it('muestra toda la guía agrupada por categoría, con las sugerencias para buscar', () => {
     const { html } = crear(vi.fn().mockReturnValue(of([reglamento, gaceta, plantillaWord])));

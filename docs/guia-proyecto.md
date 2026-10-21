@@ -275,7 +275,7 @@ Las pantallas siguen el diseño móvil acordado por el equipo (entrada, registro
 | Pieza | Clase o token |
 |---|---|
 | Colores | `--color-primary` (#0a7a55), `--color-primary-soft`, `--color-ink`, `--color-text`, `--color-muted`, `--color-border`, `--color-background`, `--color-danger` |
-| Tipografías | `Outfit` para títulos y botones, `DM Sans` para el texto (Google Fonts, en `index.html`) |
+| Tipografías | `Outfit` para títulos y botones, `DM Sans` para el texto (autoalojadas en `public/fonts`, con su respaldo de medidas ajustadas en `styles.css`; SCRUM-237) |
 | Pantalla | `.screen` (columna de 440 px máximo, alto completo), `.screen__body`, `.screen__footer` (acciones abajo, como en el diseño) |
 | Cabecera | `.top-bar` con `.icon-button` (flecha de volver) y `.top-bar__title` |
 | Textos | `.title`, `.subtitle` |
