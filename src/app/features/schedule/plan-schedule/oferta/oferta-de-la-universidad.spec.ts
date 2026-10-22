@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { environment } from '../../../../../environments/environment';
 import { AsignaturaDeOferta } from '../../../../data-access/propuesta-de-horario.repository';
 import { OfertaDeLaUniversidad } from './oferta-de-la-universidad';
 import { ARCHIVO_DE_AFUERA, OFERTA_DE_EJEMPLO } from './oferta-de-ejemplo';
@@ -89,6 +90,42 @@ describe('OfertaDeLaUniversidad', () => {
 
     expect(consultar('.import__guia-head')!.getAttribute('aria-expanded')).toBe('true');
     expect(consultar('#oferta-pasos')!.textContent).toContain('pub_rep_val.html');
+  });
+
+  it('trae a la vista el enlace a Consultar Horarios, sin abrir la guía, y se abre en otra pestaña sin dar el origen', () => {
+    crear();
+
+    const enlace = consultar<HTMLAnchorElement>('#oferta-enlace')!;
+    expect(enlace.getAttribute('href')).toBe(environment.urlConsultaDeHorarios);
+    expect(enlace.getAttribute('href')).toMatch(/^https:\/\//);
+    expect(enlace.target).toBe('_blank');
+    expect(enlace.rel).toContain('noopener');
+    expect(enlace.rel).toContain('noreferrer');
+  });
+
+  it('el primer paso de la guía también lleva a la página de la universidad', () => {
+    crear();
+    consultar<HTMLButtonElement>('.import__guia-head')!.click();
+    fixture.detectChanges();
+
+    const enlace = consultar<HTMLAnchorElement>('#oferta-pasos li a')!;
+    expect(enlace.textContent).toContain('Consultar Horarios');
+    expect(enlace.getAttribute('href')).toBe(environment.urlConsultaDeHorarios);
+    expect(enlace.rel).toContain('noopener');
+  });
+
+  it('si el navegador no logra abrir el archivo, el aviso trae el detalle técnico para poder diagnosticarlo', async () => {
+    crear();
+    const ilegible = archivoEn(OFERTA_DE_EJEMPLO);
+    Object.defineProperty(ilegible, 'arrayBuffer', { value: () => Promise.reject(new DOMException('sin permiso', 'NotReadableError')) });
+    const entrada = consultar<HTMLInputElement>('#oferta-archivo')!;
+    Object.defineProperty(entrada, 'files', { value: [ilegible], configurable: true });
+    entrada.dispatchEvent(new Event('change'));
+    await esperarA(hayResultado);
+
+    const aviso = consultar('[role="alert"]')!.textContent!;
+    expect(aviso).toContain('No pudimos leer ese archivo');
+    expect(aviso).toContain('Detalle técnico: NotReadableError');
   });
 
   it('el área para pegar está plegada hasta que se pide', () => {

@@ -25,10 +25,29 @@
       </svg>
     </button>
 
+    <p class="oferta__enlace">
+      <a
+        class="oferta__enlace-vinculo"
+        id="oferta-enlace"
+        [href]="urlConsultaDeHorarios"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Abrir «Consultar Horarios» de la universidad</a
+      >
+      (se abre en otra pestaña; no pide cuenta).
+    </p>
+
     @if (guiaAbierta()) {
       <ol class="import__pasos" id="oferta-pasos">
         @for (paso of pasos; track paso.resaltado) {
-          <li class="import__paso">{{ paso.texto }} <b>{{ paso.resaltado }}</b>.</li>
+          <li class="import__paso">
+            {{ paso.texto }}
+            @if (paso.conEnlace) {
+              <a [href]="urlConsultaDeHorarios" target="_blank" rel="noopener noreferrer"><b>{{ paso.resaltado }}</b></a>.
+            } @else {
+              <b>{{ paso.resaltado }}</b>.
+            }
+          </li>
         }
       </ol>
     }
