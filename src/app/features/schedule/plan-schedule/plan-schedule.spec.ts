@@ -1,15 +1,18 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import {
+  AsignaturaDeOferta,
   PropuestaDeHorario,
   PropuestaDeHorarioRepository,
   PropuestasDeHorario,
 } from '../../../data-access/propuesta-de-horario.repository';
 import { BorradorDeHorario, BorradorDeHorarioStore } from './borrador-de-horario';
+import { OfertaDeLaUniversidad } from './oferta/oferta-de-la-universidad';
 import { PlanSchedule } from './plan-schedule';
 
 describe('PlanSchedule', () => {
@@ -135,6 +138,74 @@ describe('PlanSchedule', () => {
 
     expect(html.querySelectorAll('.armar__materia')).toHaveLength(10);
     expect(boton(html, 'Agregar otra materia').disabled).toBe(true);
+  });
+
+  // --- La oferta de la universidad (SCRUM-243) -------------------------------------------------------------
+
+  const ALGEBRA: AsignaturaDeOferta = {
+    nombre: 'ÁLGEBRA LINEAL',
+    grupos: [{ codigo: 'SIS.FUSA 101M', bloques: [{ dia: 'martes', inicio: '07:00', fin: '10:00' }] }],
+  };
+
+  function subirOferta(fixture: ComponentFixture<PlanSchedule>, materias: AsignaturaDeOferta[]) {
+    const oferta = fixture.debugElement.query(By.directive(OfertaDeLaUniversidad)).componentInstance as OfertaDeLaUniversidad;
+    oferta.materiasElegidas.emit(materias);
+  }
+
+  it('la oferta que se sube llena las materias y se manda a proponer con el fin ya normalizado', async () => {
+    const { fixture, html } = await crear();
+
+    subirOferta(fixture, [ALGEBRA]);
+    await refrescar(fixture);
+
+    expect(html.querySelector<HTMLInputElement>('#materia-0')!.value).toBe('ÁLGEBRA LINEAL');
+    expect(html.querySelector<HTMLInputElement>('#grupo-0-0')!.value).toBe('SIS.FUSA 101M');
+    boton(html, 'Proponer horarios').click();
+    expect(repositorio.proponer).toHaveBeenCalledWith({
+      asignaturas: [ALGEBRA],
+      criterio: { franja: null, pocosHuecos: false, diasLibres: [] },
+    });
+  });
+
+  it('usar la oferta reemplaza las propuestas anteriores y guarda el borrador', async () => {
+    vi.useFakeTimers();
+    try {
+      const { fixture, html } = await crear();
+      boton(html, 'Proponer horarios').click();
+      await refrescar(fixture);
+      expect(html.querySelectorAll('.armar__opcion').length).toBeGreaterThan(0);
+
+      subirOferta(fixture, [ALGEBRA]);
+      await vi.advanceTimersByTimeAsync(600);
+      fixture.detectChanges();
+
+      expect(html.querySelectorAll('.armar__opcion')).toHaveLength(0);
+      expect(almacen.guardar).toHaveBeenCalledTimes(1);
+      expect(almacen.guardar.mock.calls[0][0].asignaturas).toEqual([ALGEBRA]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('el paso de escribir a mano sigue disponible', async () => {
+    const { html } = await crear();
+
+    expect(html.querySelector('app-oferta-de-la-universidad')).not.toBeNull();
+    expect(html.querySelector('#armar-materias')).not.toBeNull();
+    expect(boton(html, 'Agregar otra materia').disabled).toBe(false);
+  });
+
+  it('el tope de grupos de la pantalla es 20 y el código de grupo admite 30 caracteres', async () => {
+    const { fixture, html } = await crear();
+    expect(html.querySelector('#grupo-0-0')!.getAttribute('maxlength')).toBe('30');
+
+    for (let n = 0; n < 19; n++) {
+      boton(html, 'Agregar otro grupo').click();
+      await refrescar(fixture);
+    }
+
+    expect(html.querySelectorAll('.armar__grupo')).toHaveLength(20);
+    expect(boton(html, 'Agregar otro grupo').disabled).toBe(true);
   });
 
   // --- Lo que se manda -------------------------------------------------------------------------------------
