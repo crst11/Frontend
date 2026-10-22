@@ -1,0 +1,82 @@
+<section class="card oferta" aria-labelledby="oferta-titulo">
+  <h2 id="oferta-titulo" class="oferta__titulo">Subir la oferta de la universidad</h2>
+  <p class="field__hint">
+    En «Consultar Horarios» elige tu sede y tu pensum, y guarda la página (Ctrl+S). Sube aquí el archivo
+    <strong>pub_rep_val.html</strong> de la carpeta que se crea junto al archivo guardado (termina en «_files»). O
+    copia la tabla y pégala abajo. Lo que subes se lee en tu dispositivo: no se envía a ningún lado.
+  </p>
+
+  <div class="field">
+    <label class="field__label" for="oferta-archivo">Archivo de la página guardada</label>
+    <input
+      class="field__input"
+      id="oferta-archivo"
+      type="file"
+      accept=".html,.htm,.mht,.mhtml"
+      (change)="subirArchivo($event)"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="oferta-pegado">O pega aquí la tabla que copiaste</label>
+    <textarea
+      class="field__input oferta__pegado"
+      id="oferta-pegado"
+      rows="3"
+      placeholder="Pega la tabla con Ctrl+V"
+      (paste)="pegar($event)"
+    ></textarea>
+  </div>
+
+  @if (leyendo()) {
+    <p class="field__hint" role="status">Leyendo la tabla…</p>
+  }
+  @if (error(); as mensaje) {
+    <p class="alert" role="alert">{{ mensaje }}</p>
+  }
+
+  @if (oferta(); as leida) {
+    <p class="field__hint" role="status">
+      Leímos {{ leida.materias.length }} materias con horario @if (leida.periodo) { del período {{ leida.periodo }} }.
+    </p>
+
+    <div class="field">
+      <label class="field__label" for="oferta-semestre">Mi semestre</label>
+      <select
+        class="field__input"
+        id="oferta-semestre"
+        (change)="elegirSemestre($any($event.target).value)"
+      >
+        @for (numero of semestres(); track numero) {
+          <option [value]="numero" [selected]="numero === semestre()">Semestre {{ numero }}</option>
+        }
+      </select>
+    </div>
+
+    <fieldset class="oferta__materias">
+      <legend class="field__label">Materias de este semestre</legend>
+      @for (materia of materiasDelSemestre(); track materia.codigo) {
+        <label class="oferta__materia checkbox">
+          <input type="checkbox" [checked]="estaElegida(materia.codigo)" (change)="alternar(materia.codigo)" />
+          <span>
+            {{ materia.nombre }}
+            ({{ materia.grupos.length }} {{ materia.grupos.length === 1 ? 'grupo' : 'grupos' }})
+          </span>
+        </label>
+      }
+    </fieldset>
+
+    @if (pasaDelMaximo()) {
+      <p class="alert" role="alert">Elige máximo {{ maximoDeMaterias }} materias a la vez.</p>
+    }
+
+    <button
+      class="button button--primary oferta__usar"
+      type="button"
+      [disabled]="elegidas().length === 0 || pasaDelMaximo()"
+      (click)="usar()"
+    >
+      Usar estas materias
+    </button>
+  }
+</section>
