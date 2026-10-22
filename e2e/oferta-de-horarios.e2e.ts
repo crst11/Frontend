@@ -57,6 +57,57 @@ test.describe('Armar mi horario con la oferta de la universidad', () => {
     await expect(page.getByText(/en la mañana/).first()).toBeVisible();
   });
 
+  test('cambia el grupo de una materia: el que cabe se puede usar y el que choca no se deja elegir', async ({ page }) => {
+    // SCRUM-245: el grupo 105M de Álgebra pasa a ser el lunes de 07:00 a 10:00, que choca con Fundamentos de electrónica
+    // (lunes de 07:00 a 09:00). El servidor no propone esa combinación, pero sí la prueba como grupo candidato.
+    expect(OFERTA_DE_EJEMPLO).toContain('VIERNES');
+    const conChoque = OFERTA_DE_EJEMPLO.replace('VIERNES', 'LUNES');
+    await page.locator('#oferta-archivo').setInputFiles({
+      name: 'pub_rep_val.html',
+      mimeType: 'text/html',
+      buffer: comoLoGuardaElNavegador(conChoque),
+    });
+    await page.getByLabel('Mi semestre').selectOption('1');
+    await page.getByRole('button', { name: 'Proponer horarios' }).click();
+    await expect(page.getByRole('heading', { name: 'Opción 1' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Cambiar grupo de ÁLGEBRA LINEAL' }).first().click();
+
+    const panel = page.getByRole('group', { name: 'Otros grupos de ÁLGEBRA LINEAL' }).first();
+    await expect(panel.getByText(/No puedes elegirlo: choca con FUNDAMENTOS DE ELECTRÓNICA/)).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Usar este grupo' }).first()).toBeVisible();
+    expect(await violacionesDeAccesibilidad(page), 'sin violaciones de accesibilidad con el panel abierto').toEqual([]);
+
+    await panel.getByRole('button', { name: 'Usar este grupo' }).first().click();
+
+    await expect(page.getByText(/Cambiaste el grupo de esta opción/).first()).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Otros grupos de ÁLGEBRA LINEAL' })).toHaveCount(0);
+  });
+
+  test('con «quiero un día libre» muestra opciones y solo de los días que se pueden liberar', async ({ page }) => {
+    // SCRUM-251. En el semestre 1 de la oferta de ejemplo, Fundamentos de electrónica tiene su único grupo el lunes y el
+    // jueves: esos dos días no se pueden liberar. Álgebra puede estar martes, miércoles, jueves o viernes.
+    await page.locator('#oferta-archivo').setInputFiles({
+      name: 'pub_rep_val.html',
+      mimeType: 'text/html',
+      buffer: comoLoGuardaElNavegador(OFERTA_DE_EJEMPLO),
+    });
+    await page.getByLabel('Mi semestre').selectOption('1');
+    await expect(page.getByRole('button', { name: 'Quiero tener un día libre' })).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByText('Quiero dejar libres')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Quiero tener un día libre' }).click();
+    await page.getByRole('button', { name: 'Proponer horarios' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Opción 1' })).toBeVisible();
+    const diasLibres = page.locator('.armar__libres');
+    await expect(diasLibres.first()).toContainText('Días libres:');
+    for (const texto of await diasLibres.allTextContents()) {
+      expect(texto, 'el lunes y el jueves nunca se liberan con esta oferta').not.toMatch(/lunes|jueves/i);
+    }
+    expect(await violacionesDeAccesibilidad(page), 'sin violaciones de accesibilidad con las opciones de día libre').toEqual([]);
+  });
+
   test('si elige la carpeta guardada, la app encuentra la tabla sola aunque esté el archivo de afuera', async ({ page }) => {
     // Un campo de carpeta (webkitdirectory) pide una carpeta de verdad: se arma una con lo que deja Ctrl+S.
     const carpeta = mkdtempSync(join(tmpdir(), 'oferta-'));

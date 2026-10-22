@@ -18,6 +18,13 @@ export interface ConfiguracionDeEjecucion {
    * ambientes, así que no se lee de `config.json`: vale la de la compilación.
    */
   urlConsultaDeHorarios: string;
+  /**
+   * La página de la universidad con el botón «ACCESO A PLATAFORMA» (Academusoft/Hermesoft), de donde se sacan los
+   * reportes en PDF (SCRUM-250). Pública, igual en todos los ambientes: vale la de la compilación.
+   */
+  urlPlataformaInstitucional: string;
+  /** La página pública del Campo Multidimensional de Aprendizaje (CMAD, el Moodle de la universidad); SCRUM-250. */
+  urlCmad: string;
 }
 
 /** Dónde se guarda la última configuración buena, para poder arrancar sin red (RF12). */
