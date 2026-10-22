@@ -59,6 +59,8 @@ interface DiaDeLaOpcion {
 interface OpcionParaMostrar {
   propuesta: PropuestaDeHorario;
   dias: DiaDeLaOpcion[];
+  /** Los días que esta opción deja libres, en palabras («viernes y sábado»); vacío si no deja ninguno. */
+  diasLiberados: string;
   /** Si la persona le cambió algún grupo: el puntaje y los motivos eran de la sugerencia original. */
   editada: boolean;
 }
@@ -117,11 +119,14 @@ export class PlanSchedule {
   protected readonly asignaturas = signal<AsignaturaDeOferta[]>([]);
   protected readonly franja = signal<FranjaPreferida | null>(null);
   protected readonly pocosHuecos = signal(false);
-  protected readonly diasLibres = signal<DiaDeClase[]>([]);
+  /** «Quiero tener un día libre» (SCRUM-251): se ofrece una opción por cada día que se puede dejar libre. */
+  protected readonly diaLibre = signal(false);
 
   protected readonly resultado = signal<PropuestasDeHorario | null>(null);
   /** Si al pedir las propuestas se había elegido alguna preferencia: sin ninguna, el puntaje no dice nada. */
   protected readonly pidioPreferencias = signal(false);
+  /** Si las propuestas que se ven se pidieron con «quiero un día libre»: solo entonces se dice qué días quedan libres. */
+  protected readonly pidioDiaLibre = signal(false);
   protected readonly calculando = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -135,6 +140,7 @@ export class PlanSchedule {
       propuesta,
       dias: diasDe(propuesta),
       editada: this.editadas().has(i),
+      diasLiberados: listaDeDias(propuesta.resumen.diasLiberados),
     })),
   );
 
@@ -148,7 +154,7 @@ export class PlanSchedule {
       if (guardado) {
         this.franja.set(guardado.franja);
         this.pocosHuecos.set(guardado.pocosHuecos);
-        this.diasLibres.set(guardado.diasLibres);
+        this.diaLibre.set(guardado.diaLibre);
       }
     });
   }
@@ -179,10 +185,8 @@ export class PlanSchedule {
     this.cambios$.next();
   }
 
-  protected alternarDiaLibre(dia: DiaDeClase): void {
-    this.diasLibres.update((actuales) =>
-      actuales.includes(dia) ? actuales.filter((d) => d !== dia) : [...actuales, dia],
-    );
+  protected alternarDiaLibre(): void {
+    this.diaLibre.update((actual) => !actual);
     this.cambios$.next();
   }
 
@@ -200,6 +204,7 @@ export class PlanSchedule {
       next: (respuesta) => {
         this.resultado.set(respuesta);
         this.pidioPreferencias.set(pideAlgo(pedido));
+        this.pidioDiaLibre.set(pedido.criterio.diaLibre);
         this.calculando.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -317,19 +322,25 @@ export class PlanSchedule {
   private pedido(): PedidoDePropuestas {
     return {
       asignaturas: this.asignaturas(),
-      criterio: { franja: this.franja(), pocosHuecos: this.pocosHuecos(), diasLibres: this.diasLibres() },
+      criterio: { franja: this.franja(), pocosHuecos: this.pocosHuecos(), diasLibres: [], diaLibre: this.diaLibre() },
     };
   }
 
   /** Solo las preferencias: la oferta es de cada carga y no se guarda. */
   private borrador(): BorradorDeHorario {
-    return { asignaturas: [], franja: this.franja(), pocosHuecos: this.pocosHuecos(), diasLibres: this.diasLibres() };
+    return { asignaturas: [], franja: this.franja(), pocosHuecos: this.pocosHuecos(), diaLibre: this.diaLibre() };
   }
 }
 
 function pideAlgo(pedido: PedidoDePropuestas): boolean {
-  const { franja, pocosHuecos, diasLibres } = pedido.criterio;
-  return franja !== null || pocosHuecos || diasLibres.length > 0;
+  const { franja, pocosHuecos, diasLibres, diaLibre } = pedido.criterio;
+  return franja !== null || pocosHuecos || diasLibres.length > 0 || diaLibre;
+}
+
+/** «viernes», «viernes y sábado» o «martes, jueves y sábado», con los nombres de la pantalla. */
+function listaDeDias(dias: DiaDeClase[]): string {
+  const nombres = dias.map(dia);
+  return nombres.length <= 1 ? nombres.join('') : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
 }
 
 /** Las clases de una propuesta por día, de lunes a sábado y por hora dentro de cada día. */

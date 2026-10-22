@@ -28,7 +28,10 @@ export interface AsignaturaDeOferta {
 export interface CriterioDeAcomodo {
   franja: FranjaPreferida | null;
   pocosHuecos: boolean;
+  /** Días sueltos que se quieren sin clase. La pantalla ya no los ofrece (va `[]`): el servidor los ignora con `diaLibre`. */
   diasLibres: DiaDeClase[];
+  /** «Quiero tener un día libre» (SCRUM-251): el servidor ofrece una opción por cada día que se puede dejar libre. */
+  diaLibre: boolean;
 }
 
 /** La oferta que el estudiante escribió y lo que prefiere (RF13, SCRUM-209). */
@@ -51,6 +54,8 @@ export interface ResumenDePropuesta {
   minutosDeHuecos: number;
   diasConClase: DiaDeClase[];
   diasLibres: DiaDeClase[];
+  /** Los días en que alguna materia de la oferta tiene clase y esta opción los deja libres (SCRUM-251). */
+  diasLiberados: DiaDeClase[];
 }
 
 /** Una combinación sin choques. El puntaje y los motivos los calcula y escribe el servidor. */

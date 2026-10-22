@@ -37,6 +37,7 @@ describe('PlanSchedule', () => {
       minutosDeHuecos: 0,
       diasConClase: ['lunes', 'miercoles'],
       diasLibres: ['martes', 'jueves', 'viernes', 'sabado'],
+      diasLiberados: ['viernes', 'sabado'],
     },
     motivos: ['Sin choques entre tus 2 materias.', 'El 100 % de tus horas de clase queda en la mañana.'],
   };
@@ -168,31 +169,121 @@ describe('PlanSchedule', () => {
     const { fixture, html } = await crearConOferta();
     boton(html, 'Mañana').click();
     html.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click();
-    boton(html, 'Viernes').click();
+    boton(html, 'Quiero tener un día libre').click();
     await refrescar(fixture);
 
     boton(html, 'Proponer horarios').click();
 
     expect(repositorio.proponer).toHaveBeenCalledWith({
       asignaturas: [ALGEBRA, FISICA],
-      criterio: { franja: 'manana', pocosHuecos: true, diasLibres: ['viernes'] },
+      criterio: { franja: 'manana', pocosHuecos: true, diasLibres: [], diaLibre: true },
     });
   });
 
-  it('las preferencias se pueden quitar: me da igual, y volver a tocar un día libre lo desmarca', async () => {
+  it('las preferencias se pueden quitar: me da igual, y volver a tocar el día libre lo desmarca', async () => {
     const { fixture, html } = await crearConOferta();
     boton(html, 'Tarde').click();
-    boton(html, 'Sábado').click();
+    boton(html, 'Quiero tener un día libre').click();
     await refrescar(fixture);
     expect(boton(html, 'Tarde').getAttribute('aria-pressed')).toBe('true');
 
     boton(html, 'Me da igual').click();
-    boton(html, 'Sábado').click();
+    boton(html, 'Quiero tener un día libre').click();
     await refrescar(fixture);
     boton(html, 'Proponer horarios').click();
 
     expect(boton(html, 'Tarde').getAttribute('aria-pressed')).toBe('false');
-    expect(repositorio.proponer.mock.calls[0][0].criterio).toEqual({ franja: null, pocosHuecos: false, diasLibres: [] });
+    expect(repositorio.proponer.mock.calls[0][0].criterio).toEqual({
+      franja: null,
+      pocosHuecos: false,
+      diasLibres: [],
+      diaLibre: false,
+    });
+  });
+
+  // --- «Quiero tener un día libre» (SCRUM-251) ---------------------------------------------------------------
+
+  const QUIERO_UN_DIA_LIBRE = 'Quiero tener un día libre';
+
+  it('ofrece un solo botón de día libre en lugar de elegir cuáles días', async () => {
+    const { html } = await crearConOferta();
+
+    expect(boton(html, QUIERO_UN_DIA_LIBRE).getAttribute('aria-pressed')).toBe('false');
+    expect(html.querySelector('#armar-libres')).toBeNull();
+    expect(boton(html, 'Viernes')).toBeUndefined();
+  });
+
+  it('al activarlo manda diaLibre verdadero y sin días libres sueltos', async () => {
+    const { fixture, html } = await crearConOferta();
+
+    boton(html, QUIERO_UN_DIA_LIBRE).click();
+    await refrescar(fixture);
+    expect(boton(html, QUIERO_UN_DIA_LIBRE).getAttribute('aria-pressed')).toBe('true');
+    boton(html, 'Proponer horarios').click();
+
+    expect(repositorio.proponer.mock.calls[0][0].criterio).toEqual({
+      franja: null,
+      pocosHuecos: false,
+      diasLibres: [],
+      diaLibre: true,
+    });
+  });
+
+  it('cada opción dice qué días quedan libres', async () => {
+    const { fixture, html } = await crearConOferta();
+    boton(html, QUIERO_UN_DIA_LIBRE).click();
+    await refrescar(fixture);
+
+    boton(html, 'Proponer horarios').click();
+    await refrescar(fixture);
+
+    expect(html.querySelector('.armar__libres')!.textContent!.replace(/\s+/g, ' ').trim()).toBe('Días libres: viernes y sábado');
+  });
+
+  it('sin el modo no muestra la línea de días libres', async () => {
+    const { fixture, html } = await crearConOferta();
+
+    boton(html, 'Proponer horarios').click();
+    await refrescar(fixture);
+
+    expect(html.querySelector('.armar__libres')).toBeNull();
+  });
+
+  it('una opción a la que se le cambió un grupo deja de decir los días libres', async () => {
+    const pantalla = await crear();
+    await subirOferta(pantalla.fixture, [CALCULO_OFERTA, FISICA_OFERTA]);
+    const { fixture, html } = pantalla;
+    boton(html, QUIERO_UN_DIA_LIBRE).click();
+    await refrescar(fixture);
+    boton(html, 'Proponer horarios').click();
+    await refrescar(fixture);
+    expect(html.querySelector('.armar__libres')).not.toBeNull();
+
+    cambiarGrupoDe(html, 'Cálculo').click();
+    await refrescar(fixture);
+    html.querySelector<HTMLButtonElement>('.armar__candidato button')!.click();
+    await refrescar(fixture);
+
+    expect(html.querySelector('.armar__libres')).toBeNull();
+  });
+
+  it('si ningún día se puede liberar muestra el mensaje del servidor', async () => {
+    repositorio.proponer.mockReturnValue(
+      of({
+        propuestas: [],
+        choques: [],
+        mensaje: 'Con estas materias no se puede dejar ningún día libre: quita la marca.',
+        busquedaIncompleta: false,
+      }),
+    );
+    const { fixture, html } = await crearConOferta();
+    boton(html, QUIERO_UN_DIA_LIBRE).click();
+    await refrescar(fixture);
+
+    boton(html, 'Proponer horarios').click();
+    await refrescar(fixture);
+
+    expect(html.querySelector('[role="alert"]')!.textContent).toContain('no se puede dejar ningún día libre');
   });
 
   it('cambiar las materias de la oferta borra las propuestas anteriores', async () => {
@@ -489,7 +580,7 @@ describe('PlanSchedule', () => {
   // --- Borrador --------------------------------------------------------------------------------------------
 
   it('recupera las preferencias guardadas al abrir la pantalla, no la oferta', async () => {
-    const guardado: BorradorDeHorario = { asignaturas: [], franja: 'tarde', pocosHuecos: true, diasLibres: ['viernes'] };
+    const guardado: BorradorDeHorario = { asignaturas: [], franja: 'tarde', pocosHuecos: true, diaLibre: true };
     almacen.cargar.mockResolvedValue(guardado);
 
     const { fixture, html } = await crear();
@@ -497,7 +588,7 @@ describe('PlanSchedule', () => {
 
     expect(boton(html, 'Tarde').getAttribute('aria-pressed')).toBe('true');
     expect(html.querySelector<HTMLInputElement>('input[type="checkbox"]')!.checked).toBe(true);
-    expect(boton(html, 'Viernes').getAttribute('aria-pressed')).toBe('true');
+    expect(boton(html, 'Quiero tener un día libre').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('guarda las preferencias tras una pausa, sin la oferta, y no una vez por toque', async () => {
@@ -516,7 +607,7 @@ describe('PlanSchedule', () => {
         asignaturas: [],
         franja: 'tarde',
         pocosHuecos: false,
-        diasLibres: [],
+        diaLibre: false,
       });
     } finally {
       vi.useRealTimers();
