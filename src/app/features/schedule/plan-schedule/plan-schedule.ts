@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subject, debounceTime } from 'rxjs';
@@ -9,11 +9,16 @@ import {
   AsignaturaDeOferta,
   DiaDeClase,
   FranjaPreferida,
+  GrupoDeOferta,
   PedidoDePropuestas,
   PropuestaDeHorario,
   PropuestaDeHorarioRepository,
   PropuestasDeHorario,
 } from '../../../data-access/propuesta-de-horario.repository';
+import {
+  ChoqueDelCambio,
+  VerificacionDeCambioRepository,
+} from '../../../data-access/verificacion-de-cambio.repository';
 import { BorradorDeHorario, BorradorDeHorarioStore } from './borrador-de-horario';
 import { OfertaDeLaUniversidad } from './oferta/oferta-de-la-universidad';
 
@@ -54,7 +59,34 @@ interface DiaDeLaOpcion {
 interface OpcionParaMostrar {
   propuesta: PropuestaDeHorario;
   dias: DiaDeLaOpcion[];
+  /** Si la persona le cambió algún grupo: el puntaje y los motivos eran de la sugerencia original. */
+  editada: boolean;
 }
+
+/** Un grupo que se probó en lugar del actual, con el texto ya armado para mostrarlo. */
+interface CandidatoParaMostrar {
+  grupo: string;
+  horas: string;
+  cabe: boolean;
+  choques: string[];
+}
+
+/** La materia de una opción cuyo grupo se está cambiando (SCRUM-245), con lo que respondió el servidor. */
+interface CambioEnCurso {
+  opcion: number;
+  asignatura: string;
+  cargando: boolean;
+  error: string | null;
+  candidatos: CandidatoParaMostrar[];
+  /** La oferta no trae más grupos de esta materia: no hay nada que probar. */
+  sinOtrosGrupos: boolean;
+}
+
+const dia = (valor: DiaDeClase): string => (DIAS.find((d) => d.valor === valor)?.texto ?? valor).toLowerCase();
+const horasDe = (bloques: { dia: DiaDeClase; inicio: string; fin: string }[]): string =>
+  bloques.map((b) => `${dia(b.dia)} de ${b.inicio} a ${b.fin}`).join(', ');
+const choqueEnTexto = (c: ChoqueDelCambio): string =>
+  `choca con ${c.asignatura} (grupo ${c.grupo}), ${dia(c.dia)} de ${c.inicio} a ${c.fin}`;
 
 /**
  * Armar mi horario para matricular (RF13, SCRUM-209 y SCRUM-243): el estudiante sube la oferta de horarios que
@@ -75,6 +107,8 @@ export class PlanSchedule {
   private readonly repositorio = inject(PropuestaDeHorarioRepository);
   private readonly borradores = inject(BorradorDeHorarioStore);
   private readonly notificador = inject(NotifierService);
+  private readonly verificaciones = inject(VerificacionDeCambioRepository);
+  private readonly destruida = inject(DestroyRef);
 
   protected readonly dias = DIAS;
   protected readonly franjas = FRANJAS;
@@ -91,8 +125,17 @@ export class PlanSchedule {
   protected readonly calculando = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  /** Las opciones a las que la persona les cambió algún grupo (por su posición). */
+  protected readonly editadas = signal<ReadonlySet<number>>(new Set());
+  /** La materia cuyo grupo se está cambiando, si hay alguna. Solo una a la vez. */
+  protected readonly cambio = signal<CambioEnCurso | null>(null);
+
   protected readonly opciones = computed<OpcionParaMostrar[]>(() =>
-    (this.resultado()?.propuestas ?? []).map((propuesta) => ({ propuesta, dias: diasDe(propuesta) })),
+    (this.resultado()?.propuestas ?? []).map((propuesta, i) => ({
+      propuesta,
+      dias: diasDe(propuesta),
+      editada: this.editadas().has(i),
+    })),
   );
 
   private readonly cambios$ = new Subject<void>();
@@ -120,6 +163,7 @@ export class PlanSchedule {
   protected usarOferta(materias: AsignaturaDeOferta[]): void {
     this.asignaturas.set(materias);
     this.resultado.set(null);
+    this.olvidarCambios();
     this.error.set(null);
   }
 
@@ -149,6 +193,7 @@ export class PlanSchedule {
       return;
     }
     this.error.set(null);
+    this.olvidarCambios();
     this.calculando.set(true);
     const pedido = this.pedido();
     this.repositorio.proponer(pedido).subscribe({
@@ -174,7 +219,100 @@ export class PlanSchedule {
     });
   }
 
+  // --- Cambiar el grupo de una materia de una opción (SCRUM-245) -------------------------------------------
+
+  /**
+   * Abre (o cierra) el panel para probar otros grupos de una materia de una opción. El servidor dice, por cada
+   * grupo de la oferta, si cabe en el horario de esa opción o con qué choca; aquí solo se muestra. La app no
+   * sabe qué docente dicta cada grupo: la persona elige el grupo del docente que conoce.
+   */
+  protected alternarCambio(opcion: number, asignatura: string): void {
+    const actual = this.cambio();
+    if (actual?.opcion === opcion && actual.asignatura === asignatura) {
+      this.cambio.set(null);
+      return;
+    }
+    const propuesta = this.resultado()?.propuestas[opcion];
+    const eleccion = propuesta?.elecciones.find((e) => e.asignatura === asignatura);
+    if (!propuesta || !eleccion) {
+      return;
+    }
+    const candidatos = this.gruposDe(asignatura).filter((g) => g.codigo !== eleccion.grupo);
+    const base = { opcion, asignatura, error: null, candidatos: [] };
+    if (candidatos.length === 0) {
+      this.cambio.set({ ...base, cargando: false, sinOtrosGrupos: true });
+      return;
+    }
+    this.cambio.set({ ...base, cargando: true, sinOtrosGrupos: false });
+    const horario = propuesta.elecciones.map((e) => ({ asignatura: e.asignatura, grupo: { codigo: e.grupo, bloques: e.bloques } }));
+    this.verificaciones
+      .verificar({ horario, asignaturaACambiar: asignatura, candidatos })
+      .pipe(takeUntilDestroyed(this.destruida))
+      .subscribe({
+        next: (respuesta) =>
+          this.actualizarCambio(opcion, asignatura, {
+            cargando: false,
+            candidatos: respuesta.candidatos.map((c) => ({
+              grupo: c.grupo,
+              horas: horasDe(candidatos.find((g) => g.codigo === c.grupo)?.bloques ?? []),
+              cabe: c.cabe,
+              choques: c.choques.map(choqueEnTexto),
+            })),
+          }),
+        error: (err: HttpErrorResponse) => {
+          if (esFalloDelServidor(err)) {
+            void this.notificador.problema('No pudimos revisar los grupos', SIN_CONEXION);
+          }
+          this.actualizarCambio(opcion, asignatura, {
+            cargando: false,
+            error: esFalloDelServidor(err)
+              ? SIN_CONEXION
+              : (err.error?.detail ?? 'No pudimos revisar los otros grupos. Intenta de nuevo.'),
+          });
+        },
+      });
+  }
+
+  /** Cambia el grupo de la materia en esa opción, solo si el servidor dijo que cabe. */
+  protected usarGrupo(opcion: number, asignatura: string, codigo: string): void {
+    const respuesta = this.resultado();
+    const grupo = this.gruposDe(asignatura).find((g) => g.codigo === codigo);
+    const probado = this.cambio()?.candidatos.find((c) => c.grupo === codigo);
+    if (!respuesta || !grupo || !probado?.cabe) {
+      return;
+    }
+    const propuestas = respuesta.propuestas.map((propuesta, i) =>
+      i !== opcion
+        ? propuesta
+        : {
+            ...propuesta,
+            elecciones: propuesta.elecciones.map((e) =>
+              e.asignatura === asignatura ? { ...e, grupo: grupo.codigo, bloques: grupo.bloques } : e,
+            ),
+          },
+    );
+    this.resultado.set({ ...respuesta, propuestas });
+    this.editadas.update((actuales) => new Set(actuales).add(opcion));
+    this.cambio.set(null);
+  }
+
   // --- Interno ---------------------------------------------------------------------------------------------
+
+  private gruposDe(asignatura: string): GrupoDeOferta[] {
+    return this.asignaturas().find((a) => a.nombre === asignatura)?.grupos ?? [];
+  }
+
+  /** Aplica lo que llegó solo si el panel sigue abierto en esa misma materia: una respuesta tardía no pisa otra. */
+  private actualizarCambio(opcion: number, asignatura: string, cambios: Partial<CambioEnCurso>): void {
+    this.cambio.update((actual) =>
+      actual?.opcion === opcion && actual.asignatura === asignatura ? { ...actual, ...cambios } : actual,
+    );
+  }
+
+  private olvidarCambios(): void {
+    this.cambio.set(null);
+    this.editadas.set(new Set());
+  }
 
   private pedido(): PedidoDePropuestas {
     return {
