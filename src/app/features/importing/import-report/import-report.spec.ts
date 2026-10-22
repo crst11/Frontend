@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { environment } from '../../../../environments/environment';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import {
   AnalisisDeImportacion,
@@ -154,6 +155,23 @@ describe('ImportReport', () => {
     expect(html.querySelectorAll('.import__paso')).toHaveLength(6);
     expect(html.textContent).toContain('Consultar Registro Extendido');
     expect(html.textContent).toContain('Guardar como PDF');
+  });
+
+  it('trae a la vista el enlace a la Plataforma Institucional y lo repite en el primer paso de la guía', () => {
+    const { fixture, html } = crear();
+
+    const enlace = html.querySelector<HTMLAnchorElement>('#enlace-plataforma')!;
+    expect(enlace.getAttribute('href')).toBe(environment.urlPlataformaInstitucional);
+    expect(enlace.target).toBe('_blank');
+    expect(enlace.rel).toContain('noopener');
+    expect(enlace.rel).toContain('noreferrer');
+
+    boton(html, '¿Dónde consigo ese archivo?').click();
+    fixture.detectChanges();
+    const delPaso = html.querySelector<HTMLAnchorElement>('.import__paso a')!;
+    expect(delPaso.textContent).toContain('ACCESO A PLATAFORMA');
+    expect(delPaso.getAttribute('href')).toBe(environment.urlPlataformaInstitucional);
+    expect(html.querySelectorAll('.import__paso a')).toHaveLength(1);
   });
 
   it('al subir el archivo muestra lo detectado sin guardar nada', () => {

@@ -66,6 +66,56 @@
   color: var(--color-text);
 }
 
+.armar__elecciones {
+  list-style: none;
+  padding: 0;
+}
+
+.armar__eleccion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.armar__eleccion-texto {
+  flex: 1 1 160px;
+}
+
+.armar__cambiar {
+  width: auto;
+  min-height: 44px;
+  padding-inline: 14px;
+}
+
+.armar__cambio {
+  flex: 1 1 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.armar__candidato {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 0;
+}
+
+.armar__choca {
+  flex: 1 1 100%;
+  color: var(--color-danger);
+  font-size: 0.9rem;
+}
+
+.armar__usar {
+  width: auto;
+  min-height: 44px;
+  padding-inline: 14px;
+}
+
 .armar__dia-resumen {
   margin-top: 0.25rem;
 }

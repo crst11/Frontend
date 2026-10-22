@@ -11,6 +11,8 @@ describe('leerConfiguracion', () => {
     googleClientId: 'cliente-del-bundle',
     turnstileLlave: '',
     urlConsultaDeHorarios: 'https://universidad.example/horarios',
+    urlPlataformaInstitucional: 'https://universidad.example/plataforma',
+    urlCmad: 'https://universidad.example/cmad',
   };
 
   function respuesta(cuerpo: unknown, ok = true, status = ok ? 200 : 404): Response {

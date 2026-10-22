@@ -1,4 +1,48 @@
-import { extraerHtmlDeMhtml } from './mhtml';
+import { extraerHtmlDeMhtml, extraerPaginasDeMhtml } from './mhtml';
+
+describe('extraerPaginasDeMhtml', () => {
+  const LIMITE = '----MultipartBoundary--abc123----';
+  const parte = (tipo: string, cuerpo: string): string =>
+    [`--${LIMITE}`, `Content-Type: ${tipo}`, 'Content-Transfer-Encoding: binary', '', cuerpo].join('\r\n');
+
+  /** Lo que guarda Chrome en el teléfono de una página con marcos: el marco de afuera, uno vacío, la tabla y recursos. */
+  const conMarcos = [
+    'From: <Saved by Blink>',
+    'MIME-Version: 1.0',
+    'Content-Type: multipart/related;',
+    '\ttype="text/html";',
+    `\tboundary="${LIMITE}"`,
+    '',
+    parte('text/html', '<html><frameset><frame src="pub_rep_val.jsp"></frameset></html>'),
+    parte('text/html', '<html></html>'),
+    parte('text/css', 'body { color: red }'),
+    parte('text/html', '<html><body><table><tr><td>la tabla</td></tr></table></body></html>'),
+    parte('image/gif', 'GIF89a'),
+    `--${LIMITE}--`,
+    '',
+  ].join('\r\n');
+
+  it('devuelve todas las páginas HTML, en el orden en que vienen, y deja los recursos', () => {
+    expect(extraerPaginasDeMhtml(conMarcos)).toEqual([
+      '<html><frameset><frame src="pub_rep_val.jsp"></frameset></html>',
+      '<html></html>',
+      '<html><body><table><tr><td>la tabla</td></tr></table></body></html>',
+    ]);
+  });
+
+  it('lo que no es un MHTML se devuelve como su única página', () => {
+    expect(extraerPaginasDeMhtml('<html><body>hola</body></html>')).toEqual(['<html><body>hola</body></html>']);
+  });
+
+  it('un MHTML sin ninguna parte HTML se devuelve tal cual', () => {
+    const sinHtml = conMarcos.replace(/text\/html/g, 'text/plain');
+    expect(extraerPaginasDeMhtml(sinHtml)).toEqual([sinHtml]);
+  });
+
+  it('extraerHtmlDeMhtml sigue devolviendo la primera página, como lo usa el CMAD', () => {
+    expect(extraerHtmlDeMhtml(conMarcos)).toBe('<html><frameset><frame src="pub_rep_val.jsp"></frameset></html>');
+  });
+});
 
 describe('extraerHtmlDeMhtml', () => {
   const LIMITE = '----MultipartBoundary--abc123----';

@@ -18,4 +18,8 @@ export const environment: ConfiguracionDeEjecucion = {
   // SCRUM-248: la página pública de la universidad donde se consultan los horarios (no pide cuenta; igual en todos los
   // ambientes).
   urlConsultaDeHorarios: 'https://plataforma.ucundinamarca.edu.co/aplicacionesB/condicionales/apl_gen_public.jsp?id=ConsultaHorario',
+  // SCRUM-250: las páginas de la universidad donde se entra a la plataforma institucional y al CMAD (iguales en todos
+  // los ambientes).
+  urlPlataformaInstitucional: 'https://www.ucundinamarca.edu.co/index.php/servicios/plataforma-institucional',
+  urlCmad: 'https://www.ucundinamarca.edu.co/index.php/servicios2022/campo-multidimensional-de-aprendizaje',
 };
