@@ -30,6 +30,7 @@ En GitHub corre en cada pull request (job «Pruebas end to end (Playwright)» de
 | `accesibilidad.e2e.ts` | axe-core contra WCAG 2.2 AA a 360 px en 22 pantallas (públicas y con sesión, con datos importados) y en los estados con errores de validación, aviso emergente, panel del perfil y formulario abierto. Cero violaciones, sin lista de excepciones |
 | `fuentes.e2e.ts` | SCRUM-237: las tipografías salen de la propia app (ninguna petición sale de su dominio) y las dos se cargan |
 | `guia.e2e.ts` | SCRUM-237: la Guía no se desplaza mientras llegan sus sugerencias, categorías y documentos (se retrasan 800 ms para que el salto se vea) |
+| `oferta-de-horarios.e2e.ts` | SCRUM-243: sube la oferta de la universidad (en windows-1252, como la guarda la plataforma), elige la mañana y el servidor real propone combinaciones; el archivo de «afuera» dice cuál subir; sin violaciones de accesibilidad con la oferta cargada |
 | `pwa.e2e.ts` | Lo que hace instalable a la app: manifiesto completo (nombre, colores, idioma), íconos que existen y son del tamaño que dicen, service worker activo con su lista de archivos y un `robots.txt` de verdad |
 
 El PDF de la importación es el de ejemplo del Backend (`docs/postman/ejemplos/registro_academico_extendido_de_ejemplo.pdf`), con datos ficticios: ningún reporte real entra a los repositorios (Ley 1581 de 2012).
