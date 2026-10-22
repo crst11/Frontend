@@ -19,6 +19,15 @@
   gap: 12px;
 }
 
+.oferta__enlace {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.oferta__enlace-vinculo {
+  font-weight: 700;
+}
+
 .oferta__pegar,
 .oferta__carpeta {
   align-self: stretch;

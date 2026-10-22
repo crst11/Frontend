@@ -1,4 +1,5 @@
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
+import { environment } from '../../../../../environments/environment';
 import { AsignaturaDeOferta } from '../../../../data-access/propuesta-de-horario.repository';
 import { SoltarArchivo } from '../../../../shared/file-drop/file-drop';
 import { leerArchivoDeOferta, leerCarpetaDeOferta, leerOfertaPegada } from './archivo-de-oferta';
@@ -14,9 +15,21 @@ const NO_SE_PUDO_LEER =
   'No pudimos leer ese archivo. Revisa que sea la página guardada de «Consultar Horarios» (el archivo ' +
   'pub_rep_val.html).';
 
+/** Lo más largo del detalle técnico que se muestra: lo justo para identificar el fallo. */
+const MAXIMO_DEL_DETALLE = 160;
+
 interface PasoDeLaGuia {
   texto: string;
   resaltado: string;
+  /** Si el texto resaltado lleva a la página de la universidad. */
+  conEnlace?: boolean;
+}
+
+function detalleTecnico(fallo: unknown): string {
+  // Se lee `name` y `message` de cualquier objeto: una DOMException del navegador no siempre es un `Error` para JS.
+  const { name, message } = (typeof fallo === 'object' && fallo !== null ? fallo : {}) as Record<string, unknown>;
+  const detalle = typeof name === 'string' ? `${name}: ${typeof message === 'string' ? message : ''}` : 'error desconocido';
+  return `(Detalle técnico: ${detalle.slice(0, MAXIMO_DEL_DETALLE)})`;
 }
 
 /**
@@ -44,7 +57,7 @@ export class OfertaDeLaUniversidad {
   readonly materiasElegidas = output<AsignaturaDeOferta[]>();
 
   protected readonly pasos: PasoDeLaGuia[] = [
-    { texto: 'Entra a la plataforma de la universidad y abre', resaltado: 'Consultar Horarios' },
+    { texto: 'Entra a la plataforma de la universidad y abre', resaltado: 'Consultar Horarios', conEnlace: true },
     { texto: 'Elige tu sede y tu pensum y pulsa el botón de', resaltado: 'buscar' },
     { texto: 'Guarda la página con', resaltado: 'Ctrl+S' },
     {
@@ -54,6 +67,7 @@ export class OfertaDeLaUniversidad {
     { texto: 'Si no lo encuentras, elige con el botón de abajo la carpeta completa que termina en', resaltado: '_files' },
   ];
 
+  protected readonly urlConsultaDeHorarios = environment.urlConsultaDeHorarios;
   protected readonly maximoDeMaterias = MAXIMO_DE_MATERIAS;
   protected readonly guiaAbierta = signal(false);
   protected readonly pegadoAbierto = signal(false);
@@ -186,6 +200,8 @@ export class OfertaDeLaUniversidad {
 
   private fallar(fallo: unknown): void {
     this.oferta.set(null);
-    this.error.set(fallo instanceof OfertaNoLegible ? fallo.message : NO_SE_PUDO_LEER);
+    // Un fallo que no es de contenido (el navegador no pudo abrir el archivo, por ejemplo) lleva su detalle técnico:
+    // sin él, quien lo reporta y quien lo arregla no tienen cómo saber qué pasó.
+    this.error.set(fallo instanceof OfertaNoLegible ? fallo.message : `${NO_SE_PUDO_LEER} ${detalleTecnico(fallo)}`);
   }
 }

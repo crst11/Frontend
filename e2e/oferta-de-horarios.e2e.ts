@@ -21,6 +21,15 @@ test.describe('Armar mi horario con la oferta de la universidad', () => {
     await expect(page.getByRole('button', { name: '¿Dónde consigo ese archivo?' })).toBeVisible();
   });
 
+  test('trae a la vista el enlace a Consultar Horarios de la universidad', async ({ page }) => {
+    const enlace = page.getByRole('link', { name: /Abrir «Consultar Horarios»/ });
+
+    await expect(enlace).toBeVisible();
+    await expect(enlace).toHaveAttribute('href', /^https:\/\/plataforma\.ucundinamarca\.edu\.co\/.*ConsultaHorario/);
+    await expect(enlace).toHaveAttribute('target', '_blank');
+    await expect(enlace).toHaveAttribute('rel', /noopener/);
+  });
+
   test('sin oferta no hay nada que escribir a mano: solo la zona de carga', async ({ page }) => {
     await expect(page.getByText('Toca aquí para elegir el archivo de la oferta')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Agregar otra materia' })).toHaveCount(0);

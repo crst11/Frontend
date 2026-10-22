@@ -50,10 +50,8 @@ export async function leerCarpetaDeOferta(archivos: readonly File[]): Promise<Of
   for (const pagina of paginas) {
     try {
       return await leerArchivoDeOferta(pagina);
-    } catch (fallo) {
-      if (!(fallo instanceof OfertaNoLegible)) {
-        throw fallo;
-      }
+    } catch {
+      // Una página que no es la tabla, o que el navegador no logra abrir, no impide probar las demás de la carpeta.
     }
   }
   throw new OfertaNoLegible(MENSAJE_DE_LA_CARPETA);
