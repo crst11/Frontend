@@ -10,6 +10,7 @@ describe('leerConfiguracion', () => {
     apiUrl: '/api',
     googleClientId: 'cliente-del-bundle',
     turnstileLlave: '',
+    urlConsultaDeHorarios: 'https://universidad.example/horarios',
   };
 
   function respuesta(cuerpo: unknown, ok = true, status = ok ? 200 : 404): Response {
@@ -34,7 +35,7 @@ describe('leerConfiguracion', () => {
 
     const config = await leerConfiguracion(base, obtener, almacenEnMemoria());
 
-    expect(config).toEqual({ apiUrl: '/api', googleClientId: 'cliente-de-preproduccion', turnstileLlave: 'llave-pre' });
+    expect(config).toEqual({ ...base, googleClientId: 'cliente-de-preproduccion', turnstileLlave: 'llave-pre' });
   });
 
   it('pide config.json sin usar el caché del navegador', async () => {

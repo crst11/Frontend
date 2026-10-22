@@ -7,10 +7,8 @@ import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import {
   AsignaturaDeOferta,
-  BloqueDeOferta,
   DiaDeClase,
   FranjaPreferida,
-  GrupoDeOferta,
   PedidoDePropuestas,
   PropuestaDeHorario,
   PropuestaDeHorarioRepository,
@@ -19,13 +17,13 @@ import {
 import { BorradorDeHorario, BorradorDeHorarioStore } from './borrador-de-horario';
 import { OfertaDeLaUniversidad } from './oferta/oferta-de-la-universidad';
 
-/** Pausa tras la última tecla antes de guardar el borrador: una escritura por pausa y no una por letra. */
+/** Pausa tras el último cambio de una preferencia antes de guardar el borrador: una escritura por pausa. */
 const PAUSA_AL_ESCRIBIR_EN_MS = 500;
 
 const SIN_CONEXION =
   'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.';
 
-/** Los días que se ofrecen al escribir un grupo y al pedir días libres. */
+/** Los días que se ofrecen al pedir días libres y con los que se ordena la semana de cada opción. */
 const DIAS: readonly { valor: DiaDeClase; texto: string }[] = [
   { valor: 'lunes', texto: 'Lunes' },
   { valor: 'martes', texto: 'Martes' },
@@ -40,17 +38,6 @@ const FRANJAS: readonly { valor: FranjaPreferida; texto: string }[] = [
   { valor: 'tarde', texto: 'Tarde' },
   { valor: 'noche', texto: 'Noche' },
 ];
-
-/**
- * Los máximos que acepta el servidor. Aquí solo apagan el botón de agregar para no dejar escribir de más; quien
- * decide es el servidor, que además rechaza lo que se pase.
- */
-const MAXIMOS = { materias: 10, grupos: 20, bloques: 8 } as const;
-
-const NUEVO_BLOQUE: BloqueDeOferta = { dia: 'lunes', inicio: '08:00', fin: '10:00' };
-
-const nuevoGrupo = (): GrupoDeOferta => ({ codigo: '', bloques: [{ ...NUEVO_BLOQUE }] });
-const nuevaAsignatura = (): AsignaturaDeOferta => ({ nombre: '', grupos: [nuevoGrupo()] });
 
 interface ClaseDelDia {
   hora: string;
@@ -70,13 +57,13 @@ interface OpcionParaMostrar {
 }
 
 /**
- * Armar mi horario para matricular (RF13, SCRUM-209): el estudiante escribe las materias con los grupos y horarios
- * que ve al matricular y lo que prefiere, y la pantalla muestra las combinaciones sin choques que propone el
- * servidor.
+ * Armar mi horario para matricular (RF13, SCRUM-209 y SCRUM-243): el estudiante sube la oferta de horarios que
+ * publica la universidad, elige su semestre y sus materias, dice lo que prefiere, y la pantalla muestra las
+ * combinaciones sin choques que propone el servidor. No se escribe nada a mano: la oferta es la única fuente.
  *
  * <p>Aquí no se calcula nada: la oferta y las preferencias se mandan al servidor y se muestra lo que responde,
- * con el puntaje y los motivos que él escribe. Lo escrito se guarda como borrador en este dispositivo, no en el
- * servidor, y se borra al cerrar sesión.
+ * con el puntaje y los motivos que él escribe. Las preferencias se guardan como borrador en este dispositivo,
+ * no en el servidor, y se borran al cerrar sesión; la oferta no se guarda en ningún lado.
  */
 @Component({
   selector: 'app-plan-schedule',
@@ -91,9 +78,9 @@ export class PlanSchedule {
 
   protected readonly dias = DIAS;
   protected readonly franjas = FRANJAS;
-  protected readonly maximos = MAXIMOS;
 
-  protected readonly asignaturas = signal<AsignaturaDeOferta[]>([nuevaAsignatura()]);
+  /** Las materias que la persona eligió de la oferta que subió, con todos sus grupos. Sin ellas no hay qué proponer. */
+  protected readonly asignaturas = signal<AsignaturaDeOferta[]>([]);
   protected readonly franja = signal<FranjaPreferida | null>(null);
   protected readonly pocosHuecos = signal(false);
   protected readonly diasLibres = signal<DiaDeClase[]>([]);
@@ -115,8 +102,7 @@ export class PlanSchedule {
       .pipe(debounceTime(PAUSA_AL_ESCRIBIR_EN_MS), takeUntilDestroyed())
       .subscribe(() => void this.borradores.guardar(this.borrador()));
     void this.borradores.cargar().then((guardado) => {
-      if (guardado && guardado.asignaturas.length > 0) {
-        this.asignaturas.set(guardado.asignaturas);
+      if (guardado) {
         this.franja.set(guardado.franja);
         this.pocosHuecos.set(guardado.pocosHuecos);
         this.diasLibres.set(guardado.diasLibres);
@@ -124,57 +110,17 @@ export class PlanSchedule {
     });
   }
 
-  // --- Materias, grupos y bloques --------------------------------------------------------------------------
-
-  protected agregarAsignatura(): void {
-    this.cambiarAsignaturas((lista) => [...lista, nuevaAsignatura()]);
-  }
-
-  protected quitarAsignatura(i: number): void {
-    this.cambiarAsignaturas((lista) => lista.filter((_, posicion) => posicion !== i));
-  }
-
-  protected cambiarNombre(i: number, nombre: string): void {
-    this.cambiarAsignatura(i, (asignatura) => ({ ...asignatura, nombre }));
-  }
-
-  protected agregarGrupo(i: number): void {
-    this.cambiarAsignatura(i, (asignatura) => ({ ...asignatura, grupos: [...asignatura.grupos, nuevoGrupo()] }));
-  }
-
-  protected quitarGrupo(i: number, g: number): void {
-    this.cambiarAsignatura(i, (asignatura) => ({
-      ...asignatura,
-      grupos: asignatura.grupos.filter((_, posicion) => posicion !== g),
-    }));
-  }
-
-  protected cambiarCodigo(i: number, g: number, codigo: string): void {
-    this.cambiarGrupo(i, g, (grupo) => ({ ...grupo, codigo }));
-  }
-
-  protected agregarBloque(i: number, g: number): void {
-    this.cambiarGrupo(i, g, (grupo) => ({ ...grupo, bloques: [...grupo.bloques, { ...NUEVO_BLOQUE }] }));
-  }
-
-  protected quitarBloque(i: number, g: number, b: number): void {
-    this.cambiarGrupo(i, g, (grupo) => ({ ...grupo, bloques: grupo.bloques.filter((_, posicion) => posicion !== b) }));
-  }
-
-  protected cambiarBloque(i: number, g: number, b: number, cambio: Partial<BloqueDeOferta>): void {
-    this.cambiarGrupo(i, g, (grupo) => ({
-      ...grupo,
-      bloques: grupo.bloques.map((bloque, posicion) => (posicion === b ? { ...bloque, ...cambio } : bloque)),
-    }));
-  }
+  // --- La oferta de la universidad -------------------------------------------------------------------------
 
   /**
-   * Las materias que la persona eligió de la oferta que subió (SCRUM-243) reemplazan lo que había; lo que ya se había
-   * propuesto deja de valer. Todo sigue siendo un borrador de este dispositivo.
+   * Las materias que la persona tiene elegidas de la oferta que subió (SCRUM-243). Cada cambio (otro semestre, una
+   * materia desmarcada, otro archivo) reemplaza lo anterior y lo que ya se había propuesto deja de valer. La oferta
+   * no se guarda en ningún lado.
    */
   protected usarOferta(materias: AsignaturaDeOferta[]): void {
+    this.asignaturas.set(materias);
     this.resultado.set(null);
-    this.cambiarAsignaturas(() => materias);
+    this.error.set(null);
   }
 
   // --- Preferencias ----------------------------------------------------------------------------------------
@@ -232,39 +178,14 @@ export class PlanSchedule {
 
   private pedido(): PedidoDePropuestas {
     return {
-      asignaturas: this.asignaturas().map((asignatura) => ({
-        nombre: asignatura.nombre.trim(),
-        grupos: asignatura.grupos.map((grupo) => ({ ...grupo, codigo: grupo.codigo.trim() })),
-      })),
+      asignaturas: this.asignaturas(),
       criterio: { franja: this.franja(), pocosHuecos: this.pocosHuecos(), diasLibres: this.diasLibres() },
     };
   }
 
+  /** Solo las preferencias: la oferta es de cada carga y no se guarda. */
   private borrador(): BorradorDeHorario {
-    return {
-      asignaturas: this.asignaturas(),
-      franja: this.franja(),
-      pocosHuecos: this.pocosHuecos(),
-      diasLibres: this.diasLibres(),
-    };
-  }
-
-  private cambiarAsignaturas(cambio: (lista: AsignaturaDeOferta[]) => AsignaturaDeOferta[]): void {
-    this.asignaturas.update(cambio);
-    this.cambios$.next();
-  }
-
-  private cambiarAsignatura(i: number, cambio: (asignatura: AsignaturaDeOferta) => AsignaturaDeOferta): void {
-    this.cambiarAsignaturas((lista) =>
-      lista.map((asignatura, posicion) => (posicion === i ? cambio(asignatura) : asignatura)),
-    );
-  }
-
-  private cambiarGrupo(i: number, g: number, cambio: (grupo: GrupoDeOferta) => GrupoDeOferta): void {
-    this.cambiarAsignatura(i, (asignatura) => ({
-      ...asignatura,
-      grupos: asignatura.grupos.map((grupo, posicion) => (posicion === g ? cambio(grupo) : grupo)),
-    }));
+    return { asignaturas: [], franja: this.franja(), pocosHuecos: this.pocosHuecos(), diasLibres: this.diasLibres() };
   }
 }
 

@@ -13,6 +13,11 @@ export interface ConfiguracionDeEjecucion {
   googleClientId: string;
   /** Llave pública de Turnstile. Vacía = la verificación de bots está apagada. */
   turnstileLlave: string;
+  /**
+   * La página pública de la universidad donde se consulta la oferta de horarios (SCRUM-248). Es la misma en todos los
+   * ambientes, así que no se lee de `config.json`: vale la de la compilación.
+   */
+  urlConsultaDeHorarios: string;
 }
 
 /** Dónde se guarda la última configuración buena, para poder arrancar sin red (RF12). */

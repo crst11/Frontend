@@ -15,4 +15,7 @@ export const environment: ConfiguracionDeEjecucion = {
   // SCRUM-92: la llave PUBLICA de Cloudflare Turnstile (tampoco es un secreto). Vacia = la verificacion de bots esta
   // apagada y no se descarga nada. La secreta va solo en el backend (TURNSTILE_SECRETO).
   turnstileLlave: '',
+  // SCRUM-248: la página pública de la universidad donde se consultan los horarios (no pide cuenta; igual en todos los
+  // ambientes).
+  urlConsultaDeHorarios: 'https://plataforma.ucundinamarca.edu.co/aplicacionesB/condicionales/apl_gen_public.jsp?id=ConsultaHorario',
 };
