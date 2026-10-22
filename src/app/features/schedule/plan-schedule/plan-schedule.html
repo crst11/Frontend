@@ -38,20 +38,21 @@
         <span>Pocos huecos entre clases</span>
       </label>
 
-      <p class="field__label" id="armar-libres">Quiero dejar libres</p>
-      <div class="chips" role="group" aria-labelledby="armar-libres">
-        @for (dia of dias; track dia.valor) {
-          <button
-            class="chip"
-            type="button"
-            [class.chip--active]="diasLibres().includes(dia.valor)"
-            [attr.aria-pressed]="diasLibres().includes(dia.valor)"
-            (click)="alternarDiaLibre(dia.valor)"
-          >
-            {{ dia.texto }}
-          </button>
-        }
+      <div class="chips armar__dia-libre">
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="diaLibre()"
+          [attr.aria-pressed]="diaLibre()"
+          aria-describedby="armar-dia-libre-ayuda"
+          (click)="alternarDiaLibre()"
+        >
+          Quiero tener un día libre
+        </button>
       </div>
+      <p class="field__hint" id="armar-dia-libre-ayuda">
+        Te mostramos una opción por cada día que se puede dejar libre, con las clases bien repartidas.
+      </p>
     </section>
 
     <button class="button button--primary" type="button" [disabled]="calculando()" (click)="proponer()">
@@ -81,17 +82,72 @@
           <article class="card armar__opcion">
             <header class="armar__opcion-cabecera">
               <h3 class="armar__opcion-titulo">Opción {{ n + 1 }}</h3>
-              @if (pidioPreferencias()) {
+              @if (pidioPreferencias() && !opcion.editada) {
                 <span class="badge badge--ok">{{ opcion.propuesta.puntaje }} de 100</span>
               }
             </header>
 
+            @if (pidioDiaLibre() && !opcion.editada && opcion.diasLiberados) {
+              <p class="armar__libres">Días libres: <strong>{{ opcion.diasLiberados }}</strong></p>
+            }
+
             <p class="armar__etiqueta">Matricula</p>
-            <ul class="armar__lista">
+            <ul class="armar__lista armar__elecciones">
               @for (eleccion of opcion.propuesta.elecciones; track eleccion.asignatura) {
-                <li><strong>{{ eleccion.asignatura }}</strong>, grupo {{ eleccion.grupo }}</li>
+                <li class="armar__eleccion">
+                  <span class="armar__eleccion-texto"><strong>{{ eleccion.asignatura }}</strong>, grupo {{ eleccion.grupo }}</span>
+                  <button
+                    class="button button--outline armar__cambiar"
+                    type="button"
+                    [attr.aria-label]="'Cambiar grupo de ' + eleccion.asignatura"
+                    [attr.aria-expanded]="cambio()?.opcion === n && cambio()?.asignatura === eleccion.asignatura"
+                    (click)="alternarCambio(n, eleccion.asignatura)"
+                  >
+                    Cambiar grupo
+                  </button>
+                  @if (cambio(); as panel) {
+                    @if (panel.opcion === n && panel.asignatura === eleccion.asignatura) {
+                      <div class="armar__cambio" role="group" [attr.aria-label]="'Otros grupos de ' + eleccion.asignatura">
+                        @if (panel.cargando) {
+                          <p class="field__hint" role="status">Revisando los otros grupos…</p>
+                        } @else if (panel.error; as mensaje) {
+                          <p class="alert" role="alert">{{ mensaje }}</p>
+                        } @else if (panel.sinOtrosGrupos) {
+                          <p class="field__hint">Esta materia solo tiene un grupo en la oferta.</p>
+                        } @else {
+                          <ul class="armar__lista">
+                            @for (candidato of panel.candidatos; track candidato.grupo) {
+                              <li class="armar__candidato" [class.armar__candidato--choca]="!candidato.cabe">
+                                <strong>Grupo {{ candidato.grupo }}</strong> ({{ candidato.horas }})
+                                @if (candidato.cabe) {
+                                  <span class="badge badge--ok">Cabe</span>
+                                  <button
+                                    class="button button--soft armar__usar"
+                                    type="button"
+                                    (click)="usarGrupo(n, eleccion.asignatura, candidato.grupo)"
+                                  >
+                                    Usar este grupo
+                                  </button>
+                                } @else {
+                                  <span class="armar__choca">No puedes elegirlo: {{ candidato.choques.join('; ') }}.</span>
+                                }
+                              </li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    }
+                  }
+                </li>
               }
             </ul>
+
+            @if (opcion.editada) {
+              <p class="notice armar__editada">
+                Cambiaste el grupo de esta opción: el puntaje y los motivos eran de la sugerencia original y ya no
+                aplican. Lo que ves abajo sí es tu semana actual, sin choques.
+              </p>
+            }
 
             <p class="armar__etiqueta">Tu semana</p>
             @for (dia of opcion.dias; track dia.texto) {
@@ -107,12 +163,14 @@
               </div>
             }
 
-            <p class="armar__etiqueta">Por qué</p>
-            <ul class="armar__lista">
-              @for (motivo of opcion.propuesta.motivos; track $index) {
-                <li>{{ motivo }}</li>
-              }
-            </ul>
+            @if (!opcion.editada) {
+              <p class="armar__etiqueta">Por qué</p>
+              <ul class="armar__lista">
+                @for (motivo of opcion.propuesta.motivos; track $index) {
+                  <li>{{ motivo }}</li>
+                }
+              </ul>
+            }
           </article>
         }
       }

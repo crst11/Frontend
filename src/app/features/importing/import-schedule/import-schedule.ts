@@ -3,6 +3,7 @@ import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import {
   AnalisisDeHorario,
@@ -26,6 +27,8 @@ const DIAS: Record<string, string> = {
 interface PasoDeLaGuia {
   texto: string;
   resaltado: string;
+  /** Si el texto resaltado lleva a la página de la universidad donde está el botón (SCRUM-250). */
+  conEnlace?: boolean;
 }
 
 /**
@@ -48,13 +51,19 @@ export class ImportSchedule {
 
   /** Lo mismo que docs/como-descargar-el-reporte-de-horario.md, para que no se desincronicen. */
   protected readonly pasos: PasoDeLaGuia[] = [
-    { texto: 'En ucundinamarca.edu.co entra a Servicios y luego a Plataforma Institucional, y toca', resaltado: 'ACCESO A PLATAFORMA' },
+    {
+      texto: 'En ucundinamarca.edu.co entra a Servicios y luego a Plataforma Institucional, y toca',
+      resaltado: 'ACCESO A PLATAFORMA',
+      conEnlace: true,
+    },
     { texto: 'Inicia sesión con tu usuario y contraseña, o con', resaltado: 'Iniciar Sesión con Office 365' },
     { texto: 'Ya dentro del Campus TI, en el panel Gestión, abre', resaltado: 'Académico Estudiante' },
     { texto: 'En el menú de la izquierda abre', resaltado: 'Horario' },
     { texto: 'Elige tu programa en la lista y toca', resaltado: 'Continuar' },
     { texto: 'Baja hasta el final de la tabla y toca', resaltado: 'Imprimir' },
   ];
+
+  protected readonly urlPlataformaInstitucional = environment.urlPlataformaInstitucional;
 
   /** A dónde vuelve la flecha: la pantalla de la que se llegó (SCRUM-82). */
   protected readonly origen = origenDeLaImportacion(inject(Location));

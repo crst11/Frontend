@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { concat, toArray } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import {
   AcumuladoDeNotas,
@@ -85,6 +86,7 @@ export class ImportCmad {
   protected readonly avisoDeCurso = signal<string | null>(null);
   protected readonly guardando = signal(false);
   protected readonly resultado = signal<Resultado | null>(null);
+  protected readonly urlCmad = environment.urlCmad;
   protected readonly guiaAbierta = signal(true);
   /** Lo que la asignatura ya tiene guardado, para decir qué cambia al subir de nuevo. */
   private readonly guardadas = signal<{ nombre: string; nota: number | null }[]>([]);

@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { environment } from '../../../../environments/environment';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
 import { ImportCmad } from './import-cmad';
@@ -343,6 +344,16 @@ describe('ImportCmad', () => {
   });
 
   describe('la guía para conseguir la página', () => {
+    it('trae a la vista el enlace al CMAD y se abre en otra pestaña sin dar el origen', () => {
+      const { html } = crear();
+
+      const enlace = html.querySelector<HTMLAnchorElement>('#enlace-cmad')!;
+      expect(enlace.getAttribute('href')).toBe(environment.urlCmad);
+      expect(enlace.target).toBe('_blank');
+      expect(enlace.rel).toContain('noopener');
+      expect(enlace.rel).toContain('noreferrer');
+    });
+
     it('viene abierta y explica el computador y el teléfono', () => {
       const { html } = crear();
 

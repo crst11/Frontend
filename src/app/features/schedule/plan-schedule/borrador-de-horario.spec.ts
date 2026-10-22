@@ -12,7 +12,7 @@ describe('BorradorDeHorarioStore', () => {
     ],
     franja: 'manana',
     pocosHuecos: true,
-    diasLibres: ['viernes'],
+    diaLibre: true,
   };
 
   const sesion = { cuenta: vi.fn() };
@@ -64,6 +64,25 @@ describe('BorradorDeHorarioStore', () => {
     await copia.guardar('5|borrador-de-horario', { materias: ['Cálculo'] }, Date.now());
 
     expect(await almacen.cargar()).toBeNull();
+  });
+
+  it('guarda y recupera el día libre apagado', async () => {
+    const almacen = crear();
+
+    await almacen.guardar({ ...BORRADOR, diaLibre: false });
+
+    expect((await almacen.cargar())?.diaLibre).toBe(false);
+  });
+
+  it('un borrador viejo sin diaLibre (guardaba los días libres) se lee como «no» y no rompe nada', async () => {
+    const almacen = crear();
+    await copia.guardar(
+      '5|borrador-de-horario',
+      { asignaturas: [], franja: 'tarde', pocosHuecos: true, diasLibres: ['viernes'] },
+      Date.now(),
+    );
+
+    expect(await almacen.cargar()).toEqual({ asignaturas: [], franja: 'tarde', pocosHuecos: true, diaLibre: false });
   });
 
   it('cerrar sesión borra la copia local y con ella el borrador', async () => {
