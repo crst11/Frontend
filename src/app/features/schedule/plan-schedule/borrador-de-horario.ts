@@ -2,18 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { SessionService } from '../../../core/session/session.service';
 import { DispositivoDeLaSesion } from '../../../core/session/dispositivo-de-la-sesion';
 import { CopiaLocalRepository } from '../../../data-access/copia-local.repository';
-import {
-  AsignaturaDeOferta,
-  DiaDeClase,
-  FranjaPreferida,
-} from '../../../data-access/propuesta-de-horario.repository';
+import { AsignaturaDeOferta, FranjaPreferida } from '../../../data-access/propuesta-de-horario.repository';
 
 /** Lo que la persona va escribiendo en «Armar mi horario»: la oferta y lo que prefiere. */
 export interface BorradorDeHorario {
   asignaturas: AsignaturaDeOferta[];
   franja: FranjaPreferida | null;
   pocosHuecos: boolean;
-  diasLibres: DiaDeClase[];
+  /** «Quiero tener un día libre» (SCRUM-251). Los borradores anteriores guardaban `diasLibres`: se leen como «no». */
+  diaLibre: boolean;
 }
 
 /**
@@ -38,7 +35,7 @@ export class BorradorDeHorarioStore {
     }
     try {
       const guardado = await this.copia.leer(clave);
-      return esBorrador(guardado?.valor) ? guardado.valor : null;
+      return esBorrador(guardado?.valor) ? normalizado(guardado.valor) : null;
     } catch {
       return null;
     }
@@ -63,16 +60,29 @@ export class BorradorDeHorarioStore {
   }
 }
 
+/** Lo que puede haber guardado una versión anterior de la pantalla: sin `diaLibre`, y con `diasLibres` sueltos. */
+type BorradorGuardado = Omit<BorradorDeHorario, 'diaLibre'> & { diaLibre?: boolean };
+
 /** Lo guardado puede venir de una versión vieja de la pantalla: solo se usa si tiene la forma que se espera. */
-function esBorrador(valor: unknown): valor is BorradorDeHorario {
+function esBorrador(valor: unknown): valor is BorradorGuardado {
   if (typeof valor !== 'object' || valor === null) {
     return false;
   }
-  const candidato = valor as Partial<BorradorDeHorario>;
+  const candidato = valor as Partial<BorradorGuardado>;
   return (
     Array.isArray(candidato.asignaturas) &&
-    Array.isArray(candidato.diasLibres) &&
+    (candidato.diaLibre === undefined || typeof candidato.diaLibre === 'boolean') &&
     typeof candidato.pocosHuecos === 'boolean' &&
     (candidato.franja === null || typeof candidato.franja === 'string')
   );
+}
+
+/** Solo las piezas de hoy: un borrador viejo pierde sus `diasLibres` y se lee con `diaLibre` apagado. */
+function normalizado(guardado: BorradorGuardado): BorradorDeHorario {
+  return {
+    asignaturas: guardado.asignaturas,
+    franja: guardado.franja,
+    pocosHuecos: guardado.pocosHuecos,
+    diaLibre: guardado.diaLibre === true,
+  };
 }

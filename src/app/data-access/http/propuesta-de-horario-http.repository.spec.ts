@@ -10,7 +10,7 @@ describe('PropuestaDeHorarioHttpRepository', () => {
     asignaturas: [
       { nombre: 'Cálculo', grupos: [{ codigo: '1', bloques: [{ dia: 'lunes', inicio: '08:00', fin: '10:00' }] }] },
     ],
-    criterio: { franja: 'manana', pocosHuecos: true, diasLibres: ['viernes'] },
+    criterio: { franja: 'manana', pocosHuecos: true, diasLibres: [], diaLibre: true },
   };
 
   afterEach(() => TestBed.inject(HttpTestingController).verify());

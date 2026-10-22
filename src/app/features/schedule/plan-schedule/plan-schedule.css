@@ -26,6 +26,15 @@
   margin: 0.25rem 0 0;
 }
 
+.armar__dia-libre {
+  margin-top: 12px;
+}
+
+.armar__libres {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
 .armar__huecos {
   margin: 0.25rem 0;
 }

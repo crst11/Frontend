@@ -38,20 +38,21 @@
         <span>Pocos huecos entre clases</span>
       </label>
 
-      <p class="field__label" id="armar-libres">Quiero dejar libres</p>
-      <div class="chips" role="group" aria-labelledby="armar-libres">
-        @for (dia of dias; track dia.valor) {
-          <button
-            class="chip"
-            type="button"
-            [class.chip--active]="diasLibres().includes(dia.valor)"
-            [attr.aria-pressed]="diasLibres().includes(dia.valor)"
-            (click)="alternarDiaLibre(dia.valor)"
-          >
-            {{ dia.texto }}
-          </button>
-        }
+      <div class="chips armar__dia-libre">
+        <button
+          class="chip"
+          type="button"
+          [class.chip--active]="diaLibre()"
+          [attr.aria-pressed]="diaLibre()"
+          aria-describedby="armar-dia-libre-ayuda"
+          (click)="alternarDiaLibre()"
+        >
+          Quiero tener un día libre
+        </button>
       </div>
+      <p class="field__hint" id="armar-dia-libre-ayuda">
+        Te mostramos una opción por cada día que se puede dejar libre, con las clases bien repartidas.
+      </p>
     </section>
 
     <button class="button button--primary" type="button" [disabled]="calculando()" (click)="proponer()">
@@ -85,6 +86,10 @@
                 <span class="badge badge--ok">{{ opcion.propuesta.puntaje }} de 100</span>
               }
             </header>
+
+            @if (pidioDiaLibre() && !opcion.editada && opcion.diasLiberados) {
+              <p class="armar__libres">Días libres: <strong>{{ opcion.diasLiberados }}</strong></p>
+            }
 
             <p class="armar__etiqueta">Matricula</p>
             <ul class="armar__lista armar__elecciones">
