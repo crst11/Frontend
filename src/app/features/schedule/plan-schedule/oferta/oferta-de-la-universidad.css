@@ -1,18 +1,42 @@
+/* La zona de carga, la guía y las advertencias salen de import-report.css: son las mismas de las demás importaciones. */
 .oferta {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 16px;
 }
 
 .oferta__titulo {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--color-ink);
 }
 
+.oferta__semestre {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oferta__pegar,
+.oferta__carpeta {
+  align-self: stretch;
+  text-align: center;
+}
+
+.oferta__carpeta {
+  cursor: pointer;
+}
+
+/* El campo está oculto pero sigue siendo alcanzable con el teclado: el foco se ve en toda la etiqueta. */
+.oferta__carpeta:focus-within {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .oferta__pegado {
-  min-height: 4.5rem;
+  min-height: 84px;
   resize: vertical;
 }
 
@@ -25,11 +49,7 @@
 .oferta__materia {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.4rem 0;
+  gap: 8px;
+  padding: 6px 0;
   color: var(--color-text);
-}
-
-.oferta__usar {
-  align-self: stretch;
 }

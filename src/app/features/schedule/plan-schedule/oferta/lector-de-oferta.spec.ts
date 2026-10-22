@@ -131,9 +131,28 @@ describe('leerOfertaDeHorarios', () => {
     expect(otra.grupos[0].bloques[0].inicio).toBe('10:00');
   });
 
-  it('el archivo de afuera (frameset) dice cuál archivo subir', () => {
+  it('el archivo de afuera (frameset) dice cuál archivo subir y en qué carpeta está', () => {
     expect(() => leerOfertaDeHorarios(ARCHIVO_DE_AFUERA)).toThrow(OfertaNoLegible);
     expect(() => leerOfertaDeHorarios(ARCHIVO_DE_AFUERA)).toThrow(/pub_rep_val\.html/);
+    // La carpeta sale del propio archivo (la ruta de su marco principal), no de una suposición.
+    expect(() => leerOfertaDeHorarios(ARCHIVO_DE_AFUERA)).toThrow(/Universidad Cundinamarca _ Sistema Institucional_files/);
+  });
+
+  it('el archivo de afuera sin ruta legible en su marco sigue diciendo cuál subir', () => {
+    const sinRuta = '<html><frameset rows="0,*"><frame name="mainFrame"></frameset></html>';
+
+    expect(() => leerOfertaDeHorarios(sinRuta)).toThrow(/pub_rep_val\.html/);
+  });
+
+  it('la ruta del marco no deja pasar texto largo ni marcas: solo se muestra como texto corto', () => {
+    const hostil = `<html><frameset><frame name="mainFrame" src="${'x'.repeat(500)}<b>.html"></frameset></html>`;
+
+    expect(() => leerOfertaDeHorarios(hostil)).toThrow(/pub_rep_val\.html/);
+    try {
+      leerOfertaDeHorarios(hostil);
+    } catch (fallo) {
+      expect((fallo as Error).message.length).toBeLessThan(500);
+    }
   });
 
   it('un html sin tabla de horarios no se puede leer', () => {

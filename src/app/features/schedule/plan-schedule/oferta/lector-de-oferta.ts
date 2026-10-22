@@ -48,9 +48,44 @@ const DIAS: Record<string, DiaDeClase> = {
   domingo: 'domingo',
 };
 
-const MENSAJE_DEL_ARCHIVO_DE_AFUERA =
-  'Ese es el archivo de «afuera», que no trae la tabla. Sube el archivo pub_rep_val.html de la carpeta que se ' +
-  'creó junto a él al guardar la página (termina en «_files»), o copia la tabla y pégala aquí.';
+const LARGO_MAXIMO_DE_LA_CARPETA = 150;
+
+/**
+ * Lo que se le dice a quien sube el archivo de «afuera» (el marco vacío que deja Ctrl+S): dónde está la tabla. La
+ * carpeta sale de la ruta del marco principal del propio archivo; si no se puede leer, se describe en general.
+ */
+function mensajeDelArchivoDeAfuera(html: string): string {
+  const carpeta = carpetaDelMarcoPrincipal(html);
+  const donde = carpeta
+    ? `de la carpeta «${carpeta}»`
+    : 'de la carpeta que se creó junto a él al guardar la página (termina en «_files»)';
+  return (
+    `Ese es el archivo de «afuera», que no trae la tabla. La tabla está en el archivo pub_rep_val.html ${donde}. ` +
+    'Súbelo, elige esa carpeta con el botón de abajo, o copia la tabla y pégala aquí.'
+  );
+}
+
+/**
+ * La carpeta donde el navegador dejó la página interna, según el `src` del marco `mainFrame`
+ * (`./Mi página_files/pub_rep_val.html` → «Mi página_files»). Solo se devuelve texto corto y sin marcas, porque se
+ * muestra en pantalla y viene de un archivo que no controlamos.
+ */
+function carpetaDelMarcoPrincipal(html: string): string | null {
+  const marco = (html.match(/<frame\b[^>]*>/gi) ?? []).find((etiqueta) => /mainFrame/i.test(etiqueta));
+  const ruta = marco ? /\bsrc\s*=\s*["']([^"']+)["']/i.exec(marco)?.[1] : undefined;
+  if (!ruta) {
+    return null;
+  }
+  let decodificada = ruta;
+  try {
+    decodificada = decodeURIComponent(ruta);
+  } catch {
+    // Una ruta mal codificada se muestra tal cual.
+  }
+  const partes = decodificada.split(/[\\/]/).filter((parte) => parte !== '' && parte !== '.');
+  const carpeta = partes.length >= 2 ? sinMarcasNiControles(partes[partes.length - 2]).trim() : '';
+  return carpeta !== '' && carpeta.length <= LARGO_MAXIMO_DE_LA_CARPETA ? carpeta : null;
+}
 
 /**
  * Lee la tabla «Proyección Horarios y Cupos» de la plataforma de la universidad (SCRUM-243).
@@ -68,7 +103,7 @@ export function leerOfertaDeHorarios(html: string): OfertaLeida {
   const tabla = [...documento.querySelectorAll('table')].find(esLaTablaDeHorarios);
   if (!tabla) {
     throw new OfertaNoLegible(
-      /<frameset/i.test(html) ? MENSAJE_DEL_ARCHIVO_DE_AFUERA : 'No encontramos la tabla de horarios en ese archivo.',
+      /<frameset/i.test(html) ? mensajeDelArchivoDeAfuera(html) : 'No encontramos la tabla de horarios en ese archivo.',
     );
   }
   if (tabla.rows.length > MAXIMO_DE_FILAS) {
@@ -124,6 +159,13 @@ export function aAsignaturaDeOferta(materia: MateriaLeida): AsignaturaDeOferta {
       })),
     })),
   };
+}
+
+/** Quita lo que podría pasar por una etiqueta (`<`, `>`, comillas) y los caracteres de control. */
+function sinMarcasNiControles(texto: string): string {
+  return Array.from(texto)
+    .filter((letra) => !'<>"\''.includes(letra) && letra.charCodeAt(0) >= 32)
+    .join('');
 }
 
 function esLaTablaDeHorarios(tabla: HTMLTableElement): boolean {

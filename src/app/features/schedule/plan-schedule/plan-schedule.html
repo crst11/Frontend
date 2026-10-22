@@ -2,182 +2,62 @@
   <header>
     <h1 class="title">Armar mi horario</h1>
     <p class="subtitle">
-      Sube la oferta de horarios que publica la universidad o escribe tú las materias que quieres matricular con
-      los grupos y horarios que ves en su plataforma. La app no se conecta a ella: tú aportas la oferta y ella te
-      propone combinaciones sin choques. Nada de esto se guarda en el servidor.
+      Sube la oferta de horarios que publica la universidad y CundiApp arma tu horario por ti: eliges tu semestre
+      y lo que prefieres, y te propone combinaciones sin choques. La app no se conecta a la universidad y nada de
+      esto se guarda en el servidor.
     </p>
     <a class="armar__volver" routerLink="/horario">Volver a Mi horario</a>
   </header>
 
   <app-oferta-de-la-universidad (materiasElegidas)="usarOferta($event)" />
 
-  <section aria-labelledby="armar-materias">
-    <h2 id="armar-materias" class="armar__seccion">Mis materias</h2>
+  @if (asignaturas().length > 0) {
+    <section class="card armar__preferencias" aria-labelledby="armar-preferencias">
+      <h2 id="armar-preferencias" class="armar__seccion">Lo que prefiero</h2>
 
-    @for (asignatura of asignaturas(); track $index; let i = $index) {
-      <article class="card armar__materia">
-        <div class="field">
-          <label class="field__label" [for]="'materia-' + i">Materia {{ i + 1 }}</label>
-          <input
-            class="field__input"
-            [id]="'materia-' + i"
-            type="text"
-            maxlength="80"
-            autocomplete="off"
-            placeholder="Por ejemplo, Ecuaciones diferenciales"
-            [value]="asignatura.nombre"
-            (input)="cambiarNombre(i, $any($event.target).value)"
-          />
-        </div>
-
-        @for (grupo of asignatura.grupos; track $index; let g = $index) {
-          <div class="armar__grupo">
-            <div class="armar__grupo-cabecera">
-              <div class="field armar__codigo">
-                <label class="field__label" [for]="'grupo-' + i + '-' + g">Grupo, como sale en la plataforma</label>
-                <input
-                  class="field__input"
-                  [id]="'grupo-' + i + '-' + g"
-                  type="text"
-                  maxlength="30"
-                  autocomplete="off"
-                  placeholder="Por ejemplo, 501M o LE3-M1"
-                  [value]="grupo.codigo"
-                  (input)="cambiarCodigo(i, g, $any($event.target).value)"
-                />
-              </div>
-              @if (asignatura.grupos.length > 1) {
-                <button
-                  class="button button--outline armar__chico"
-                  type="button"
-                  [attr.aria-label]="'Quitar el grupo ' + (grupo.codigo || g + 1) + ' de ' + (asignatura.nombre || 'la materia ' + (i + 1))"
-                  (click)="quitarGrupo(i, g)"
-                >
-                  Quitar grupo
-                </button>
-              }
-            </div>
-
-            @for (bloque of grupo.bloques; track $index; let b = $index) {
-              <div class="armar__bloque">
-                <div class="armar__bloque-dia">
-                  <select
-                    class="field__input armar__dia"
-                    [attr.aria-label]="'Día del bloque ' + (b + 1) + ' del grupo ' + (grupo.codigo || g + 1)"
-                    (change)="cambiarBloque(i, g, b, { dia: $any($event.target).value })"
-                  >
-                    @for (dia of dias; track dia.valor) {
-                      <option [value]="dia.valor" [selected]="dia.valor === bloque.dia">{{ dia.texto }}</option>
-                    }
-                  </select>
-                  @if (grupo.bloques.length > 1) {
-                    <button class="icon-button" type="button" aria-label="Quitar este bloque" (click)="quitarBloque(i, g, b)">×</button>
-                  }
-                </div>
-                <div class="armar__bloque-horas">
-                  <input
-                    class="field__input"
-                    type="time"
-                    aria-label="Hora de inicio"
-                    [value]="bloque.inicio"
-                    (change)="cambiarBloque(i, g, b, { inicio: $any($event.target).value })"
-                  />
-                  <span class="armar__a" aria-hidden="true">a</span>
-                  <input
-                    class="field__input"
-                    type="time"
-                    aria-label="Hora de fin"
-                    [value]="bloque.fin"
-                    (change)="cambiarBloque(i, g, b, { fin: $any($event.target).value })"
-                  />
-                </div>
-              </div>
-            }
-
-            <button
-              class="button button--soft armar__chico"
-              type="button"
-              [disabled]="grupo.bloques.length >= maximos.bloques"
-              (click)="agregarBloque(i, g)"
-            >
-              Agregar otro día de este grupo
-            </button>
-          </div>
-        }
-
-        <div class="armar__acciones">
+      <p class="field__label" id="armar-franja">Quiero tener clase en</p>
+      <div class="chips" role="group" aria-labelledby="armar-franja">
+        <button class="chip" type="button" [class.chip--active]="franja() === null" [attr.aria-pressed]="franja() === null" (click)="elegirFranja(null)">
+          Me da igual
+        </button>
+        @for (opcion of franjas; track opcion.valor) {
           <button
-            class="button button--soft armar__chico"
+            class="chip"
             type="button"
-            [disabled]="asignatura.grupos.length >= maximos.grupos"
-            (click)="agregarGrupo(i)"
+            [class.chip--active]="franja() === opcion.valor"
+            [attr.aria-pressed]="franja() === opcion.valor"
+            (click)="elegirFranja(opcion.valor)"
           >
-            Agregar otro grupo
+            {{ opcion.texto }}
           </button>
-          @if (asignaturas().length > 1) {
-            <button class="button button--outline armar__chico" type="button" (click)="quitarAsignatura(i)">
-              Quitar materia
-            </button>
-          }
-        </div>
-      </article>
-    }
+        }
+      </div>
 
-    <button
-      class="button button--soft"
-      type="button"
-      [disabled]="asignaturas().length >= maximos.materias"
-      (click)="agregarAsignatura()"
-    >
-      Agregar otra materia
+      <label class="checkbox armar__huecos">
+        <input type="checkbox" [checked]="pocosHuecos()" (change)="alternarPocosHuecos()" />
+        <span>Pocos huecos entre clases</span>
+      </label>
+
+      <p class="field__label" id="armar-libres">Quiero dejar libres</p>
+      <div class="chips" role="group" aria-labelledby="armar-libres">
+        @for (dia of dias; track dia.valor) {
+          <button
+            class="chip"
+            type="button"
+            [class.chip--active]="diasLibres().includes(dia.valor)"
+            [attr.aria-pressed]="diasLibres().includes(dia.valor)"
+            (click)="alternarDiaLibre(dia.valor)"
+          >
+            {{ dia.texto }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <button class="button button--primary" type="button" [disabled]="calculando()" (click)="proponer()">
+      {{ calculando() ? 'Buscando combinaciones…' : 'Proponer horarios' }}
     </button>
-  </section>
-
-  <section class="card armar__preferencias" aria-labelledby="armar-preferencias">
-    <h2 id="armar-preferencias" class="armar__seccion">Lo que prefiero</h2>
-
-    <p class="field__label" id="armar-franja">Quiero tener clase en</p>
-    <div class="chips" role="group" aria-labelledby="armar-franja">
-      <button class="chip" type="button" [class.chip--active]="franja() === null" [attr.aria-pressed]="franja() === null" (click)="elegirFranja(null)">
-        Me da igual
-      </button>
-      @for (opcion of franjas; track opcion.valor) {
-        <button
-          class="chip"
-          type="button"
-          [class.chip--active]="franja() === opcion.valor"
-          [attr.aria-pressed]="franja() === opcion.valor"
-          (click)="elegirFranja(opcion.valor)"
-        >
-          {{ opcion.texto }}
-        </button>
-      }
-    </div>
-
-    <label class="checkbox armar__huecos">
-      <input type="checkbox" [checked]="pocosHuecos()" (change)="alternarPocosHuecos()" />
-      <span>Pocos huecos entre clases</span>
-    </label>
-
-    <p class="field__label" id="armar-libres">Quiero dejar libres</p>
-    <div class="chips" role="group" aria-labelledby="armar-libres">
-      @for (dia of dias; track dia.valor) {
-        <button
-          class="chip"
-          type="button"
-          [class.chip--active]="diasLibres().includes(dia.valor)"
-          [attr.aria-pressed]="diasLibres().includes(dia.valor)"
-          (click)="alternarDiaLibre(dia.valor)"
-        >
-          {{ dia.texto }}
-        </button>
-      }
-    </div>
-  </section>
-
-  <button class="button button--primary" type="button" [disabled]="calculando()" (click)="proponer()">
-    {{ calculando() ? 'Buscando combinaciones…' : 'Proponer horarios' }}
-  </button>
+  }
 
   @if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
