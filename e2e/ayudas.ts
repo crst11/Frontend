@@ -61,10 +61,26 @@ export async function iniciarSesion(page: Page, usuario: string, opciones: { per
 const ETIQUETAS_WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 /**
+ * Espera a que terminen las animaciones y transiciones que van a acabar (las infinitas, como un indicador de carga, no se esperan).
+ * Playwright da por visible un elemento en cuanto tiene caja, aunque su opacidad apenas empiece a subir: el aviso emergente (SweetAlert2)
+ * aparece con un fundido de 0,3 s y sus botones cambian de color en 0,2 s, y axe, que lee los colores calculados en ese instante, los
+ * mide semitransparentes y reporta un contraste bajo que no existe (SCRUM-249). Auditar la pantalla ya quieta no oculta ninguna violacion
+ * real: lo que se mide es el estado final.
+ */
+export async function esperarQueTermineDeAnimarse(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => document.getAnimations().every((animacion) => animacion.effect?.getComputedTiming().iterations === Infinity),
+    undefined,
+    { timeout: 10_000 },
+  );
+}
+
+/**
  * Las violaciones de accesibilidad de lo que hay en pantalla ahora, en una lista legible (vacia = todo bien). Se compara con `toEqual([])`
- * para que el mensaje del fallo diga que regla, que tan grave es y en que elemento.
+ * para que el mensaje del fallo diga que regla, que tan grave es y en que elemento. Antes de medir espera a que la pantalla quede quieta.
  */
 export async function violacionesDeAccesibilidad(page: Page): Promise<string[]> {
+  await esperarQueTermineDeAnimarse(page);
   const resultado = await new AxeBuilder({ page }).withTags(ETIQUETAS_WCAG).analyze();
   return resultado.violations.map(
     (v) => `${v.id} [${v.impact}] ${v.help}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')} (${v.helpUrl})`,

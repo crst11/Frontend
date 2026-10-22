@@ -81,6 +81,10 @@ test.describe('Accesibilidad (WCAG 2.2 AA, 360 px)', () => {
     // El aviso emergente de "correo verificado" (SweetAlert) tapa la pagina: tambien se audita abierto.
     const usuario = usuarioNuevo('accesible');
     await page.goto('/cuenta/registro');
+    // Se alarga la animacion del aviso (SCRUM-249) para que la prueba siempre mida en el peor caso: si axe corriera con el aviso a medio
+    // aparecer, fallaria cada vez y no una de cada tantas. `violacionesDeAccesibilidad` espera a que termine antes de medir. El estilo
+    // sobrevive porque el registro y la verificacion son la misma pagina (la navegacion es de Angular, no recarga).
+    await page.addStyleTag({ content: '.swal2-popup, .swal2-styled { animation-duration: 2s !important; transition-duration: 2s !important; }' });
     await page.getByLabel('Nombres').fill('Camila');
     await page.getByLabel('Apellidos').fill('Rodriguez');
     await page.getByLabel('Correo institucional').fill(usuario);
