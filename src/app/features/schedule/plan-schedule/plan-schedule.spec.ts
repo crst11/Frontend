@@ -240,6 +240,18 @@ describe('PlanSchedule', () => {
     expect(html.querySelector('.armar__libres')!.textContent!.replace(/\s+/g, ' ').trim()).toBe('Días libres: viernes y sábado');
   });
 
+  it('si el servidor todavía no manda diasLiberados (salió el Frontend antes), la lista de opciones se ve igual', async () => {
+    const sinElCampo = { ...PROPUESTA, resumen: { ...PROPUESTA.resumen, diasLiberados: undefined } } as unknown as PropuestaDeHorario;
+    repositorio.proponer.mockReturnValue(of({ ...CON_PROPUESTAS, propuestas: [sinElCampo] }));
+    const { fixture, html } = await crearConOferta();
+
+    boton(html, 'Proponer horarios').click();
+    await refrescar(fixture);
+
+    expect(html.querySelector('.armar__opcion')).not.toBeNull();
+    expect(html.querySelector('.armar__libres')).toBeNull();
+  });
+
   it('sin el modo no muestra la línea de días libres', async () => {
     const { fixture, html } = await crearConOferta();
 

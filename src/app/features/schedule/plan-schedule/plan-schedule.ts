@@ -140,7 +140,8 @@ export class PlanSchedule {
       propuesta,
       dias: diasDe(propuesta),
       editada: this.editadas().has(i),
-      diasLiberados: listaDeDias(propuesta.resumen.diasLiberados),
+      // Backend y Frontend se despliegan por separado: un servidor que todavía no manda el campo no debe tumbar la lista.
+      diasLiberados: listaDeDias(propuesta.resumen.diasLiberados ?? []),
     })),
   );
 
