@@ -76,6 +76,46 @@ describe('leerArchivoDeOferta', () => {
   });
 });
 
+describe('leerArchivoDeOferta con un .mht del teléfono', () => {
+  const LIMITE = '----MultipartBoundary--m81jaQrQZLJTZyi1TF5tUChw3YaiTJlHRUaMRpAUqr----';
+  const parte = (tipo: string, cuerpo: string): string =>
+    [`--${LIMITE}`, `Content-Type: ${tipo}`, 'Content-Transfer-Encoding: binary', '', cuerpo].join('\r\n');
+  /** Como lo guarda Chrome en el teléfono: el marco de afuera primero, la tabla en otra parte. */
+  const mht = (paginas: string[]): string =>
+    [
+      'From: <Saved by Blink>',
+      'MIME-Version: 1.0',
+      'Content-Type: multipart/related;',
+      '\ttype="text/html";',
+      `\tboundary="${LIMITE}"`,
+      '',
+      ...paginas.map((p) => parte('text/html', p)),
+      parte('image/gif', 'GIF89a'),
+      `--${LIMITE}--`,
+      '',
+    ].join('\r\n');
+
+  it('encuentra la tabla aunque el marco de afuera sea la primera página del archivo', async () => {
+    const archivo = new File([enWindows1252(mht([ARCHIVO_DE_AFUERA, '<html></html>', OFERTA_DE_EJEMPLO]))], 'Universidad (1).mht');
+
+    const oferta = await leerArchivoDeOferta(archivo);
+
+    expect(oferta.materias[0].nombre).toBe('ÁLGEBRA LINEAL');
+  });
+
+  it('si ninguna página del .mht es la tabla, dice qué pasó en vez de un error mudo', async () => {
+    const archivo = new File([enWindows1252(mht([ARCHIVO_DE_AFUERA, '<html></html>']))], 'Universidad (1).mht');
+
+    await expect(leerArchivoDeOferta(archivo)).rejects.toThrow(OfertaNoLegible);
+  });
+
+  it('una sola página con la tabla sigue funcionando como antes', async () => {
+    const archivo = new File([enWindows1252(mht([OFERTA_DE_EJEMPLO]))], 'pagina.mht');
+
+    expect((await leerArchivoDeOferta(archivo)).materias.length).toBeGreaterThan(0);
+  });
+});
+
 describe('leerCarpetaDeOferta', () => {
   const archivo = (nombre: string, contenido: string): File => new File([enWindows1252(contenido)], nombre);
   const afuera = () => archivo('Universidad Cundinamarca _ Sistema Institucional.html', ARCHIVO_DE_AFUERA);

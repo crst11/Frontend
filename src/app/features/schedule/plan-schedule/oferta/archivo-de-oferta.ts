@@ -1,4 +1,4 @@
-import { extraerHtmlDeMhtml } from '../../../importing/import-cmad/mhtml';
+import { extraerPaginasDeMhtml } from '../../../importing/import-cmad/mhtml';
 import { OfertaLeida, OfertaNoLegible, leerOfertaDeHorarios } from './lector-de-oferta';
 
 /** Lo más grande que se acepta, subido o pegado: la página real de una carrera pesa menos de 100 KB. */
@@ -21,8 +21,25 @@ export async function leerArchivoDeOferta(archivo: File): Promise<OfertaLeida> {
     throw new OfertaNoLegible(MENSAJE_DEL_TAMANO);
   }
   const texto = decodificar(new Uint8Array(await archivo.arrayBuffer()));
-  // Lo que no es un MHTML se devuelve igual: sirve para el `.html` y para el `.mht` que guarda Chrome en el teléfono.
-  return leerOfertaDeHorarios(extraerHtmlDeMhtml(texto));
+  // Lo que no es un MHTML es su única página: sirve para el `.html`. El `.mht` que guarda Chrome en el teléfono trae
+  // varias (el marco de afuera, uno vacío y la tabla): se prueba cada una y gana la primera que es la tabla.
+  return leerLaPrimeraQueEsLaTabla(extraerPaginasDeMhtml(texto));
+}
+
+function leerLaPrimeraQueEsLaTabla(paginas: readonly string[]): OfertaLeida {
+  let primerFallo: OfertaNoLegible | null = null;
+  for (const pagina of paginas) {
+    try {
+      return leerOfertaDeHorarios(pagina);
+    } catch (fallo) {
+      if (!(fallo instanceof OfertaNoLegible)) {
+        throw fallo;
+      }
+      primerFallo ??= fallo;
+    }
+  }
+  // Nunca llega vacío: `extraerPaginasDeMhtml` devuelve al menos una página.
+  throw primerFallo ?? new OfertaNoLegible(MENSAJE_DE_LA_CARPETA);
 }
 
 /** Lo máximo de páginas que se prueban de una carpeta elegida: la que guarda el navegador trae unas pocas. */

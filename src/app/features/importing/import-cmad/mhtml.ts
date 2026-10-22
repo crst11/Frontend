@@ -9,22 +9,33 @@
  * <p>Todo ocurre en el navegador. Lo que no es un MHTML se devuelve igual, para usarla siempre.
  */
 export function extraerHtmlDeMhtml(contenido: string): string {
+  return extraerPaginasDeMhtml(contenido)[0];
+}
+
+/**
+ * Todas las páginas HTML de un MHTML, en el orden en que vienen (SCRUM-252). Una página con marcos, como la de
+ * «Consultar Horarios», se guarda como varias: el marco de afuera, uno vacío y la que trae la tabla; quien necesite
+ * una en particular las prueba una por una. Siempre devuelve al menos una: lo que no es un MHTML, o no trae ninguna
+ * parte HTML, se devuelve tal cual.
+ */
+export function extraerPaginasDeMhtml(contenido: string): string[] {
   const cabecera = cabeceraDe(contenido);
   if (!/^MIME-Version:/im.test(cabecera) || !/Content-Type:\s*multipart\/related/i.test(cabecera)) {
-    return contenido;
+    return [contenido];
   }
   const limite = /boundary="?([^";\s]+)"?/i.exec(cabecera)?.[1];
   if (!limite) {
-    return contenido;
+    return [contenido];
   }
 
+  const paginas: string[] = [];
   for (const parte of contenido.split(`--${limite}`)) {
     const { cabecera: cabeceraDeLaParte, cuerpo } = separar(parte);
     if (/^Content-Type:\s*text\/html/im.test(cabeceraDeLaParte)) {
-      return decodificar(cuerpo, cabeceraDeLaParte);
+      paginas.push(decodificar(cuerpo, cabeceraDeLaParte));
     }
   }
-  return contenido;
+  return paginas.length > 0 ? paginas : [contenido];
 }
 
 /** Las cabeceras MIME van hasta la primera línea en blanco; las que ocupan varias líneas se juntan. */
