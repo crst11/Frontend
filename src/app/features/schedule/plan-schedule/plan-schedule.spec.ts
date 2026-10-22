@@ -209,6 +209,7 @@ describe('PlanSchedule', () => {
     const { html } = await crearConOferta();
 
     expect(boton(html, QUIERO_UN_DIA_LIBRE).getAttribute('aria-pressed')).toBe('false');
+    expect(html.querySelector('#armar-dia-libre-ayuda')!.textContent).toContain('todas las opciones que dejan algún día libre');
     expect(html.querySelector('#armar-libres')).toBeNull();
     expect(boton(html, 'Viernes')).toBeUndefined();
   });
