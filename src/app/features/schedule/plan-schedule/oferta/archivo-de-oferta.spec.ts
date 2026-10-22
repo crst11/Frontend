@@ -114,6 +114,16 @@ describe('leerCarpetaDeOferta', () => {
     await expect(leerCarpetaDeOferta(carpeta)).rejects.toThrow(/_files/);
   });
 
+  it('una página que el navegador no logra abrir no impide encontrar la tabla en las demás', async () => {
+    const ilegible = archivo('pub_rep_val.html', OFERTA_DE_EJEMPLO);
+    Object.defineProperty(ilegible, 'arrayBuffer', { value: () => Promise.reject(new DOMException('x', 'NotReadableError')) });
+    const buena = archivo('copia.html', OFERTA_DE_EJEMPLO);
+
+    const oferta = await leerCarpetaDeOferta([ilegible, buena]);
+
+    expect(oferta.materias.length).toBeGreaterThan(0);
+  });
+
   it('una carpeta vacía o con puros archivos que no son páginas dice lo mismo', async () => {
     await expect(leerCarpetaDeOferta([])).rejects.toThrow(OfertaNoLegible);
     await expect(leerCarpetaDeOferta([archivo('salir.gif', 'GIF89a')])).rejects.toThrow(OfertaNoLegible);
