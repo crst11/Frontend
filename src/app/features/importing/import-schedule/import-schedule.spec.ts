@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { environment } from '../../../../environments/environment';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import {
   AnalisisDeHorario,
@@ -114,6 +115,23 @@ describe('ImportSchedule', () => {
     expect(pasos[2]).toContain('Académico Estudiante');
     expect(pasos[3]).toContain('Horario');
     expect(pasos[5]).toContain('Imprimir');
+  });
+
+  it('trae a la vista el enlace a la Plataforma Institucional y lo repite en el primer paso de la guía', () => {
+    const { fixture, html } = crear();
+
+    const enlace = html.querySelector<HTMLAnchorElement>('#enlace-plataforma')!;
+    expect(enlace.getAttribute('href')).toBe(environment.urlPlataformaInstitucional);
+    expect(enlace.target).toBe('_blank');
+    expect(enlace.rel).toContain('noopener');
+    expect(enlace.rel).toContain('noreferrer');
+
+    html.querySelector<HTMLButtonElement>('.import__guia-head')!.click();
+    fixture.detectChanges();
+    const delPaso = html.querySelector<HTMLAnchorElement>('.import__paso a')!;
+    expect(delPaso.textContent).toContain('ACCESO A PLATAFORMA');
+    expect(delPaso.getAttribute('href')).toBe(environment.urlPlataformaInstitucional);
+    expect(html.querySelectorAll('.import__paso a')).toHaveLength(1);
   });
 
   it('lee el archivo y muestra lo detectado sin guardar nada', () => {
