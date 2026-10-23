@@ -28,7 +28,7 @@ const PAUSA_AL_ESCRIBIR_EN_MS = 500;
 const SIN_CONEXION =
   'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.';
 
-/** Los días que se ofrecen al pedir días libres y con los que se ordena la semana de cada opción. */
+/** Los días con los que se ordena la semana de cada opción y los nombres con que se dicen. */
 const DIAS: readonly { valor: DiaDeClase; texto: string }[] = [
   { valor: 'lunes', texto: 'Lunes' },
   { valor: 'martes', texto: 'Martes' },
@@ -112,7 +112,6 @@ export class PlanSchedule {
   private readonly verificaciones = inject(VerificacionDeCambioRepository);
   private readonly destruida = inject(DestroyRef);
 
-  protected readonly dias = DIAS;
   protected readonly franjas = FRANJAS;
 
   /** Las materias que la persona eligió de la oferta que subió, con todos sus grupos. Sin ellas no hay qué proponer. */
@@ -334,8 +333,9 @@ export class PlanSchedule {
 }
 
 function pideAlgo(pedido: PedidoDePropuestas): boolean {
-  const { franja, pocosHuecos, diasLibres, diaLibre } = pedido.criterio;
-  return franja !== null || pocosHuecos || diasLibres.length > 0 || diaLibre;
+  // `diasLibres` ya no lo manda la pantalla (va vacío): lo que cuenta es `diaLibre`.
+  const { franja, pocosHuecos, diaLibre } = pedido.criterio;
+  return franja !== null || pocosHuecos || diaLibre;
 }
 
 /** «viernes», «viernes y sábado» o «martes, jueves y sábado», con los nombres de la pantalla. */
