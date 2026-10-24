@@ -18,6 +18,7 @@ target/
 dist/
 node_modules/
 coverage/
+.scannerwork/
 .angular/
 
 # Pruebas end to end (SCRUM-235)

@@ -217,7 +217,7 @@ export class ImportCmad {
   /** Si la página dice de qué curso es y no es el elegido, se avisa: es el error más fácil de cometer. */
   private compararConLaAsignatura(original: string, tabla: TablaDelCmad): string | null {
     const asignatura = this.asignatura();
-    if (!asignatura || (!tabla.curso && !/\d{4,}\//.test(original))) {
+    if (!asignatura || (!tabla.curso && !/\d{4,20}\//.test(original))) {
       return null;
     }
     const delCurso = (tabla.curso ?? original).toUpperCase();

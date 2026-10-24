@@ -85,7 +85,7 @@ export class CopiaLocalIndexedDbRepository extends CopiaLocalRepository {
   private pedir<T>(peticion: IDBRequest<T>): Promise<T> {
     return new Promise((resolver, rechazar) => {
       peticion.onsuccess = () => resolver(peticion.result);
-      peticion.onerror = () => rechazar(peticion.error);
+      peticion.onerror = () => rechazar(peticion.error ?? new Error('La petición a la copia local falló'));
     });
   }
 }
