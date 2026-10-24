@@ -214,7 +214,9 @@ describe('lecturasSinConexionInterceptor', () => {
     it('con conexión pasan como siempre', () => {
       http.post(PENDIENTES, { titulo: 'Taller' }).subscribe();
 
-      backend.expectOne(PENDIENTES).flush({ id: 1 });
+      const peticion = backend.expectOne(PENDIENTES);
+      expect(peticion.request.method).toBe('POST');
+      peticion.flush({ id: 1 });
     });
 
     it('sin conexión no salen y responden como falta de conexión', () => {
