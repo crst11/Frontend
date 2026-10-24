@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subject, debounceTime } from 'rxjs';
@@ -105,7 +105,7 @@ const choqueEnTexto = (c: ChoqueDelCambio): string =>
   templateUrl: './plan-schedule.html',
   styleUrl: './plan-schedule.css',
 })
-export class PlanSchedule {
+export class PlanSchedule implements OnInit {
   private readonly repositorio = inject(PropuestaDeHorarioRepository);
   private readonly borradores = inject(BorradorDeHorarioStore);
   private readonly notificador = inject(NotifierService);
@@ -150,6 +150,9 @@ export class PlanSchedule {
     this.cambios$
       .pipe(debounceTime(PAUSA_AL_ESCRIBIR_EN_MS), takeUntilDestroyed())
       .subscribe(() => void this.borradores.guardar(this.borrador()));
+  }
+
+  ngOnInit(): void {
     void this.borradores.cargar().then((guardado) => {
       if (guardado) {
         this.franja.set(guardado.franja);

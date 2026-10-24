@@ -82,7 +82,7 @@ function sinTildes(texto: string): string {
 function categoriaQueCierra(nombre: string): string | null {
   // Moodle pega «Cálculo total» y «Total REA 1» sin espacio entre los dos; el OCR a veces pierde la tilde.
   const sinPrefijo = nombre.replace(/^c[aá]lculo\s*total\s*/i, '');
-  const cierre = /^total\s+(.+)$/i.exec(sinPrefijo);
+  const cierre = /^total\s+(\S.*)$/i.exec(sinPrefijo);
   return cierre && !esElTotal(sinPrefijo) ? limpio(cierre[1]) : null;
 }
 
