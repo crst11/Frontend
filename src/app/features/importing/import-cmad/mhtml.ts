@@ -78,7 +78,7 @@ function desdeQuotedPrintable(texto: string): Uint8Array {
   for (let i = 0; i < sinSaltos.length; i++) {
     const hex = sinSaltos[i] === '=' ? sinSaltos.slice(i + 1, i + 3) : '';
     if (/^[0-9A-Fa-f]{2}$/.test(hex)) {
-      bytes.push(parseInt(hex, 16));
+      bytes.push(Number.parseInt(hex, 16));
       i += 2;
     } else {
       bytes.push(...codificador.encode(sinSaltos[i]));

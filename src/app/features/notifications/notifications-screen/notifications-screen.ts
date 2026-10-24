@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
@@ -33,7 +33,7 @@ const FORMATO_DE_AVISO = new Intl.DateTimeFormat('es-CO', {
   templateUrl: './notifications-screen.html',
   styleUrl: './notifications-screen.css',
 })
-export class NotificationsScreen {
+export class NotificationsScreen implements OnInit {
   private readonly repositorio = inject(AvisoRepository);
   private readonly notificador = inject(NotifierService);
   private readonly sinLeerGlobal = inject(AvisosSinLeer);
@@ -46,7 +46,7 @@ export class NotificationsScreen {
 
   protected readonly sinLeer = computed(() => this.avisos().filter((a) => !a.leido).length);
 
-  constructor() {
+  ngOnInit(): void {
     this.cargar();
     void this.push.comprobar();
   }
