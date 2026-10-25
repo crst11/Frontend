@@ -11,6 +11,10 @@ import {
   PropuestaDeHorarioRepository,
   PropuestasDeHorario,
 } from '../../../data-access/propuesta-de-horario.repository';
+import {
+  SugerenciaDeMatricula,
+  SugerenciaDeMatriculaRepository,
+} from '../../../data-access/sugerencia-de-matricula.repository';
 import { VerificacionDeCambio, VerificacionDeCambioRepository } from '../../../data-access/verificacion-de-cambio.repository';
 import { BorradorDeHorario, BorradorDeHorarioStore } from './borrador-de-horario';
 import { OfertaDeLaUniversidad } from './oferta/oferta-de-la-universidad';
@@ -84,8 +88,29 @@ describe('PlanSchedule', () => {
   const repositorio = { proponer: vi.fn() };
   const verificacion = { verificar: vi.fn() };
   const almacen = { cargar: vi.fn(), guardar: vi.fn() };
+  const sugerencias = { consultar: vi.fn() };
+
+  const SIN_SUGERENCIA: SugerenciaDeMatricula = {
+    semestreActual: null,
+    semestreSugerido: null,
+    materias: [],
+    creditos: 0,
+    adelantables: [],
+    motivo: null,
+  };
+  const CON_SUGERENCIA: SugerenciaDeMatricula = {
+    semestreActual: 2,
+    semestreSugerido: 3,
+    materias: [
+      { codigo: 'CAD612021101', nombre: 'Álgebra lineal', creditos: 3, semestre: 3, motivoDeSugerencia: 'siguiente_semestre', dependeDeUnaEnCurso: false },
+    ],
+    creditos: 3,
+    adelantables: [],
+    motivo: null,
+  };
 
   beforeEach(() => {
+    sugerencias.consultar.mockReset().mockReturnValue(of(SIN_SUGERENCIA));
     notificador.problema.mockReset().mockResolvedValue(undefined);
     repositorio.proponer.mockReset().mockReturnValue(of(CON_PROPUESTAS));
     verificacion.verificar.mockReset().mockReturnValue(of(OTROS_GRUPOS));
@@ -102,6 +127,7 @@ describe('PlanSchedule', () => {
         { provide: VerificacionDeCambioRepository, useValue: verificacion },
         { provide: BorradorDeHorarioStore, useValue: almacen },
         { provide: NotifierService, useValue: notificador },
+        { provide: SugerenciaDeMatriculaRepository, useValue: sugerencias },
       ],
     });
     const fixture = TestBed.createComponent(PlanSchedule);
@@ -132,6 +158,40 @@ describe('PlanSchedule', () => {
 
   const boton = (html: HTMLElement, texto: string) =>
     Array.from(html.querySelectorAll<HTMLButtonElement>('button')).find((b) => b.textContent?.trim() === texto)!;
+
+  // --- La sugerencia de matrícula (SCRUM-244) --------------------------------------------------------------
+
+  const oferta = (fixture: ComponentFixture<PlanSchedule>) =>
+    fixture.debugElement.query(By.directive(OfertaDeLaUniversidad)).componentInstance as OfertaDeLaUniversidad;
+
+  it('pide la sugerencia al abrir y se la pasa a la oferta', async () => {
+    sugerencias.consultar.mockReturnValue(of(CON_SUGERENCIA));
+
+    const { fixture, html } = await crear();
+
+    expect(sugerencias.consultar).toHaveBeenCalledTimes(1);
+    expect(oferta(fixture).sugerencia()).toEqual(CON_SUGERENCIA);
+    expect(html.querySelector('.notice')).toBeNull();
+  });
+
+  it('sin sugerencia muestra el motivo que dice el servidor y deja la oferta como siempre', async () => {
+    sugerencias.consultar.mockReturnValue(of({ ...SIN_SUGERENCIA, motivo: 'Elige tu programa para recibir una sugerencia de matrícula.' }));
+
+    const { fixture, html } = await crear();
+
+    expect(html.querySelector('.notice')!.textContent).toContain('Elige tu programa');
+    expect(oferta(fixture).sugerencia()).toBeNull();
+  });
+
+  it('si la sugerencia falla no avisa nada y deja armar a mano', async () => {
+    sugerencias.consultar.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+    const { fixture, html } = await crear();
+
+    expect(html.querySelector('.notice')).toBeNull();
+    expect(html.querySelector('.alert')).toBeNull();
+    expect(oferta(fixture).sugerencia()).toBeNull();
+  });
 
   // --- La oferta, y nada de escribir a mano ----------------------------------------------------------------
 
