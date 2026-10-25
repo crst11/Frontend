@@ -1,0 +1,65 @@
+<section class="card adelantables" aria-labelledby="adelantables-titulo">
+  <h2 id="adelantables-titulo" class="adelantables__titulo">Podrías adelantar</h2>
+  <p class="field__hint">
+    Materias de semestres siguientes que ya puedes cursar. Son solo ideas: no se agregan a tu horario.
+  </p>
+
+  <div class="field">
+    <label class="field__label" for="adelantables-creditos">Créditos que puedes llevar</label>
+    <input
+      id="adelantables-creditos"
+      class="field__input adelantables__creditos"
+      type="number"
+      inputmode="numeric"
+      min="0"
+      [max]="maximo"
+      [value]="disponibles() ?? ''"
+      aria-describedby="adelantables-ayuda"
+      (input)="escribir($event)"
+    />
+    <p class="field__hint" id="adelantables-ayuda">
+      Empieza con los {{ creditosDelSemestre() }} que el plan asigna a tu semestre. Cámbialos si no vas nivelado o
+      tienes un caso especial.
+    </p>
+    @if (disponibles() !== creditosDelSemestre()) {
+      <button class="button button--outline adelantables__restaurar" type="button" (click)="volverAlPlan()">
+        Usar los {{ creditosDelSemestre() }} del plan
+      </button>
+    }
+  </div>
+
+  <div class="adelantables__resultado" role="status" aria-live="polite">
+    @if (adelantables().length === 0) {
+      <p class="field__hint">
+        La oferta de este período no trae materias de semestres siguientes que ya puedas cursar.
+      </p>
+    } @else if (sobran() === null) {
+      <p>Escribe tus créditos para ver cuáles caben. Estas son todas las que ya puedes cursar:</p>
+      <ng-container [ngTemplateOutlet]="lista" [ngTemplateOutletContext]="{ $implicit: adelantables() }" />
+    } @else if (sobran()! <= 0) {
+      <p>
+        Con las materias que llevas marcadas ({{ creditosMarcados() }} de {{ disponibles() }} créditos) no te sobran
+        créditos para adelantar.
+      </p>
+    } @else if (lasQueCaben().length === 0) {
+      <p>
+        Te {{ sobran() === 1 ? 'sobra 1 crédito' : 'sobran ' + sobran() + ' créditos' }}, pero ninguna de las que ya
+        puedes cursar cabe en ellos.
+      </p>
+    } @else {
+      <p>Te {{ sobran() === 1 ? 'sobra 1 crédito' : 'sobran ' + sobran() + ' créditos' }}: podrías sumar</p>
+      <ng-container [ngTemplateOutlet]="lista" [ngTemplateOutletContext]="{ $implicit: lasQueCaben() }" />
+    }
+  </div>
+
+  <ng-template #lista let-materias>
+    <ul class="adelantables__lista">
+      @for (materia of materias; track materia.codigo) {
+        <li>
+          <strong>{{ materia.nombre }}</strong> ({{ materia.creditos }} {{ materia.creditos === 1 ? 'crédito' : 'créditos' }}):
+          {{ materia.requisito }}.
+        </li>
+      }
+    </ul>
+  </ng-template>
+</section>
