@@ -32,15 +32,15 @@ export class NotifierService {
     await this.mostrar({ icon: 'info', title: titulo, text: texto, confirmButtonText: 'Entendido' });
   }
 
-  /** Pide confirmar una acción; con "Cancelar" enfocado para que un Enter distraído no la ejecute. */
-  async confirmar(titulo: string, texto: string, textoBoton: string): Promise<boolean> {
+  /** Pide confirmar una acción; con el botón de rechazar enfocado para que un Enter distraído no la ejecute. */
+  async confirmar(titulo: string, texto: string, textoBoton: string, textoCancelar = 'Cancelar'): Promise<boolean> {
     const resultado = await this.mostrar({
       icon: 'question',
       title: titulo,
       text: texto,
       showCancelButton: true,
       confirmButtonText: textoBoton,
-      cancelButtonText: 'Cancelar',
+      cancelButtonText: textoCancelar,
       reverseButtons: true,
       focusCancel: true,
     });

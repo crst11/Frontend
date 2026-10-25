@@ -309,6 +309,7 @@ Reglas: errores junto al campo que los causa, además del mensaje del backend en
 - **RF10 (sprint 6):** suscripción Web Push con la llave VAPID pública; el backend envía con la privada.
 - **Equipos compartidos (SCRUM-231).** El inicio de sesión pregunta «Es mi dispositivo personal» (marcada por defecto). Desmarcada, la consulta sin conexión se apaga (no se guarda nada en IndexedDB) y la sesión se cierra sola tras 15 minutos sin actividad, con la aplicación abierta o al reabrirla (`core/session`: `dispositivo-de-la-sesion.ts` y `vigilante-de-inactividad.ts`). Solo se guardan en `localStorage` la elección y el momento de la última actividad, nunca un token ni datos personales.
 - El service worker solo funciona en HTTPS o en `localhost`: se prueba con `ng build` y un servidor estático, no con `ng serve`.
+- **Versiones nuevas (SCRUM-258).** El service worker baja la versión nueva en segundo plano pero sigue sirviendo la vieja hasta que la aplicación se cierra y se reabre, y como la sesión se restaura sola casi nunca se cierra. `core/actualizacion/actualizador-de-la-app.ts` busca la versión nueva al volver a la aplicación y cada 30 minutos, y cuando está lista pregunta «Hay una versión nueva de CundiApp» con «Actualizar ahora» y «Después». No recarga sin preguntar porque «Armar mi horario» guarda la oferta que se sube solo en memoria. Si el service worker queda en un estado irrecuperable, explica y recarga.
 
 ## 10. Pruebas
 

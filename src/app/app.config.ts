@@ -11,6 +11,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
 import { SessionService } from './core/session/session.service';
 import { VigilanteDeInactividad } from './core/session/vigilante-de-inactividad';
+import { ActualizadorDeLaApp } from './core/actualizacion/actualizador-de-la-app';
 import { verificacionHumanaInterceptor } from './core/humano/verificacion-humana.interceptor';
 import { sessionInterceptor } from './core/session/session.interceptor';
 import { lecturasSinConexionInterceptor } from './core/offline/lecturas-sin-conexion.interceptor';
@@ -86,6 +87,10 @@ export const appConfig: ApplicationConfig = {
     // En un equipo compartido la sesión se cierra sola tras 15 minutos sin actividad (SCRUM-231).
     provideAppInitializer(() => {
       inject(VigilanteDeInactividad).iniciar();
+    }),
+    // Avisa cuando hay una versión nueva y deja actualizar sin cerrar sesión (SCRUM-258).
+    provideAppInitializer(() => {
+      inject(ActualizadorDeLaApp).iniciar();
     }),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
