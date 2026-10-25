@@ -2,10 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Adelantable } from './sugerencia-en-oferta';
 import { AdelantablesDeLaSugerencia } from './adelantables-de-la-sugerencia';
 
-const ADELANTABLES: Adelantable[] = [
-  { codigo: 'G', nombre: 'Gestión', creditos: 2, requisito: 'no tiene prerrequisitos' },
-  { codigo: 'F', nombre: 'Física I', creditos: 3, requisito: 'ya aprobaste Cálculo I' },
-];
+const GESTION: Adelantable = { codigo: 'G', nombre: 'Gestión', creditos: 2, requisito: 'no tiene prerrequisitos' };
+const FISICA: Adelantable = { codigo: 'F', nombre: 'Física I', creditos: 3, requisito: 'ya aprobaste Cálculo I' };
+const ADELANTABLES: Adelantable[] = [GESTION, FISICA];
 
 describe('AdelantablesDeLaSugerencia (SCRUM-257)', () => {
   let fixture: ComponentFixture<AdelantablesDeLaSugerencia>;
@@ -13,6 +12,8 @@ describe('AdelantablesDeLaSugerencia (SCRUM-257)', () => {
   const pantalla = (): HTMLElement => fixture.nativeElement as HTMLElement;
   const texto = (): string => (pantalla().textContent ?? '').replace(/\s+/g, ' ');
   const campo = (): HTMLInputElement => pantalla().querySelector<HTMLInputElement>('#adelantables-creditos')!;
+  const filas = (): string[] => Array.from(pantalla().querySelectorAll('li')).map((li) => (li.textContent ?? '').replace(/\s+/g, ' ').trim());
+  const resultado = (): string => (pantalla().querySelector('.adelantables__resultado')?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
   function crear(adelantables: Adelantable[], creditosDelSemestre: number, creditosMarcados: number): void {
     TestBed.configureTestingModule({ imports: [AdelantablesDeLaSugerencia] });
@@ -37,67 +38,93 @@ describe('AdelantablesDeLaSugerencia (SCRUM-257)', () => {
     expect(pantalla().querySelector('.adelantables__restaurar')).toBeNull();
   });
 
-  it('dice que no sobran créditos cuando lo marcado ya llena lo disponible', () => {
+  it('muestra todas las que podría adelantar, con su requisito, antes de la casilla de créditos', () => {
     crear(ADELANTABLES, 17, 17);
 
-    expect(texto()).toContain('no te sobran créditos para adelantar');
-    expect(texto()).not.toContain('Gestión');
+    expect(filas()).toHaveLength(2);
+    expect(filas()[0]).toContain('Gestión (2 créditos): no tiene prerrequisitos.');
+    expect(filas()[1]).toContain('Física I (3 créditos): ya aprobaste Cálculo I.');
+    const lista = pantalla().querySelector('.adelantables__lista')!;
+    expect(lista.compareDocumentPosition(campo()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('con créditos que sobran lista solo las que caben, cada una con su requisito', () => {
+  it('dice que ahora no puede adelantar ninguna cuando lo marcado ya llena los créditos disponibles', () => {
+    crear(ADELANTABLES, 17, 17);
+
+    expect(resultado()).toContain('Ahora no puedes adelantar ninguna');
+    expect(resultado()).toContain('Tendrías que tener más créditos disponibles');
+    expect(filas()[0]).toContain('Te faltan 2 créditos');
+    expect(filas()[1]).toContain('Te faltan 3 créditos');
+  });
+
+  it('con créditos que sobran marca las que le caben y dice cuántos le faltarían para las otras', () => {
     crear(ADELANTABLES, 17, 15);
 
-    expect(texto()).toContain('Te sobran 2 créditos: podrías sumar');
-    expect(texto()).toContain('Gestión (2 créditos): no tiene prerrequisitos.');
-    expect(texto()).not.toContain('Física I');
+    expect(resultado()).toContain('Te sobran 2 créditos: te cabe la primera de la lista');
+    expect(filas()[0]).toContain('Gestión');
+    expect(filas()[0]).toContain('Te cabe');
+    expect(filas()[1]).toContain('Física I');
+    expect(filas()[1]).toContain('Te falta 1 crédito');
   });
 
-  it('con más créditos disponibles caben todas y se dice el requisito de la que lo pide', () => {
+  it('con más créditos disponibles le caben todas', () => {
     crear(ADELANTABLES, 17, 14);
 
-    expect(texto()).toContain('Te sobran 3 créditos');
-    expect(texto()).toContain('Física I (3 créditos): ya aprobaste Cálculo I.');
+    expect(resultado()).toContain('Te sobran 3 créditos: te caben las primeras 2 de la lista');
+    expect(filas().every((fila) => fila.includes('Te cabe'))).toBe(true);
   });
 
-  it('deja editar los créditos y recalcula lo que sobra; se puede volver a los del plan', () => {
+  it('pone primero las que le caben en lo que sobra, aunque la lista llegue en otro orden', () => {
+    crear([FISICA, GESTION], 17, 15);
+
+    expect(filas()[0]).toContain('Gestión');
+    expect(filas()[1]).toContain('Física I');
+  });
+
+  it('deja editar los créditos, reordena y recalcula; se puede volver a los del plan', () => {
     crear(ADELANTABLES, 17, 17);
 
     escribir('19');
 
-    expect(texto()).toContain('Te sobran 2 créditos');
-    expect(texto()).toContain('Gestión');
+    expect(resultado()).toContain('Te sobran 2 créditos');
+    expect(filas()[0]).toContain('Gestión');
+    expect(filas()[0]).toContain('Te cabe');
     expect(pantalla().querySelector('.adelantables__restaurar')).not.toBeNull();
 
     pantalla().querySelector<HTMLButtonElement>('.adelantables__restaurar')!.click();
     fixture.detectChanges();
 
     expect(campo().value).toBe('17');
-    expect(texto()).toContain('no te sobran créditos');
+    expect(resultado()).toContain('Ahora no puedes adelantar ninguna');
   });
 
-  it('dice que ninguna cabe cuando sobra menos de lo que pide cada una', () => {
+  it('dice que ninguna le cabe todavía cuando sobra menos de lo que pide cada una', () => {
     crear(ADELANTABLES, 17, 16);
 
-    expect(texto()).toContain('Te sobra 1 crédito, pero ninguna');
+    expect(resultado()).toContain('Te sobra 1 crédito, pero ninguna cabe todavía');
+    expect(resultado()).toContain('Tendrías que tener más créditos disponibles');
+    expect(filas()[0]).toContain('Te falta 1 crédito');
   });
 
-  it('con el campo vacío o con algo que no es un entero pide escribir los créditos y muestra todas', () => {
+  it('con el campo vacío o con algo que no es un entero pide escribir los créditos y no compara', () => {
     crear(ADELANTABLES, 17, 17);
 
     escribir('');
-    expect(texto()).toContain('Escribe tus créditos');
-    expect(texto()).toContain('Gestión');
+    expect(resultado()).toContain('Escribe tus créditos');
+    expect(filas()).toHaveLength(2);
+    expect(texto()).not.toContain('Te cabe');
 
     escribir('2.5');
-    expect(texto()).toContain('Escribe tus créditos');
+    expect(resultado()).toContain('Escribe tus créditos');
 
     escribir('999');
-    expect(texto()).toContain('Escribe tus créditos');
+    expect(resultado()).toContain('Escribe tus créditos');
   });
 
-  it('avisa cuando la oferta no trae nada para adelantar', () => {
+  it('avisa cuando la oferta no trae nada para adelantar y no muestra la casilla', () => {
     crear([], 17, 10);
 
     expect(texto()).toContain('no trae materias de semestres siguientes');
+    expect(pantalla().querySelector('#adelantables-creditos')).toBeNull();
   });
 });

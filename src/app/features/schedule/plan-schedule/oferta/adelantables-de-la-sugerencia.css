@@ -33,3 +33,11 @@
   gap: 6px;
   color: var(--color-text);
 }
+
+.adelantables__item--no-cabe {
+  color: var(--color-muted);
+}
+
+.adelantables__lista .badge {
+  margin-left: 4px;
+}

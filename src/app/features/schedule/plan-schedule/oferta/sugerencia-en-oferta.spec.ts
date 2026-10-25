@@ -5,7 +5,6 @@ import {
   coincideConElPlan,
   creditosDeLasMarcadas,
   cruzarConLaOferta,
-  marcadasPorDefecto,
   queCaben,
   textoDelRequisito,
 } from './sugerencia-en-oferta';
@@ -76,23 +75,6 @@ describe('sugerencia-en-oferta', () => {
       const entradas = cruzarConLaOferta(sugerencia([sugerida('P', 10)]), [leida('P-A'), leida('P-B')]);
 
       expect(entradas[0].lineas.map((l) => l.codigo)).toEqual(['P-A', 'P-B']);
-    });
-  });
-
-  describe('marcadasPorDefecto', () => {
-    it('marca las sugeridas que tienen una sola línea y deja sin marcar las adelantables', () => {
-      const entradas = cruzarConLaOferta(
-        sugerencia([sugerida('A', 3)], [sugerida('C', 2, 'adelantable')]),
-        [leida('A'), leida('C')],
-      );
-
-      expect([...marcadasPorDefecto(entradas)]).toEqual(['A']);
-    });
-
-    it('no marca ninguna línea de una materia con varias: la persona elige cuál', () => {
-      const entradas = cruzarConLaOferta(sugerencia([sugerida('P', 10)]), [leida('P-A'), leida('P-B')]);
-
-      expect(marcadasPorDefecto(entradas).size).toBe(0);
     });
   });
 
