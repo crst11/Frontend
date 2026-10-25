@@ -11,10 +11,19 @@ import { leerArchivoDeOferta, leerCarpetaDeOferta, leerOfertaPegada } from './ar
 import { MateriaLeida, OfertaLeida, OfertaNoLegible, aAsignaturaDeOferta } from './lector-de-oferta';
 import {
   EntradaSugerida,
-  adelantablesPorCreditos,
+  Adelantable,
+  adelantablesDeLaOferta,
   creditosDeLasMarcadas,
   cruzarConLaOferta,
+  marcadasPorDefecto,
 } from './sugerencia-en-oferta';
+
+/** Lo que «Podrías adelantar» necesita de la lista de la sugerencia. */
+export interface ResumenDeAdelantables {
+  adelantables: Adelantable[];
+  creditosDelSemestre: number;
+  creditosMarcados: number;
+}
 
 /** Cómo se le dice a la persona por qué se le sugiere cada materia. */
 const TEXTO_DEL_MOTIVO: Record<MotivoDeSugerencia, string> = {
@@ -79,6 +88,16 @@ export class OfertaDeLaUniversidad {
    * no haya oferta cargada o si se pasa del máximo de materias que acepta el servidor.
    */
   readonly materiasElegidas = output<AsignaturaDeOferta[]>();
+  /**
+   * Si la lista sigue la sugerencia: la pantalla arma sola las propuestas mientras sea cierto y deja el botón para
+   * cuando la persona elige a mano (SCRUM-257).
+   */
+  readonly siguiendoSugerencia = output<boolean>();
+  /**
+   * Lo que la pantalla necesita para «Podrías adelantar» (va debajo de las propuestas): lo adelantable que la oferta
+   * trae, los créditos del plan para el semestre y los que suman las materias marcadas. Nulo si no se sigue la sugerencia.
+   */
+  readonly resumenDeAdelantables = output<ResumenDeAdelantables | null>();
 
   protected readonly pasos: PasoDeLaGuia[] = [
     { texto: 'Entra a la plataforma de la universidad y abre', resaltado: 'Consultar Horarios', conEnlace: true },
@@ -100,8 +119,8 @@ export class OfertaDeLaUniversidad {
   protected readonly leyendo = signal(false);
   protected readonly error = signal<string | null>(null);
   private readonly desmarcadas = signal<ReadonlySet<string>>(new Set());
-  /** Las líneas que la persona marcó en la sugerencia: la sugerencia llega sin nada marcado. */
-  private readonly marcadasPorLaPersona = signal<ReadonlySet<string>>(new Set());
+  /** Las líneas que la persona dejó marcadas en la sugerencia; nulo mientras no toque nada (rigen las de por defecto). */
+  private readonly marcadasPorLaPersona = signal<ReadonlySet<string> | null>(null);
   /** La persona pidió elegir a mano en lugar de seguir la sugerencia. */
   protected readonly eligeAMano = signal(false);
   private cerrada = false;
@@ -125,11 +144,13 @@ export class OfertaDeLaUniversidad {
     const oferta = this.oferta();
     return sugerencia && oferta ? cruzarConLaOferta(sugerencia, oferta.materias) : [];
   });
-  protected readonly marcadas = this.marcadasPorLaPersona.asReadonly();
+  protected readonly marcadas = computed<ReadonlySet<string>>(
+    () => this.marcadasPorLaPersona() ?? marcadasPorDefecto(this.entradas()),
+  );
   protected readonly entradasSugeridas = computed(() =>
     this.entradas().filter((e) => e.lineas.length > 0 && e.sugerida.motivoDeSugerencia !== 'adelantable'),
   );
-  protected readonly adelantables = computed(() => adelantablesPorCreditos(this.entradas()));
+  private readonly adelantables = computed(() => adelantablesDeLaOferta(this.entradas()));
   protected readonly sinOferta = computed(() =>
     this.entradas().filter((e) => e.lineas.length === 0 && e.sugerida.motivoDeSugerencia !== 'adelantable'),
   );
@@ -148,6 +169,19 @@ export class OfertaDeLaUniversidad {
     inject(DestroyRef).onDestroy(() => (this.cerrada = true));
     // Cada cambio de la oferta, del semestre o de las casillas le avisa a la pantalla qué materias quedaron. La primera
     // vez (sin oferta todavía) no hay nada que avisar.
+    effect(() => {
+      const siguiendo = this.siguiendoLaSugerencia();
+      this.siguiendoSugerencia.emit(siguiendo);
+      this.resumenDeAdelantables.emit(
+        siguiendo && this.oferta()
+          ? {
+              adelantables: this.adelantables(),
+              creditosDelSemestre: this.sugerencia()?.creditosDelSemestre ?? 0,
+              creditosMarcados: this.creditos(),
+            }
+          : null,
+      );
+    });
     effect(() => {
       const elegidas = this.siguiendoLaSugerencia() ? this.lineasMarcadas() : this.elegidas();
       const materias = this.oferta() && !this.pasaDelMaximo() ? elegidas.map(aAsignaturaDeOferta) : [];
@@ -267,7 +301,7 @@ export class OfertaDeLaUniversidad {
   private recibir(leida: OfertaLeida): void {
     this.oferta.set(leida);
     this.desmarcadas.set(new Set());
-    this.marcadasPorLaPersona.set(new Set());
+    this.marcadasPorLaPersona.set(null);
     const semestres = this.semestres();
     const inicial = this.semestreInicial();
     this.semestre.set(inicial !== null && semestres.includes(inicial) ? inicial : (semestres[0] ?? null));
