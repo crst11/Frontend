@@ -240,7 +240,7 @@ describe('PlanSchedule', () => {
     expect(repositorio.proponer).not.toHaveBeenCalled();
   });
 
-  it('muestra «Podrías adelantar» debajo de las opciones con lo que dice la oferta, y lo quita al dejar la sugerencia', async () => {
+  it('muestra «Podrías adelantar» con los créditos antes de las opciones para matricular, y lo quita al dejar la sugerencia', async () => {
     sugerencias.consultar.mockReturnValue(of(CON_SUGERENCIA));
     const { fixture, html } = await crear();
 
@@ -253,6 +253,12 @@ describe('PlanSchedule', () => {
 
     expect(html.textContent).toContain('Podrías adelantar');
     expect(html.textContent).toContain('Gestión (2 créditos): no tiene prerrequisitos.');
+
+    oferta(fixture).siguiendoSugerencia.emit(true);
+    await subirOferta(fixture);
+    const creditos = html.querySelector('app-adelantables-de-la-sugerencia')!;
+    const opciones = html.querySelector('#armar-resultado')!;
+    expect(creditos.compareDocumentPosition(opciones) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     oferta(fixture).resumenDeAdelantables.emit(null);
     await refrescar(fixture);

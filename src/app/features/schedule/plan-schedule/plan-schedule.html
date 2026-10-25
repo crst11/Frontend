@@ -73,6 +73,14 @@
     <p class="alert" role="alert">{{ mensaje }}</p>
   }
 
+  @if (resumenDeAdelantables(); as resumen) {
+    <app-adelantables-de-la-sugerencia
+      [adelantables]="resumen.adelantables"
+      [creditosDelSemestre]="resumen.creditosDelSemestre"
+      [creditosMarcados]="resumen.creditosMarcados"
+    />
+  }
+
   @if (resultado(); as respuesta) {
     <section aria-labelledby="armar-resultado" aria-live="polite">
       <h2 id="armar-resultado" class="armar__seccion">Opciones para matricular</h2>
@@ -184,13 +192,5 @@
         }
       }
     </section>
-  }
-
-  @if (resumenDeAdelantables(); as resumen) {
-    <app-adelantables-de-la-sugerencia
-      [adelantables]="resumen.adelantables"
-      [creditosDelSemestre]="resumen.creditosDelSemestre"
-      [creditosMarcados]="resumen.creditosMarcados"
-    />
   }
 </main>
