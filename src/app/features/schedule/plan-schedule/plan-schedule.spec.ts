@@ -96,16 +96,18 @@ describe('PlanSchedule', () => {
     materias: [],
     creditos: 0,
     adelantables: [],
+    creditosDelSemestre: 17,
     motivo: null,
   };
   const CON_SUGERENCIA: SugerenciaDeMatricula = {
     semestreActual: 2,
     semestreSugerido: 3,
     materias: [
-      { codigo: 'CAD612021101', nombre: 'Álgebra lineal', creditos: 3, semestre: 3, motivoDeSugerencia: 'siguiente_semestre', dependeDeUnaEnCurso: false },
+      { codigo: 'CAD612021101', nombre: 'Álgebra lineal', creditos: 3, semestre: 3, motivoDeSugerencia: 'siguiente_semestre', dependeDeUnaEnCurso: false, prerrequisitos: [] },
     ],
     creditos: 3,
     adelantables: [],
+    creditosDelSemestre: 17,
     motivo: null,
   };
 
@@ -194,6 +196,75 @@ describe('PlanSchedule', () => {
   });
 
   // --- La oferta, y nada de escribir a mano ----------------------------------------------------------------
+
+  it('siguiendo la sugerencia arma sola las opciones, de mañana, sin que la persona pida nada', async () => {
+    sugerencias.consultar.mockReturnValue(of(CON_SUGERENCIA));
+    const { fixture, html } = await crear();
+    oferta(fixture).siguiendoSugerencia.emit(true);
+
+    await subirOferta(fixture);
+
+    expect(repositorio.proponer).toHaveBeenCalledTimes(1);
+    expect(repositorio.proponer.mock.calls[0][0].criterio.franja).toBe('manana');
+    expect(html.querySelector('#armar-resultado')).not.toBeNull();
+  });
+
+  it('respeta la franja que la persona ya había elegido al armar sola las opciones', async () => {
+    almacen.cargar.mockResolvedValue({ asignaturas: [], franja: 'noche', pocosHuecos: false, diaLibre: false });
+    sugerencias.consultar.mockReturnValue(of(CON_SUGERENCIA));
+    const { fixture } = await crear();
+    oferta(fixture).siguiendoSugerencia.emit(true);
+
+    await subirOferta(fixture);
+
+    expect(repositorio.proponer.mock.calls[0][0].criterio.franja).toBe('noche');
+  });
+
+  it('arma sola las opciones una sola vez: si la persona cambia las materias, vuelve a pedir ella', async () => {
+    sugerencias.consultar.mockReturnValue(of(CON_SUGERENCIA));
+    const { fixture, html } = await crear();
+    oferta(fixture).siguiendoSugerencia.emit(true);
+
+    await subirOferta(fixture);
+    await subirOferta(fixture, [ALGEBRA]);
+
+    expect(repositorio.proponer).toHaveBeenCalledTimes(1);
+    expect(html.querySelector('#armar-resultado')).toBeNull();
+  });
+
+  it('sin seguir la sugerencia no propone nada hasta que la persona lo pida', async () => {
+    const { fixture } = await crear();
+
+    await subirOferta(fixture);
+
+    expect(repositorio.proponer).not.toHaveBeenCalled();
+  });
+
+  it('muestra «Podrías adelantar» con los créditos antes de las opciones para matricular, y lo quita al dejar la sugerencia', async () => {
+    sugerencias.consultar.mockReturnValue(of(CON_SUGERENCIA));
+    const { fixture, html } = await crear();
+
+    oferta(fixture).resumenDeAdelantables.emit({
+      adelantables: [{ codigo: 'G', nombre: 'Gestión', creditos: 2, requisito: 'no tiene prerrequisitos' }],
+      creditosDelSemestre: 17,
+      creditosMarcados: 15,
+    });
+    await refrescar(fixture);
+
+    expect(html.textContent).toContain('Podrías adelantar');
+    expect(html.textContent).toContain('Gestión (2 créditos): no tiene prerrequisitos.');
+
+    oferta(fixture).siguiendoSugerencia.emit(true);
+    await subirOferta(fixture);
+    const creditos = html.querySelector('app-adelantables-de-la-sugerencia')!;
+    const opciones = html.querySelector('#armar-resultado')!;
+    expect(creditos.compareDocumentPosition(opciones) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    oferta(fixture).resumenDeAdelantables.emit(null);
+    await refrescar(fixture);
+
+    expect(html.textContent).not.toContain('Podrías adelantar');
+  });
 
   it('empieza solo con la carga de la oferta: sin formulario de materias, sin preferencias y sin botón de proponer', async () => {
     const { html } = await crear();

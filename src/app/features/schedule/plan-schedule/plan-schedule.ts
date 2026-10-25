@@ -24,7 +24,8 @@ import {
   SugerenciaDeMatriculaRepository,
 } from '../../../data-access/sugerencia-de-matricula.repository';
 import { BorradorDeHorario, BorradorDeHorarioStore } from './borrador-de-horario';
-import { OfertaDeLaUniversidad } from './oferta/oferta-de-la-universidad';
+import { AdelantablesDeLaSugerencia } from './oferta/adelantables-de-la-sugerencia';
+import { OfertaDeLaUniversidad, ResumenDeAdelantables } from './oferta/oferta-de-la-universidad';
 
 /** Pausa tras el último cambio de una preferencia antes de guardar el borrador: una escritura por pausa. */
 const PAUSA_AL_ESCRIBIR_EN_MS = 500;
@@ -105,7 +106,7 @@ const choqueEnTexto = (c: ChoqueDelCambio): string =>
  */
 @Component({
   selector: 'app-plan-schedule',
-  imports: [RouterLink, OfertaDeLaUniversidad],
+  imports: [RouterLink, OfertaDeLaUniversidad, AdelantablesDeLaSugerencia],
   templateUrl: './plan-schedule.html',
   styleUrl: './plan-schedule.css',
 })
@@ -121,6 +122,12 @@ export class PlanSchedule implements OnInit {
   protected readonly sugerencia = signal<SugerenciaDeMatricula | null>(null);
   /** Por qué no hay sugerencia (sin programa, sin historial, plan terminado): el texto lo dice el servidor. */
   protected readonly avisoDeSugerencia = signal<string | null>(null);
+
+  /** Lo que la oferta trae para adelantar y los créditos del semestre; solo mientras se sigue la sugerencia (SCRUM-257). */
+  protected readonly resumenDeAdelantables = signal<ResumenDeAdelantables | null>(null);
+  private siguiendoSugerencia = false;
+  /** La propuesta armada sola se pide una vez por oferta; después manda lo que la persona haga. */
+  private armadoAutomatico = false;
 
   protected readonly franjas = FRANJAS;
 
@@ -195,6 +202,30 @@ export class PlanSchedule implements OnInit {
     this.resultado.set(null);
     this.olvidarCambios();
     this.error.set(null);
+    this.armarSola(materias.length > 0);
+  }
+
+  /** La oferta ya está cruzada con la sugerencia (SCRUM-257): se avisa si la persona sigue lo sugerido. */
+  protected alSeguirSugerencia(siguiendo: boolean): void {
+    this.siguiendoSugerencia = siguiendo;
+    if (!siguiendo) {
+      this.armadoAutomatico = false;
+    }
+  }
+
+  /**
+   * Con la sugerencia armada en la oferta, la pantalla arranca con las opciones ya propuestas, de mañana (la
+   * preferencia por defecto si la persona no eligió otra). Solo la primera vez: después manda lo que haga.
+   */
+  private armarSola(hayMaterias: boolean): void {
+    if (!this.siguiendoSugerencia || !hayMaterias || this.armadoAutomatico) {
+      return;
+    }
+    this.armadoAutomatico = true;
+    if (this.franja() === null) {
+      this.franja.set('manana');
+    }
+    this.proponer();
   }
 
   // --- Preferencias ----------------------------------------------------------------------------------------

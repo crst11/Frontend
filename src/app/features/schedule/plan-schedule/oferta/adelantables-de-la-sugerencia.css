@@ -1,0 +1,43 @@
+.adelantables {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adelantables__titulo {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.125rem;
+  color: var(--color-ink);
+}
+
+.adelantables__creditos {
+  max-width: 8rem;
+}
+
+.adelantables__restaurar {
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.adelantables__resultado p {
+  margin: 0 0 8px;
+  color: var(--color-text);
+}
+
+.adelantables__lista {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text);
+}
+
+.adelantables__item--no-cabe {
+  color: var(--color-muted);
+}
+
+.adelantables__lista .badge {
+  margin-left: 4px;
+}

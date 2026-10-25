@@ -49,32 +49,6 @@
   resize: vertical;
 }
 
-.oferta__sugerencia {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.oferta__sugerida {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.oferta__depende {
-  margin: 0 0 0 32px;
-}
-
-.oferta__creditos {
-  margin: 0;
-  font-size: 0.95rem;
-  color: var(--color-ink);
-}
-
-.oferta__modo {
-  align-self: stretch;
-}
-
 .oferta__materias {
   margin: 0;
   padding: 0;
