@@ -24,13 +24,22 @@ export function cruzarConLaOferta(sugerencia: SugerenciaDeMatricula, oferta: rea
   }));
 }
 
-/** Arranca marcado lo sugerido que tiene una sola línea; lo adelantable y lo que pide elegir línea, no. */
-export function marcadasPorDefecto(entradas: readonly EntradaSugerida[]): Set<string> {
-  return new Set(
-    entradas
-      .filter((e) => e.sugerida.motivoDeSugerencia !== 'adelantable' && e.lineas.length === 1)
-      .map((e) => e.lineas[0].codigo),
-  );
+/** Lo que se podría adelantar con un tope de créditos que sobren: las materias que la oferta trae, de menos a más créditos. */
+export interface AdelantablesConCreditos {
+  creditos: number;
+  nombres: string[];
+}
+
+/** Agrupa lo adelantable (solo texto, no se marca) por sus créditos; deja fuera lo que la oferta de este período no trae. */
+export function adelantablesPorCreditos(entradas: readonly EntradaSugerida[]): AdelantablesConCreditos[] {
+  const grupos = new Map<number, string[]>();
+  for (const entrada of entradas) {
+    if (entrada.sugerida.motivoDeSugerencia !== 'adelantable' || entrada.lineas.length === 0) {
+      continue;
+    }
+    grupos.set(entrada.sugerida.creditos, [...(grupos.get(entrada.sugerida.creditos) ?? []), entrada.sugerida.nombre]);
+  }
+  return [...grupos.entries()].sort(([a], [b]) => a - b).map(([creditos, nombres]) => ({ creditos, nombres }));
 }
 
 /** Los créditos de las materias que tienen alguna línea marcada; una materia cuenta una sola vez. */

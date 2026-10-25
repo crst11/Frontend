@@ -11,9 +11,9 @@ import { leerArchivoDeOferta, leerCarpetaDeOferta, leerOfertaPegada } from './ar
 import { MateriaLeida, OfertaLeida, OfertaNoLegible, aAsignaturaDeOferta } from './lector-de-oferta';
 import {
   EntradaSugerida,
+  adelantablesPorCreditos,
   creditosDeLasMarcadas,
   cruzarConLaOferta,
-  marcadasPorDefecto,
 } from './sugerencia-en-oferta';
 
 /** Cómo se le dice a la persona por qué se le sugiere cada materia. */
@@ -100,8 +100,8 @@ export class OfertaDeLaUniversidad {
   protected readonly leyendo = signal(false);
   protected readonly error = signal<string | null>(null);
   private readonly desmarcadas = signal<ReadonlySet<string>>(new Set());
-  /** Las líneas que la persona dejó marcadas en la sugerencia; nulo mientras no toque nada (rigen las de por defecto). */
-  private readonly marcadasPorLaPersona = signal<ReadonlySet<string> | null>(null);
+  /** Las líneas que la persona marcó en la sugerencia: la sugerencia llega sin nada marcado. */
+  private readonly marcadasPorLaPersona = signal<ReadonlySet<string>>(new Set());
   /** La persona pidió elegir a mano en lugar de seguir la sugerencia. */
   protected readonly eligeAMano = signal(false);
   private cerrada = false;
@@ -125,16 +125,14 @@ export class OfertaDeLaUniversidad {
     const oferta = this.oferta();
     return sugerencia && oferta ? cruzarConLaOferta(sugerencia, oferta.materias) : [];
   });
-  protected readonly marcadas = computed<ReadonlySet<string>>(
-    () => this.marcadasPorLaPersona() ?? marcadasPorDefecto(this.entradas()),
-  );
+  protected readonly marcadas = this.marcadasPorLaPersona.asReadonly();
   protected readonly entradasSugeridas = computed(() =>
     this.entradas().filter((e) => e.lineas.length > 0 && e.sugerida.motivoDeSugerencia !== 'adelantable'),
   );
-  protected readonly entradasAdelantables = computed(() =>
-    this.entradas().filter((e) => e.lineas.length > 0 && e.sugerida.motivoDeSugerencia === 'adelantable'),
+  protected readonly adelantables = computed(() => adelantablesPorCreditos(this.entradas()));
+  protected readonly sinOferta = computed(() =>
+    this.entradas().filter((e) => e.lineas.length === 0 && e.sugerida.motivoDeSugerencia !== 'adelantable'),
   );
-  protected readonly sinOferta = computed(() => this.entradas().filter((e) => e.lineas.length === 0));
   protected readonly creditos = computed(() => creditosDeLasMarcadas(this.entradas(), this.marcadas()));
 
   private readonly lineasMarcadas = computed(() =>
@@ -269,7 +267,7 @@ export class OfertaDeLaUniversidad {
   private recibir(leida: OfertaLeida): void {
     this.oferta.set(leida);
     this.desmarcadas.set(new Set());
-    this.marcadasPorLaPersona.set(null);
+    this.marcadasPorLaPersona.set(new Set());
     const semestres = this.semestres();
     const inicial = this.semestreInicial();
     this.semestre.set(inicial !== null && semestres.includes(inicial) ? inicial : (semestres[0] ?? null));
