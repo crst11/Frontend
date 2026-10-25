@@ -2,9 +2,9 @@ import { MateriaSugerida, SugerenciaDeMatricula } from '../../../../data-access/
 import { MateriaLeida } from './lector-de-oferta';
 import {
   coincideConElPlan,
+  adelantablesPorCreditos,
   creditosDeLasMarcadas,
   cruzarConLaOferta,
-  marcadasPorDefecto,
 } from './sugerencia-en-oferta';
 
 const sugerida = (codigo: string, creditos: number, motivo: MateriaSugerida['motivoDeSugerencia'] = 'siguiente_semestre'): MateriaSugerida => ({
@@ -69,20 +69,31 @@ describe('sugerencia-en-oferta', () => {
     });
   });
 
-  describe('marcadasPorDefecto', () => {
-    it('marca las sugeridas que tienen una sola línea y deja sin marcar las adelantables', () => {
+  describe('adelantablesPorCreditos', () => {
+    it('agrupa por créditos, de menos a más, solo lo adelantable que la oferta trae', () => {
       const entradas = cruzarConLaOferta(
-        sugerencia([sugerida('A', 3)], [sugerida('C', 2, 'adelantable')]),
-        [leida('A'), leida('C')],
+        sugerencia(
+          [sugerida('A', 3)],
+          [
+            sugerida('F', 3, 'adelantable'),
+            sugerida('G', 2, 'adelantable'),
+            sugerida('H', 3, 'adelantable'),
+            sugerida('X', 2, 'adelantable'),
+          ],
+        ),
+        [leida('A'), leida('F'), leida('G'), leida('H')],
       );
 
-      expect([...marcadasPorDefecto(entradas)]).toEqual(['A']);
+      expect(adelantablesPorCreditos(entradas)).toEqual([
+        { creditos: 2, nombres: ['Materia G'] },
+        { creditos: 3, nombres: ['Materia F', 'Materia H'] },
+      ]);
     });
 
-    it('no marca ninguna línea de una materia con varias: la persona elige cuál', () => {
-      const entradas = cruzarConLaOferta(sugerencia([sugerida('P', 10)]), [leida('P-A'), leida('P-B')]);
+    it('no devuelve nada si no hay adelantables en la oferta', () => {
+      const entradas = cruzarConLaOferta(sugerencia([sugerida('A', 3)], [sugerida('X', 2, 'adelantable')]), [leida('A')]);
 
-      expect(marcadasPorDefecto(entradas).size).toBe(0);
+      expect(adelantablesPorCreditos(entradas)).toEqual([]);
     });
   });
 

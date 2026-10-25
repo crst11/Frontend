@@ -169,7 +169,7 @@
         </h2>
         <p class="field__hint" role="status">
           Según tu plan y lo que llevas cursado{{ leida.periodo ? ', con la oferta del período ' + leida.periodo : '' }}.
-          Marca o desmarca lo que quieras.
+          Son solo sugerencias: marca las que quieras matricular.
         </p>
 
         <fieldset class="oferta__materias">
@@ -179,13 +179,17 @@
           }
         </fieldset>
 
-        @if (entradasAdelantables().length > 0) {
-          <fieldset class="oferta__materias">
-            <legend class="field__label">Podrías adelantar</legend>
-            @for (entrada of entradasAdelantables(); track entrada.sugerida.codigo) {
-              <ng-container [ngTemplateOutlet]="fila" [ngTemplateOutletContext]="{ $implicit: entrada }" />
+        @if (adelantables().length > 0) {
+          <section class="oferta__adelantar" aria-labelledby="oferta-adelantar-titulo">
+            <h3 id="oferta-adelantar-titulo" class="field__label">Podrías adelantar</h3>
+            @for (grupo of adelantables(); track grupo.creditos) {
+              <p class="field__hint oferta__adelantar-grupo">
+                Si te {{ grupo.creditos === 1 ? 'sobra 1 crédito' : 'sobran ' + grupo.creditos + ' créditos' }}:
+                {{ grupo.nombres.join(', ') }}.
+              </p>
             }
-          </fieldset>
+            <p class="field__hint">Ya tienes aprobados sus prerrequisitos. Son solo ideas: no se agregan a tu horario.</p>
+          </section>
         }
 
         @if (sinOferta().length > 0) {
