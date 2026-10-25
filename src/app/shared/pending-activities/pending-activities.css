@@ -34,13 +34,15 @@
   list-style: none;
 }
 
+/* Filas como el checklist del Figma: blancas, con borde y esquinas de 12 px. */
 .pendientes__lista li {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: var(--color-primary-soft);
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
 }
 
 .pendientes__datos {

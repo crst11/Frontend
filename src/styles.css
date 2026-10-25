@@ -366,7 +366,7 @@ a {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  padding: 20px;
+  padding: 16px 20px;
 }
 
 /* Chips (sugerencias y filtros) y etiquetas pequeñas */
@@ -440,7 +440,7 @@ a {
   min-width: 120px;
   height: 46px;
   margin: 8px 6px 0;
-  border-radius: var(--radius-field);
+  border-radius: var(--radius-button);
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 600;
@@ -448,6 +448,7 @@ a {
 
 .swal2-popup.app-popup .swal2-styled.swal2-confirm {
   background: var(--color-primary);
+  box-shadow: var(--shadow-button);
   color: #ffffff;
 }
 
