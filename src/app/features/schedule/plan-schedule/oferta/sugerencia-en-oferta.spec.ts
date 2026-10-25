@@ -1,19 +1,28 @@
 import { MateriaSugerida, SugerenciaDeMatricula } from '../../../../data-access/sugerencia-de-matricula.repository';
 import { MateriaLeida } from './lector-de-oferta';
 import {
+  adelantablesDeLaOferta,
   coincideConElPlan,
-  adelantablesPorCreditos,
   creditosDeLasMarcadas,
   cruzarConLaOferta,
+  marcadasPorDefecto,
+  queCaben,
+  textoDelRequisito,
 } from './sugerencia-en-oferta';
 
-const sugerida = (codigo: string, creditos: number, motivo: MateriaSugerida['motivoDeSugerencia'] = 'siguiente_semestre'): MateriaSugerida => ({
+const sugerida = (
+  codigo: string,
+  creditos: number,
+  motivo: MateriaSugerida['motivoDeSugerencia'] = 'siguiente_semestre',
+  prerrequisitos: string[] = [],
+): MateriaSugerida => ({
   codigo,
   nombre: `Materia ${codigo}`,
   creditos,
   semestre: 3,
   motivoDeSugerencia: motivo,
   dependeDeUnaEnCurso: false,
+  prerrequisitos,
 });
 
 const leida = (codigo: string): MateriaLeida => ({
@@ -29,6 +38,7 @@ const sugerencia = (materias: MateriaSugerida[], adelantables: MateriaSugerida[]
   materias,
   creditos: materias.reduce((total, m) => total + m.creditos, 0),
   adelantables,
+  creditosDelSemestre: 17,
   motivo: null,
 });
 
@@ -69,31 +79,67 @@ describe('sugerencia-en-oferta', () => {
     });
   });
 
-  describe('adelantablesPorCreditos', () => {
-    it('agrupa por créditos, de menos a más, solo lo adelantable que la oferta trae', () => {
+  describe('marcadasPorDefecto', () => {
+    it('marca las sugeridas que tienen una sola línea y deja sin marcar las adelantables', () => {
       const entradas = cruzarConLaOferta(
-        sugerencia(
-          [sugerida('A', 3)],
-          [
-            sugerida('F', 3, 'adelantable'),
-            sugerida('G', 2, 'adelantable'),
-            sugerida('H', 3, 'adelantable'),
-            sugerida('X', 2, 'adelantable'),
-          ],
-        ),
-        [leida('A'), leida('F'), leida('G'), leida('H')],
+        sugerencia([sugerida('A', 3)], [sugerida('C', 2, 'adelantable')]),
+        [leida('A'), leida('C')],
       );
 
-      expect(adelantablesPorCreditos(entradas)).toEqual([
-        { creditos: 2, nombres: ['Materia G'] },
-        { creditos: 3, nombres: ['Materia F', 'Materia H'] },
+      expect([...marcadasPorDefecto(entradas)]).toEqual(['A']);
+    });
+
+    it('no marca ninguna línea de una materia con varias: la persona elige cuál', () => {
+      const entradas = cruzarConLaOferta(sugerencia([sugerida('P', 10)]), [leida('P-A'), leida('P-B')]);
+
+      expect(marcadasPorDefecto(entradas).size).toBe(0);
+    });
+  });
+
+  describe('textoDelRequisito', () => {
+    it('dice que no pide prerrequisitos', () => {
+      expect(textoDelRequisito([])).toBe('no tiene prerrequisitos');
+    });
+
+    it('nombra lo que ya se aprobó', () => {
+      expect(textoDelRequisito(['Cálculo I'])).toBe('ya aprobaste Cálculo I');
+      expect(textoDelRequisito(['Cálculo I', 'Física I'])).toBe('ya aprobaste Cálculo I y Física I');
+    });
+  });
+
+  describe('adelantablesDeLaOferta', () => {
+    const entradas = cruzarConLaOferta(
+      sugerencia(
+        [sugerida('A', 3)],
+        [
+          sugerida('F', 3, 'adelantable', ['Materia A']),
+          sugerida('G', 2, 'adelantable'),
+          sugerida('H', 3, 'adelantable'),
+          sugerida('X', 2, 'adelantable'),
+        ],
+      ),
+      [leida('A'), leida('F'), leida('G'), leida('H')],
+    );
+
+    it('trae solo lo adelantable que la oferta trae, de menos a más créditos, con su requisito', () => {
+      expect(adelantablesDeLaOferta(entradas)).toEqual([
+        { codigo: 'G', nombre: 'Materia G', creditos: 2, requisito: 'no tiene prerrequisitos' },
+        { codigo: 'F', nombre: 'Materia F', creditos: 3, requisito: 'ya aprobaste Materia A' },
+        { codigo: 'H', nombre: 'Materia H', creditos: 3, requisito: 'no tiene prerrequisitos' },
       ]);
     });
 
-    it('no devuelve nada si no hay adelantables en la oferta', () => {
-      const entradas = cruzarConLaOferta(sugerencia([sugerida('A', 3)], [sugerida('X', 2, 'adelantable')]), [leida('A')]);
+    it('no devuelve nada si la oferta no trae ninguna', () => {
+      const sin = cruzarConLaOferta(sugerencia([sugerida('A', 3)], [sugerida('X', 2, 'adelantable')]), [leida('A')]);
 
-      expect(adelantablesPorCreditos(entradas)).toEqual([]);
+      expect(adelantablesDeLaOferta(sin)).toEqual([]);
+    });
+
+    it('queCaben deja las que entran en los créditos que sobran', () => {
+      expect(queCaben(adelantablesDeLaOferta(entradas), 2).map((m) => m.codigo)).toEqual(['G']);
+      expect(queCaben(adelantablesDeLaOferta(entradas), 3).map((m) => m.codigo)).toEqual(['G', 'F', 'H']);
+      expect(queCaben(adelantablesDeLaOferta(entradas), 1)).toEqual([]);
+      expect(queCaben(adelantablesDeLaOferta(entradas), 0)).toEqual([]);
     });
   });
 

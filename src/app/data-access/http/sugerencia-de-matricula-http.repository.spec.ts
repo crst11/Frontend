@@ -10,10 +10,11 @@ describe('SugerenciaDeMatriculaHttpRepository', () => {
     semestreActual: 2,
     semestreSugerido: 3,
     materias: [
-      { codigo: 'A', nombre: 'Materia A', creditos: 3, semestre: 3, motivoDeSugerencia: 'siguiente_semestre', dependeDeUnaEnCurso: false },
+      { codigo: 'A', nombre: 'Materia A', creditos: 3, semestre: 3, motivoDeSugerencia: 'siguiente_semestre', dependeDeUnaEnCurso: false, prerrequisitos: [] },
     ],
     creditos: 3,
     adelantables: [],
+    creditosDelSemestre: 17,
     motivo: null,
   };
 
