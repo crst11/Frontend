@@ -274,13 +274,14 @@ Las pantallas siguen el diseño móvil acordado por el equipo (entrada, registro
 
 | Pieza | Clase o token |
 |---|---|
-| Colores | `--color-primary` (#0a7a55), `--color-primary-soft`, `--color-ink`, `--color-text`, `--color-muted`, `--color-border`, `--color-background`, `--color-danger` |
+| Colores (rediseño, SCRUM-259) | `--color-primary` (#047857), `--color-primary-strong`, `--color-primary-soft`, `--color-ink`, `--color-text`, `--color-muted`, `--color-border`, `--color-background`, `--color-chip`. Estados: `--color-danger` (texto rojo), `--color-danger-line` (bordes y rellenos), `--color-danger-soft`, `--color-warning` (relleno), `--color-warning-text`, `--color-warning-soft`. `--color-faint` es solo para marcadores de posición y adornos. El texto siempre usa los tokens que llegan a 4.5:1 (`src/styles.spec.ts` mide cada par); los claros son para bordes, rellenos y franjas |
+| Formas | `--radius-field` y `--radius-card` (12 px), `--radius-button` (14 px), `--shadow-button`. El diseño sale de Figma (`docs/rediseno/2026-10-25-rediseno-visual-design.md`) |
 | Tipografías | `Outfit` para títulos y botones, `DM Sans` para el texto (autoalojadas en `public/fonts`, con su respaldo de medidas ajustadas en `styles.css`; SCRUM-237) |
 | Pantalla | `.screen` (columna de 440 px máximo, alto completo), `.screen__body`, `.screen__footer` (acciones abajo, como en el diseño) |
 | Cabecera | `.top-bar` con `.icon-button` (flecha de volver) y `.top-bar__title` |
 | Textos | `.title`, `.subtitle` |
 | Formularios | `.field`, `.field-row` (dos campos lado a lado), `.field__label`, `.field__input`, `.field__hint`, `.field__error`, `.checkbox` |
-| Botones | `.button` con `--primary` (acción principal), `--soft` (secundaria verde) o `--outline` |
+| Botones | `.button` (50 px como mínimo, crece si el texto es largo) con `--primary` (acción principal), `--soft` (secundaria verde) o `--outline`. Pulsado: se achica al 98 %. Cargando: deshabilitado, `aria-busy="true"` y la clase `.button--loading` (anillo delante del texto); `prefers-reduced-motion` apaga ambos movimientos |
 | Mensajes y bloques | `.alert` (error), `.notice` (aviso), `.card` |
 | Chips y etiquetas | `.chips` con `.chip` / `.chip--active` (sugerencias y filtros que se tocan; con `aria-pressed`), `.badge` / `.badge--ok` (formato del archivo, vigencia) |
 | Contraseñas | `<app-password-input inputId="..." formControlName="...">` de `shared/`: todo campo de contraseña lo usa para traer el ojo; no se escribe un `<input type="password">` suelto |
