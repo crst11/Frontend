@@ -44,6 +44,8 @@ import { ProyeccionRepository } from './data-access/proyeccion.repository';
 import { PropuestaDeHorarioRepository } from './data-access/propuesta-de-horario.repository';
 import { PropuestaDeHorarioHttpRepository } from './data-access/http/propuesta-de-horario-http.repository';
 import { VerificacionDeCambioRepository } from './data-access/verificacion-de-cambio.repository';
+import { SugerenciaDeMatriculaRepository } from './data-access/sugerencia-de-matricula.repository';
+import { SugerenciaDeMatriculaHttpRepository } from './data-access/http/sugerencia-de-matricula-http.repository';
 import { VerificacionDeCambioHttpRepository } from './data-access/http/verificacion-de-cambio-http.repository';
 import { ProyeccionHttpRepository } from './data-access/http/proyeccion-http.repository';
 import { ImportacionDeHorarioRepository } from './data-access/importacion-de-horario.repository';
@@ -70,6 +72,7 @@ export const appConfig: ApplicationConfig = {
     { provide: ProyeccionRepository, useClass: ProyeccionHttpRepository },
     { provide: PropuestaDeHorarioRepository, useClass: PropuestaDeHorarioHttpRepository },
     { provide: VerificacionDeCambioRepository, useClass: VerificacionDeCambioHttpRepository },
+    { provide: SugerenciaDeMatriculaRepository, useClass: SugerenciaDeMatriculaHttpRepository },
     { provide: BrujulaRepository, useClass: BrujulaHttpRepository },
     { provide: AvisoRepository, useClass: AvisoHttpRepository },
     { provide: DispositivoRepository, useClass: DispositivoHttpRepository },
