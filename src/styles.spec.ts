@@ -57,6 +57,7 @@ describe('Sistema visual: styles.css (SCRUM-259)', () => {
       ['--color-ink', '--color-surface'],
       ['--color-muted', '--color-background'],
       ['--color-muted', '--color-surface'],
+      ['--color-text', '--color-chip'],
       ['--color-primary', '--color-surface'],
       ['--color-primary', '--color-primary-soft'],
       ['--color-primary-strong', '--color-primary-soft'],

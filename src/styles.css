@@ -205,6 +205,7 @@ a {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-field);
   background: var(--color-surface);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
   color: var(--color-ink);
   font-family: var(--font-body);
   font-size: 16px;
@@ -214,14 +215,22 @@ a {
   color: var(--color-faint);
 }
 
+/* Foco: el borde llega a 2 px con una sombra de 1 px, así el campo no cambia de alto. */
 .field__input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  box-shadow: 0 0 0 1px var(--color-primary);
 }
 
+/* Error: va después del foco para que un campo con error enfocado conserve el borde de error. */
 .field__input[aria-invalid='true'] {
-  border-color: var(--color-danger);
+  border-color: var(--color-danger-line);
+  background: var(--color-danger-soft);
+  box-shadow: 0 0 0 0.5px var(--color-danger-line);
+}
+
+.field__input[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 1px var(--color-danger-line);
 }
 
 .field__hint {

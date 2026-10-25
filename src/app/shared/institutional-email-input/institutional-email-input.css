@@ -8,17 +8,27 @@
   height: 48px;
   padding: 0 16px;
   border: 1px solid var(--color-border);
+  gap: 8px;
   border-radius: var(--radius-field);
   background: var(--color-surface);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
+/* Mismos estados que .field__input: foco de 2 px y, si hay error, el borde de error gana aunque el campo esté enfocado. */
 .institutional-email:focus-within {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  box-shadow: 0 0 0 1px var(--color-primary);
 }
 
 .institutional-email--invalid {
-  border-color: var(--color-danger);
+  border-color: var(--color-danger-line);
+  background: var(--color-danger-soft);
+  box-shadow: 0 0 0 0.5px var(--color-danger-line);
+}
+
+.institutional-email--invalid:focus-within {
+  border-color: var(--color-danger-line);
+  box-shadow: 0 0 0 1px var(--color-danger-line);
 }
 
 .institutional-email__user {
@@ -38,13 +48,19 @@
 }
 
 .institutional-email__user::placeholder {
-  color: #9ca3af;
+  color: var(--color-faint);
 }
 
+/* El dominio va en una píldora, como en el Figma. */
 .institutional-email__domain {
   flex: none;
-  color: var(--color-muted);
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-chip);
+  color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
 }
