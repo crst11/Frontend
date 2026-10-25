@@ -1,4 +1,4 @@
-// @ts-ignore El constructor de pruebas entrega el archivo como texto con este atributo de importación; el tipo no lo conoce.
+// @ts-expect-error El constructor de pruebas entrega el archivo como texto con este atributo de importación; el tipo no lo conoce.
 import estilosCrudos from './styles.css' with { loader: 'text' };
 
 const estilos = estilosCrudos as string;
