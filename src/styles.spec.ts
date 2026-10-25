@@ -80,4 +80,16 @@ describe('Sistema visual: styles.css (SCRUM-259)', () => {
       expect(selector, 'selector que usa --color-faint como texto').toContain('::placeholder');
     }
   });
+
+  it('el botón no usa altura fija', () => {
+    const regla = /\n\.button\s*\{([^}]*)\}/.exec(estilos)?.[1] ?? '';
+    expect(regla).toMatch(/min-height:\s*50px/);
+    expect(regla).not.toMatch(/(^|[;\s])height:/);
+  });
+
+  it('el pulsado y el spinner se apagan con movimiento reducido', () => {
+    const reducido = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(estilos)?.[1] ?? '';
+    expect(reducido).toContain('.button--loading::before');
+    expect(reducido).toContain('.button:active');
+  });
 });
