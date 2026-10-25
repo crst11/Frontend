@@ -24,15 +24,6 @@ export function cruzarConLaOferta(sugerencia: SugerenciaDeMatricula, oferta: rea
   }));
 }
 
-/** Arranca marcado lo sugerido que tiene una sola línea; lo adelantable y lo que pide elegir línea, no. */
-export function marcadasPorDefecto(entradas: readonly EntradaSugerida[]): Set<string> {
-  return new Set(
-    entradas
-      .filter((e) => e.sugerida.motivoDeSugerencia !== 'adelantable' && e.lineas.length === 1)
-      .map((e) => e.lineas[0].codigo),
-  );
-}
-
 /** Una materia que se podría adelantar y por qué se puede: es solo información, no se marca ni entra al horario. */
 export interface Adelantable {
   codigo: string;
