@@ -13,6 +13,8 @@ export interface MateriaSugerida {
   motivoDeSugerencia: MotivoDeSugerencia;
   /** Algún prerrequisito se está cursando ahora: cuenta como cumplido, pero hay que aprobarlo. */
   dependeDeUnaEnCurso: boolean;
+  /** Los nombres de las materias que pide el plan para cursarla; vacío si no pide ninguna (SCRUM-257). */
+  prerrequisitos: string[];
 }
 
 /**
@@ -24,8 +26,10 @@ export interface SugerenciaDeMatricula {
   semestreSugerido: number | null;
   materias: MateriaSugerida[];
   creditos: number;
-  /** Materias de semestres posteriores que ya cumplen sus prerrequisitos; no cuentan en `creditos`. */
+  /** Materias de semestres posteriores con sus prerrequisitos ya aprobados; no cuentan en `creditos`. */
   adelantables: MateriaSugerida[];
+  /** Lo que el plan asigna al semestre sugerido: con esto arranca «créditos que puedes llevar», y la persona lo edita. */
+  creditosDelSemestre: number;
   motivo: string | null;
 }
 

@@ -13,7 +13,8 @@ const materia = (
   creditos: number,
   motivoDeSugerencia: MateriaSugerida['motivoDeSugerencia'] = 'siguiente_semestre',
   dependeDeUnaEnCurso = false,
-): MateriaSugerida => ({ codigo, nombre, creditos, semestre: 3, motivoDeSugerencia, dependeDeUnaEnCurso });
+  prerrequisitos: string[] = [],
+): MateriaSugerida => ({ codigo, nombre, creditos, semestre: 3, motivoDeSugerencia, dependeDeUnaEnCurso, prerrequisitos });
 
 /** La oferta de ejemplo trae Álgebra Lineal, Fundamentos de Electrónica, Física I y dos líneas de Profundización I. */
 const SUGERENCIA: SugerenciaDeMatricula = {
@@ -26,7 +27,8 @@ const SUGERENCIA: SugerenciaDeMatricula = {
     materia('CAD9999', 'Materia que la oferta no trae', 2),
   ],
   creditos: 19,
-  adelantables: [materia('CAD612021208', 'Física I', 3, 'adelantable')],
+  adelantables: [materia('CAD612021208', 'Física I', 3, 'adelantable', false, ['Álgebra lineal'])],
+  creditosDelSemestre: 17,
   motivo: null,
 };
 
@@ -64,15 +66,15 @@ describe('OfertaDeLaUniversidad con la sugerencia de matrícula (SCRUM-244)', ()
     });
   }
 
-  it('muestra lo sugerido para el semestre siguiente sin marcar nada: son sugerencias, la persona decide', async () => {
+  it('arma el semestre sugerido con lo sugerido ya marcado, para quitar lo que la persona no quiera', async () => {
     await crearConOferta(SUGERENCIA);
 
     expect(texto()).toContain('Lo que te sugerimos para el semestre 3');
-    expect(texto()).toContain('Son solo sugerencias');
-    expect(casilla('CAD612021101').checked).toBe(false);
-    expect(casilla('CAD612021106').checked).toBe(false);
-    expect(consultar('.oferta__creditos')!.textContent).toContain('0 créditos');
-    expect(ultima()).toEqual([]);
+    expect(casilla('CAD612021101').checked).toBe(true);
+    expect(casilla('CAD612021106').checked).toBe(true);
+    expect(casilla('CAD612021836-A').checked).toBe(false);
+    expect(consultar('.oferta__creditos')!.textContent).toContain('7 créditos');
+    expect(ultima()).toEqual(['ÁLGEBRA LINEAL', 'FUNDAMENTOS DE ELECTRÓNICA']);
     expect(consultar('#oferta-semestre')).toBeNull();
   });
 
@@ -84,27 +86,52 @@ describe('OfertaDeLaUniversidad con la sugerencia de matrícula (SCRUM-244)', ()
     expect(texto()).toContain('Depende de una materia que cursas ahora');
   });
 
-  it('suma los créditos de lo que la persona marca y los resta al desmarcar una materia', async () => {
+  it('resta los créditos al desmarcar una materia y los suma al volver a marcarla', async () => {
     await crearConOferta(SUGERENCIA);
-
-    marcar('CAD612021101');
-    marcar('CAD612021106');
-
-    expect(consultar('.oferta__creditos')!.textContent).toContain('7 créditos');
-    expect(ultima()).toEqual(['ÁLGEBRA LINEAL', 'FUNDAMENTOS DE ELECTRÓNICA']);
 
     marcar('CAD612021106');
 
     expect(consultar('.oferta__creditos')!.textContent).toContain('3 créditos');
     expect(ultima()).toEqual(['ÁLGEBRA LINEAL']);
+
+    marcar('CAD612021106');
+
+    expect(consultar('.oferta__creditos')!.textContent).toContain('7 créditos');
   });
 
-  it('dice en texto lo que se podría adelantar según los créditos que sobren, sin casilla para marcarlo', async () => {
+  it('no dibuja lo adelantable ni deja marcarlo: eso lo cuenta el cuadro «Podrías adelantar»', async () => {
     await crearConOferta(SUGERENCIA);
 
-    expect(texto()).toContain('Podrías adelantar');
-    expect(texto()).toContain('Si te sobran 3 créditos: Física I.');
     expect(casilla('CAD612021208')).toBeNull();
+    expect(texto()).not.toContain('Podrías adelantar');
+  });
+
+  it('avisa si se sigue la sugerencia y resume lo adelantable con los créditos del semestre', async () => {
+    const siguiendo: boolean[] = [];
+    const resumenes: unknown[] = [];
+    TestBed.configureTestingModule({ imports: [OfertaDeLaUniversidad] });
+    fixture = TestBed.createComponent(OfertaDeLaUniversidad);
+    fixture.componentRef.setInput('sugerencia', SUGERENCIA);
+    fixture.componentInstance.siguiendoSugerencia.subscribe((valor) => siguiendo.push(valor));
+    fixture.componentInstance.resumenDeAdelantables.subscribe((valor) => resumenes.push(valor));
+    fixture.detectChanges();
+    const entrada = consultar<HTMLInputElement>('#oferta-archivo')!;
+    Object.defineProperty(entrada, 'files', {
+      value: [new File([enWindows1252(OFERTA_DE_EJEMPLO)], 'pub_rep_val.html')],
+      configurable: true,
+    });
+    entrada.dispatchEvent(new Event('change'));
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(resumenes[resumenes.length - 1]).not.toBeNull();
+    });
+
+    expect(siguiendo[siguiendo.length - 1]).toBe(true);
+    expect(resumenes[resumenes.length - 1]).toEqual({
+      adelantables: [{ codigo: 'CAD612021208', nombre: 'Física I', creditos: 3, requisito: 'ya aprobaste Álgebra lineal' }],
+      creditosDelSemestre: 17,
+      creditosMarcados: 7,
+    });
   });
 
   it('en una materia con varias líneas la persona elige una y se cuentan sus créditos una sola vez', async () => {
@@ -114,7 +141,11 @@ describe('OfertaDeLaUniversidad con la sugerencia de matrícula (SCRUM-244)', ()
 
     marcar('CAD612021836-A');
 
-    expect(consultar('.oferta__creditos')!.textContent).toContain('10 créditos');
+    expect(consultar('.oferta__creditos')!.textContent).toContain('17 créditos');
+
+    marcar('CAD612021836-B');
+
+    expect(consultar('.oferta__creditos')!.textContent).toContain('17 créditos');
   });
 
   it('avisa de las materias sugeridas que la oferta de este período no trae', async () => {
@@ -154,14 +185,14 @@ describe('OfertaDeLaUniversidad con la sugerencia de matrícula (SCRUM-244)', ()
     expect(consultar('.oferta__modo')).toBeNull();
   });
 
-  it('si la sugerencia llega después de la oferta, se muestra igual y sin nada marcado', async () => {
+  it('si la sugerencia llega después de la oferta, se muestra igual y con lo sugerido marcado', async () => {
     await crearConOferta(null);
 
     fixture.componentRef.setInput('sugerencia', SUGERENCIA);
     fixture.detectChanges();
 
     expect(texto()).toContain('Lo que te sugerimos para el semestre 3');
-    expect(casilla('CAD612021101').checked).toBe(false);
-    expect(ultima()).toEqual([]);
+    expect(casilla('CAD612021101').checked).toBe(true);
+    expect(ultima()).toEqual(['ÁLGEBRA LINEAL', 'FUNDAMENTOS DE ELECTRÓNICA']);
   });
 });
