@@ -122,104 +122,15 @@
     </div>
   }
 
-  <ng-template #fila let-entrada>
-    <div class="oferta__sugerida">
-      @if (entrada.lineas.length === 1) {
-        <label class="oferta__materia checkbox">
-          <input
-            type="checkbox"
-            [attr.data-codigo]="entrada.lineas[0].codigo"
-            [checked]="estaMarcada(entrada.lineas[0].codigo)"
-            (change)="alternarMarcada(entrada.lineas[0].codigo)"
-          />
-          <span>
-            {{ entrada.sugerida.nombre }} ({{ entrada.sugerida.creditos }} cr.)
-            <span class="badge" [class.badge--ok]="entrada.sugerida.motivoDeSugerencia === 'siguiente_semestre'">{{ textoDelMotivo(entrada.sugerida.motivoDeSugerencia) }}</span>
-          </span>
-        </label>
-      } @else {
-        <p class="field__label">
-          {{ entrada.sugerida.nombre }} ({{ entrada.sugerida.creditos }} cr.)
-          <span class="badge" [class.badge--ok]="entrada.sugerida.motivoDeSugerencia === 'siguiente_semestre'">{{ textoDelMotivo(entrada.sugerida.motivoDeSugerencia) }}</span>
-          Elige una línea:
-        </p>
-        @for (linea of entrada.lineas; track linea.codigo) {
-          <label class="oferta__materia checkbox">
-            <input
-              type="checkbox"
-              [attr.data-codigo]="linea.codigo"
-              [checked]="estaMarcada(linea.codigo)"
-              (change)="alternarMarcada(linea.codigo)"
-            />
-            <span>{{ linea.nombre }} ({{ linea.grupos.length }} {{ linea.grupos.length === 1 ? 'grupo' : 'grupos' }})</span>
-          </label>
-        }
-      }
-      @if (entrada.sugerida.dependeDeUnaEnCurso) {
-        <p class="field__hint oferta__depende">Depende de una materia que cursas ahora: la puedes matricular si la apruebas.</p>
-      }
-    </div>
-  </ng-template>
-
   @if (oferta(); as leida) {
-    @if (siguiendoLaSugerencia()) {
-      <section class="card oferta__sugerencia" aria-labelledby="oferta-sugerencia-titulo">
-        <h2 id="oferta-sugerencia-titulo" class="oferta__titulo">
-          Lo que te sugerimos para el semestre {{ sugerencia()?.semestreSugerido }}
-        </h2>
-        <p class="field__hint" role="status">
-          Según tu plan y lo que llevas cursado{{ leida.periodo ? ', con la oferta del período ' + leida.periodo : '' }}.
-          Marca o desmarca lo que quieras.
-        </p>
-
-        <fieldset class="oferta__materias">
-          <legend class="field__label">Materias sugeridas</legend>
-          @for (entrada of entradasSugeridas(); track entrada.sugerida.codigo) {
-            <ng-container [ngTemplateOutlet]="fila" [ngTemplateOutletContext]="{ $implicit: entrada }" />
-          }
-        </fieldset>
-
-        @if (entradasAdelantables().length > 0) {
-          <fieldset class="oferta__materias">
-            <legend class="field__label">Podrías adelantar</legend>
-            @for (entrada of entradasAdelantables(); track entrada.sugerida.codigo) {
-              <ng-container [ngTemplateOutlet]="fila" [ngTemplateOutletContext]="{ $implicit: entrada }" />
-            }
-          </fieldset>
-        }
-
-        @if (sinOferta().length > 0) {
-          <p class="notice oferta__sin-oferta">
-            La oferta de este período no trae:
-            @for (entrada of sinOferta(); track entrada.sugerida.codigo; let ultima = $last) {
-              <b>{{ entrada.sugerida.nombre }}</b>{{ ultima ? '.' : ', ' }}
-            }
-            No la puedes matricular todavía.
-          </p>
-        }
-
-        @if (pasaDelMaximo()) {
-          <p class="alert" role="alert">Elige máximo {{ maximoDeMaterias }} materias a la vez.</p>
-        }
-
-        <p class="oferta__creditos" role="status" aria-live="polite">
-          Llevas marcados <strong>{{ creditos() }} {{ creditos() === 1 ? 'crédito' : 'créditos' }}</strong>.
-        </p>
-
-        <button class="button button--outline oferta__modo" type="button" (click)="alternarModo()">
-          Prefiero elegir mis materias yo mismo
-        </button>
-      </section>
-    } @else {
-    @if (haySugerencia()) {
-      <button class="button button--soft oferta__modo" type="button" (click)="alternarModo()">
-        Volver a la sugerencia del semestre {{ sugerencia()?.semestreSugerido }}
-      </button>
-    }
     <section class="card oferta__semestre" aria-labelledby="oferta-semestre-titulo">
       <h2 id="oferta-semestre-titulo" class="oferta__titulo">Elige tu semestre y tus materias</h2>
       <p class="field__hint" role="status">
         Leímos {{ leida.materias.length }} materias con horario{{ leida.periodo ? ' del período ' + leida.periodo : '' }}.
+        @if (siguiendoLaSugerencia()) {
+          Dejamos elegido el semestre {{ semestre() }}, el que te toca según tu plan y lo que llevas cursado: cambia de
+          semestre o quita las materias que no quieras.
+        }
       </p>
 
       <div class="field">
@@ -235,7 +146,12 @@
         <legend class="field__label">Materias de este semestre</legend>
         @for (materia of materiasDelSemestre(); track materia.codigo) {
           <label class="oferta__materia checkbox">
-            <input type="checkbox" [checked]="estaElegida(materia.codigo)" (change)="alternar(materia.codigo)" />
+            <input
+            type="checkbox"
+            [attr.data-codigo]="materia.codigo"
+            [checked]="estaElegida(materia.codigo)"
+            (change)="alternar(materia.codigo)"
+          />
             <span>
               {{ materia.nombre }}
               ({{ materia.grupos.length }} {{ materia.grupos.length === 1 ? 'grupo' : 'grupos' }})
@@ -244,10 +160,19 @@
         }
       </fieldset>
 
+      @if (siguiendoLaSugerencia() && sinOferta().length > 0) {
+        <p class="notice oferta__sin-oferta">
+          La oferta de este período no trae:
+          @for (entrada of sinOferta(); track entrada.sugerida.codigo; let ultima = $last) {
+            <b>{{ entrada.sugerida.nombre }}</b>{{ ultima ? '.' : ', ' }}
+          }
+          No la puedes matricular todavía.
+        </p>
+      }
+
       @if (pasaDelMaximo()) {
         <p class="alert" role="alert">Elige máximo {{ maximoDeMaterias }} materias a la vez.</p>
       }
     </section>
-    }
   }
 </section>

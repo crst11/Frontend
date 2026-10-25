@@ -13,7 +13,12 @@
     <p class="notice" role="status">{{ aviso }}</p>
   }
 
-  <app-oferta-de-la-universidad [sugerencia]="sugerencia()" (materiasElegidas)="usarOferta($event)" />
+  <app-oferta-de-la-universidad
+    [sugerencia]="sugerencia()"
+    (materiasElegidas)="usarOferta($event)"
+    (siguiendoSugerencia)="alSeguirSugerencia($event)"
+    (resumenDeAdelantables)="resumenDeAdelantables.set($event)"
+  />
 
   @if (asignaturas().length > 0) {
     <section class="card armar__preferencias" aria-labelledby="armar-preferencias">
@@ -66,6 +71,14 @@
 
   @if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
+  }
+
+  @if (resumenDeAdelantables(); as resumen) {
+    <app-adelantables-de-la-sugerencia
+      [adelantables]="resumen.adelantables"
+      [creditosDelSemestre]="resumen.creditosDelSemestre"
+      [creditosMarcados]="resumen.creditosMarcados"
+    />
   }
 
   @if (resultado(); as respuesta) {

@@ -1,0 +1,70 @@
+<section class="card adelantables" aria-labelledby="adelantables-titulo">
+  <h2 id="adelantables-titulo" class="adelantables__titulo">Podrías adelantar</h2>
+
+  @if (adelantables().length === 0) {
+    <p class="field__hint">La oferta de este período no trae materias de semestres siguientes que ya puedas cursar.</p>
+  } @else {
+    <p class="field__hint">
+      Materias de semestres siguientes que ya puedes cursar. Son solo ideas: no se agregan a tu horario.
+    </p>
+
+    <ul class="adelantables__lista" aria-label="Materias que podrías adelantar">
+      @for (item of ordenadas(); track item.materia.codigo) {
+        <li [class.adelantables__item--no-cabe]="item.faltan !== null && item.faltan > 0">
+          <strong>{{ item.materia.nombre }}</strong> ({{ textoDeLosCreditos(item.materia.creditos) }}):
+          {{ item.materia.requisito }}.
+          @if (item.faltan !== null) {
+            <span class="badge" [class.badge--ok]="item.faltan === 0">
+              {{ item.faltan === 0 ? 'Te cabe' : (item.faltan === 1 ? 'Te falta ' : 'Te faltan ') + textoDeLosCreditos(item.faltan) }}
+            </span>
+          }
+        </li>
+      }
+    </ul>
+
+    <div class="field">
+      <label class="field__label" for="adelantables-creditos">Créditos que puedes llevar</label>
+      <input
+        id="adelantables-creditos"
+        class="field__input adelantables__creditos"
+        type="number"
+        inputmode="numeric"
+        min="0"
+        [max]="maximo"
+        [value]="disponibles() ?? ''"
+        aria-describedby="adelantables-ayuda"
+        (input)="escribir($event)"
+      />
+      <p class="field__hint" id="adelantables-ayuda">
+        Empieza con los {{ creditosDelSemestre() }} que el plan asigna a tu semestre. Cámbialos si no vas nivelado o
+        tienes un caso especial.
+      </p>
+      @if (disponibles() !== creditosDelSemestre()) {
+        <button class="button button--outline adelantables__restaurar" type="button" (click)="volverAlPlan()">
+          Usar los {{ creditosDelSemestre() }} del plan
+        </button>
+      }
+    </div>
+
+    <div class="adelantables__resultado" role="status" aria-live="polite">
+      @if (sobran() === null) {
+        <p>Escribe tus créditos para ver cuáles te caben.</p>
+      } @else if (sobran()! <= 0) {
+        <p>
+          Ahora no puedes adelantar ninguna: con las materias que llevas marcadas ({{ creditosMarcados() }} de
+          {{ disponibles() }} créditos) no te sobra ningún crédito. Tendrías que tener más créditos disponibles.
+        </p>
+      } @else if (lasQueCaben().length === 0) {
+        <p>
+          Te {{ sobran() === 1 ? 'sobra 1 crédito' : 'sobran ' + sobran() + ' créditos' }}, pero ninguna cabe todavía.
+          Tendrías que tener más créditos disponibles.
+        </p>
+      } @else {
+        <p>
+          Te {{ sobran() === 1 ? 'sobra 1 crédito' : 'sobran ' + sobran() + ' créditos' }}:
+          {{ lasQueCaben().length === 1 ? 'te cabe la primera de la lista' : 'te caben las primeras ' + lasQueCaben().length + ' de la lista' }}.
+        </p>
+      }
+    </div>
+  }
+</section>
