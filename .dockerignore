@@ -12,6 +12,7 @@ dist/
 
 # Git, documentacion y herramientas: no hacen falta para compilar
 .git/
+.worktrees/
 .github/
 docs/
 *.md

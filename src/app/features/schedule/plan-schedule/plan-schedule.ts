@@ -19,6 +19,10 @@ import {
   ChoqueDelCambio,
   VerificacionDeCambioRepository,
 } from '../../../data-access/verificacion-de-cambio.repository';
+import {
+  SugerenciaDeMatricula,
+  SugerenciaDeMatriculaRepository,
+} from '../../../data-access/sugerencia-de-matricula.repository';
 import { BorradorDeHorario, BorradorDeHorarioStore } from './borrador-de-horario';
 import { OfertaDeLaUniversidad } from './oferta/oferta-de-la-universidad';
 
@@ -110,7 +114,13 @@ export class PlanSchedule implements OnInit {
   private readonly borradores = inject(BorradorDeHorarioStore);
   private readonly notificador = inject(NotifierService);
   private readonly verificaciones = inject(VerificacionDeCambioRepository);
+  private readonly sugerencias = inject(SugerenciaDeMatriculaRepository);
   private readonly destruida = inject(DestroyRef);
+
+  /** Lo que el servidor sugiere matricular (SCRUM-244). Sin ella la pantalla funciona como en SCRUM-243. */
+  protected readonly sugerencia = signal<SugerenciaDeMatricula | null>(null);
+  /** Por qué no hay sugerencia (sin programa, sin historial, plan terminado): el texto lo dice el servidor. */
+  protected readonly avisoDeSugerencia = signal<string | null>(null);
 
   protected readonly franjas = FRANJAS;
 
@@ -153,6 +163,17 @@ export class PlanSchedule implements OnInit {
   }
 
   ngOnInit(): void {
+    this.sugerencias
+      .consultar()
+      .pipe(takeUntilDestroyed(this.destruida))
+      .subscribe({
+        next: (sugerida) => {
+          this.sugerencia.set(sugerida.semestreSugerido === null ? null : sugerida);
+          this.avisoDeSugerencia.set(sugerida.semestreSugerido === null ? sugerida.motivo : null);
+        },
+        // La sugerencia es un extra: si no llega, se arma a mano como siempre.
+        error: () => this.avisoDeSugerencia.set(null),
+      });
     void this.borradores.cargar().then((guardado) => {
       if (guardado) {
         this.franja.set(guardado.franja);

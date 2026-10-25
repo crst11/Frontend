@@ -9,7 +9,11 @@
     <a class="armar__volver" routerLink="/horario">Volver a Mi horario</a>
   </header>
 
-  <app-oferta-de-la-universidad (materiasElegidas)="usarOferta($event)" />
+  @if (avisoDeSugerencia(); as aviso) {
+    <p class="notice" role="status">{{ aviso }}</p>
+  }
+
+  <app-oferta-de-la-universidad [sugerencia]="sugerencia()" (materiasElegidas)="usarOferta($event)" />
 
   @if (asignaturas().length > 0) {
     <section class="card armar__preferencias" aria-labelledby="armar-preferencias">
