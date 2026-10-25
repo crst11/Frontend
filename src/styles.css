@@ -42,21 +42,31 @@
 }
 
 :root {
-  --color-primary: #0a7a55;
-  --color-primary-strong: #086447;
-  --color-primary-soft: #e6f7ef;
-  --color-primary-ring: #b9e6d1;
+  /* Valores del diseño de Figma (SCRUM-259). Los tokens de texto (`--color-danger`, `--color-warning-text`, `--color-muted`) están
+     oscurecidos a propósito para llegar a 4.5:1 (WCAG AA); los claros del Figma (`--color-danger-line`, `--color-warning`,
+     `--color-faint`) son solo para bordes, rellenos, franjas y marcadores de posición. `styles.spec.ts` mide los pares. */
+  --color-primary: #047857;
+  --color-primary-strong: #065f46;
+  --color-primary-soft: #ecfdf5;
+  --color-primary-ring: #a7f3d0;
   --color-ink: #111827;
-  --color-text: #374151;
+  --color-text: #4b5563;
   --color-muted: #6b7280;
-  --color-border: #e3e6ea;
+  --color-faint: #9ca3af;
+  --color-border: #e5e7eb;
   --color-surface: #ffffff;
-  --color-background: #f7f8fa;
-  --color-danger: #c62828;
-  --color-danger-soft: #fdecec;
-  --color-warning: #e08a1e;
+  --color-background: #f9fafb;
+  --color-chip: #f3f4f6;
+  --color-danger: #b91c1c;
+  --color-danger-line: #ef4444;
+  --color-danger-soft: #fef2f2;
+  --color-warning: #f59e0b;
+  --color-warning-text: #92400e;
+  --color-warning-soft: #fef6e7;
   --radius-field: 12px;
-  --radius-card: 16px;
+  --radius-card: 12px;
+  --radius-button: 14px;
+  --shadow-button: 0 8px 10px rgba(4, 120, 87, 0.15);
   --font-display: 'Outfit', 'Outfit Respaldo', 'Segoe UI', Arial, sans-serif;
   --font-body: 'DM Sans', 'DM Sans Respaldo', 'Segoe UI', Arial, sans-serif;
 }
@@ -201,7 +211,7 @@ a {
 }
 
 .field__input::placeholder {
-  color: #9ca3af;
+  color: var(--color-faint);
 }
 
 .field__input:focus {
