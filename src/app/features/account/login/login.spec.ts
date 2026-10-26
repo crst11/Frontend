@@ -116,6 +116,19 @@ describe('Login', () => {
     expect(campo.type).toBe('password');
   });
 
+  it('el enlace para recuperar la contraseña va justo bajo el campo de contraseña, no en el pie', () => {
+    const html = crear(vi.fn()).nativeElement as HTMLElement;
+
+    const enlace = html.querySelector('.login__forgot a');
+    expect(enlace?.textContent).toContain('¿Olvidaste tu contraseña?');
+    expect(enlace?.getAttribute('href')).toBe('/cuenta/recuperar');
+    expect(html.querySelector('.screen__footer')?.contains(enlace as Node)).toBe(false);
+    const contrasena = html.querySelector('#contrasena') as Node;
+    const dispositivo = html.querySelector('.checkbox') as Node;
+    expect(contrasena.compareDocumentPosition(enlace as Node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(dispositivo.compareDocumentPosition(enlace as Node) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
   it('si la cuenta está pendiente ofrece ir a verificar el correo', () => {
     const iniciar = vi.fn().mockReturnValue(
       throwError(() => ({ status: 403, error: { detail: 'Verifica tu correo institucional con el código' } })),

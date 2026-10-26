@@ -45,6 +45,8 @@ Nota de ajuste de la fase 1: el ojo de `password-input` ya cumple el diseño y n
 
 Nota de ajuste: la barra inferior y las celdas del código estaban previstas en la fase 1, pero dependen de la estructura de sus pantallas y del comportamiento de la verificación; se construyen en las fases 3 y 2 donde se usan.
 
+Nota de ajuste de la fase 2: el Figma pone «¿Olvidaste tu contraseña?» bajo el campo de contraseña, así que en «Entrar» el orden del teclado pasa a contraseña, ojo, enlace, casilla de dispositivo personal, botón (antes el enlace iba en el pie); y las casillas del código ganan `aria-invalid` cuando el código es incorrecto o incompleto, algo que el diseño necesita para mostrar el error y que ayuda al lector de pantalla. Son las dos excepciones a «`aria-*` y orden del teclado no cambian».
+
 ## Reglas de implementación
 
 - Se reutiliza lo que existe: clases globales de `styles.css` y componentes de `shared/`. No se crean componentes nuevos si una clase alcanza.
