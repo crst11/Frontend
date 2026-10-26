@@ -16,6 +16,7 @@ describe('ActualizadorDeLaApp (SCRUM-258)', () => {
   const confirmar = vi.fn();
   const informar = vi.fn();
   const problema = vi.fn();
+  const aviso = vi.fn();
   const recargar = vi.fn();
   let detener: (() => void) | null = null;
 
@@ -23,7 +24,7 @@ describe('ActualizadorDeLaApp (SCRUM-258)', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: SwUpdate, useValue: { isEnabled: habilitado, versionUpdates, unrecoverable, checkForUpdate, activateUpdate } },
-        { provide: NotifierService, useValue: { confirmar, informar, problema } },
+        { provide: NotifierService, useValue: { confirmar, informar, problema, aviso } },
         { provide: RECARGAR_LA_PAGINA, useValue: recargar },
       ],
     });
@@ -43,6 +44,8 @@ describe('ActualizadorDeLaApp (SCRUM-258)', () => {
     confirmar.mockReset().mockResolvedValue(true);
     informar.mockReset().mockResolvedValue(undefined);
     problema.mockReset().mockResolvedValue(undefined);
+    aviso.mockReset().mockResolvedValue(undefined);
+    sessionStorage.clear();
     recargar.mockReset();
   });
   afterEach(() => {
@@ -144,6 +147,51 @@ describe('ActualizadorDeLaApp (SCRUM-258)', () => {
 
     expect(problema).toHaveBeenCalledTimes(1);
     expect(recargar).not.toHaveBeenCalled();
+  });
+
+  it('si el service worker no contesta la activación, recarga igual en pocos segundos', async () => {
+    vi.useFakeTimers();
+    activateUpdate.mockReturnValue(new Promise(() => undefined));
+    iniciar();
+
+    versionUpdates.next(versionLista);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(recargar).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(recargar).toHaveBeenCalledTimes(1);
+    expect(problema).not.toHaveBeenCalled();
+  });
+
+  it('tras actualizar, la aplicación recién recargada avisa una sola vez que ya tiene la versión nueva', async () => {
+    iniciar();
+    versionUpdates.next(versionLista);
+    await asentar();
+    expect(recargar).toHaveBeenCalledTimes(1);
+    expect(aviso).not.toHaveBeenCalled();
+
+    detener?.();
+    TestBed.resetTestingModule();
+    iniciar();
+    expect(aviso).toHaveBeenCalledTimes(1);
+    expect(aviso.mock.calls[0][0]).toContain('versión nueva');
+
+    detener?.();
+    TestBed.resetTestingModule();
+    iniciar();
+    expect(aviso).toHaveBeenCalledTimes(1);
+  });
+
+  it('una recarga por falla del service worker no dice que se actualizó', async () => {
+    iniciar();
+    unrecoverable.next({ type: 'UNRECOVERABLE_STATE', reason: 'archivo dañado' });
+    await asentar();
+
+    detener?.();
+    TestBed.resetTestingModule();
+    iniciar();
+
+    expect(aviso).not.toHaveBeenCalled();
   });
 
   it('si el service worker queda en un estado irrecuperable lo explica y recarga', async () => {
