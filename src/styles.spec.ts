@@ -113,7 +113,8 @@ describe('Sistema visual: styles.css (SCRUM-259)', () => {
     const marcada = /\.checkbox input:checked\s*\{([^}]*)\}/.exec(estilos)?.[1] ?? '';
     expect(marcada).toMatch(/border-color:\s*var\(--color-primary\)/);
     expect(estilos).toMatch(/\.checkbox input:checked::after/);
-    expect(estilos).toMatch(/\.checkbox input:focus-visible/);
+    const foco = /\.checkbox input:focus-visible\s*\{([^}]*)\}/.exec(estilos)?.[1] ?? '';
+    expect(foco).toMatch(/outline:\s*[2-9]px solid var\(--color-primary\)/);
   });
 
   it('el pulsado y el spinner se apagan con movimiento reducido', () => {

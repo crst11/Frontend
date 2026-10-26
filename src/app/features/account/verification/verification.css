@@ -65,7 +65,7 @@
   border: 2px solid #10b981;
 }
 
-/* Activa: borde verde oscuro y el cursor del navegador. Va después de «completa» para ganarle cuando se vuelve a una casilla llena. */
+/* Activa: borde verde oscuro y el cursor del navegador. Le gana a «completa» por especificidad (clase + pseudoclase), no por el orden. */
 .verification__digit:focus {
   outline: none;
   border: 2px solid var(--color-primary);

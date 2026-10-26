@@ -161,6 +161,35 @@ describe('Verification', () => {
     expect(html.querySelector('[role="alert"]')?.textContent).toContain('6 dígitos');
   });
 
+  it('un error al reenviar no pinta de rojo ni marca inválidas las casillas del código', () => {
+    const reenviarCodigo = vi
+      .fn()
+      .mockReturnValue(throwError(() => ({ status: 429, error: { detail: 'Pediste demasiados códigos. Espera un momento' } })));
+    const fixture = crear({ reenviarCodigo });
+    const html = fixture.nativeElement as HTMLElement;
+
+    html.querySelector<HTMLButtonElement>('.verification__resend')!.click();
+    fixture.detectChanges();
+
+    expect(html.querySelector('[role="alert"]')?.textContent).toContain('demasiados códigos');
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(0);
+    expect(casillas(html).some((casilla) => casilla.hasAttribute('aria-invalid'))).toBe(false);
+  });
+
+  it('con el código incompleto marca las casillas inválidas, y al escribir de nuevo se limpian', () => {
+    const fixture = crear({ verificarCorreo: vi.fn() });
+    const html = fixture.nativeElement as HTMLElement;
+
+    teclear(html, '123');
+    enviar(fixture);
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(6);
+
+    teclear(html, '4');
+    fixture.detectChanges();
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(0);
+    expect(casillas(html).some((casilla) => casilla.hasAttribute('aria-invalid'))).toBe(false);
+  });
+
   it('si el correo con el código nuevo no sale, muestra el mensaje del servidor', () => {
     const detalle = 'No pudimos enviar el código a tu correo. Intenta de nuevo en unos minutos';
     const reenviarCodigo = vi

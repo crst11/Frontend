@@ -41,7 +41,7 @@
         <legend class="visually-hidden">Código de verificación</legend>
         @for (posicion of posiciones; track posicion) {
           <input #casilla class="verification__digit" [class.verification__digit--filled]="digitos()[posicion]"
-            [class.verification__digit--error]="!!error()" [attr.aria-invalid]="error() ? 'true' : null"
+            [class.verification__digit--error]="codigoInvalido()" [attr.aria-invalid]="codigoInvalido() ? 'true' : null"
             type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
             [attr.aria-label]="'Dígito ' + (posicion + 1) + ' de 6'"
             (input)="escribir(posicion, $event)" (keydown)="retroceder(posicion, $event)" (paste)="pegar(posicion, $event)" />
