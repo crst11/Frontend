@@ -123,3 +123,34 @@ describe('Sistema visual: styles.css (SCRUM-259)', () => {
     expect(reducido).toContain('.button:active');
   });
 });
+
+describe('Sistema visual: piezas de la fase 3 (SCRUM-263)', () => {
+  /** Las declaraciones de la regla de ese selector exacto, o '' si no existe. */
+  function regla(selector: string): string {
+    const sinComentarios = estilos.replace(/\/\*[\s\S]*?\*\//g, '');
+    const cuerpos = sinComentarios.split('}').filter((texto) => texto.split('{')[0].trim() === selector);
+    return cuerpos.map((texto) => texto.split('{')[1]).join(' ');
+  }
+
+  it('las insignias de estado de clase usan pares de colores que llegan a 4.5:1', () => {
+    expect(regla('.badge--live')).toMatch(/background:\s*var\(--color-primary-soft\)/);
+    expect(regla('.badge--soon')).toMatch(/background:\s*var\(--color-warning-soft\)/);
+    expect(regla('.badge--soon')).toMatch(/color:\s*var\(--color-warning-text\)/);
+    expect(regla('.badge--solid')).toMatch(/background:\s*var\(--color-primary\)/);
+    expect(regla('.badge--solid')).toMatch(/color:\s*#ffffff/);
+    expect(contraste(color('blanco'), color('--color-primary'))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('el progreso por pasos tiene segmentos y marcadores con su estado hecho', () => {
+    expect(regla('.steps__bar')).toMatch(/display:\s*flex/);
+    expect(regla('.steps__segment')).toMatch(/background:\s*var\(--color-border\)/);
+    expect(regla('.steps__segment--done')).toMatch(/background:\s*var\(--color-primary\)/);
+    expect(regla('.steps__marker')).toMatch(/border:\s*2px solid/);
+    expect(regla('.steps__marker--done')).toMatch(/background:\s*var\(--color-primary\)/);
+  });
+
+  it('los segmentos no dependen del movimiento: el relleno no se anima con movimiento reducido', () => {
+    const reducido = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(estilos)?.[1] ?? '';
+    expect(reducido).toContain('.steps__segment');
+  });
+});

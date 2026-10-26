@@ -83,6 +83,12 @@ describe('ImportCmad', () => {
     notificador.problema.mockReset().mockResolvedValue(undefined);
   });
 
+  it('la zona de carga lleva la insignia del reporte oficial (SCRUM-263)', () => {
+    const { html } = crear();
+
+    expect(html.querySelector('.import__zona .badge--solid')?.textContent?.trim()).toBe('Reporte oficial RF03');
+  });
+
   it('pide las asignaturas del semestre actual y deja elegida la que llega por la dirección', () => {
     const { html, misAsignaturas } = crear('8');
 

@@ -34,6 +34,9 @@ export class ImportAll {
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
 
+  /** Un segmento visual por paso: son solo dibujo, el porcentaje que se anuncia es el que manda el servidor. */
+  protected readonly segmentos = computed(() => Array.from({ length: this.avance()?.total ?? 0 }, (_, posicion) => posicion));
+
   protected readonly completo = computed(() => {
     const avance = this.avance();
     return !!avance && avance.porcentaje === 100;

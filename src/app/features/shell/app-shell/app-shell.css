@@ -1,5 +1,7 @@
 :host {
   display: block;
+  /* El espacio de la barra inferior, para que ella no tape el final de cada pantalla. */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
 }
 
 /* La barra se queda arriba al bajar: el menú y el avatar siempre están a un toque. */
@@ -203,4 +205,73 @@
   font-size: 13px;
   color: var(--color-muted);
   overflow-wrap: anywhere;
+}
+
+/* La barra inferior: las cuatro secciones de uso diario y «Más», siempre a un toque del pulgar. */
+.shell__inferior {
+  position: fixed;
+  bottom: 0;
+  left: max(0px, calc(50vw - 220px));
+  z-index: 25;
+  display: flex;
+  width: min(100%, 440px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+}
+
+.shell__tab {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 6px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.shell__tab:hover {
+  color: var(--color-ink);
+}
+
+.shell__tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -4px;
+  border-radius: 12px;
+}
+
+.shell__tab--activa {
+  color: var(--color-primary);
+}
+
+/* La pestaña activa no depende solo del color: lleva una barra arriba (WCAG 1.4.1). */
+.shell__tab--activa::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 32px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--color-primary);
+  transform: translateX(-50%);
+}
+
+.shell__tab-texto {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
