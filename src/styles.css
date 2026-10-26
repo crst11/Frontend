@@ -353,6 +353,10 @@ a {
   .button:active:not(:disabled) {
     transform: none;
   }
+
+  .steps__segment {
+    transition: none;
+  }
 }
 
 .button--primary {
@@ -451,6 +455,63 @@ a {
   border-color: transparent;
   background: var(--color-primary-soft);
   color: var(--color-primary-strong);
+}
+
+/* Insignias de estado de una clase (en curso, próxima) y la etiqueta oficial de un reporte (SCRUM-263). */
+.badge--live {
+  border-color: transparent;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-strong);
+}
+
+.badge--soon {
+  border-color: transparent;
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
+}
+
+.badge--solid {
+  border-color: transparent;
+  background: var(--color-primary);
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Progreso por pasos: una barra de segmentos y, en cada paso, un marcador numerado que se llena al terminarlo. */
+.steps__bar {
+  display: flex;
+  gap: 4px;
+}
+
+.steps__segment {
+  flex: 1 1 0;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-border);
+  transition: background-color 0.2s ease;
+}
+
+.steps__segment--done {
+  background: var(--color-primary);
+}
+
+.steps__marker {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.steps__marker--done {
+  background: var(--color-primary);
 }
 
 /* Avisos emergentes (SweetAlert2, ver core/feedback/notifier.service.ts): mismos colores y tipografías que la app.
