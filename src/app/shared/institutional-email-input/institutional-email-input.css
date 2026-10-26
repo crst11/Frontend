@@ -28,7 +28,8 @@
 
 .institutional-email--invalid:focus-within {
   border-color: var(--color-danger-line);
-  box-shadow: 0 0 0 1px var(--color-danger-line);
+  /* Anillo exterior: con el foco en un campo con error, el cambio se ve aunque el borde no cambie. */
+  box-shadow: 0 0 0 1px var(--color-danger-line), 0 0 0 4px rgba(239, 68, 68, 0.25);
 }
 
 .institutional-email__user {

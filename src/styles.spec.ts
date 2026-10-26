@@ -1,7 +1,11 @@
 // @ts-expect-error El constructor de pruebas entrega el archivo como texto con este atributo de importación; el tipo no lo conoce.
 import estilosCrudos from './styles.css' with { loader: 'text' };
 
+// @ts-expect-error Mismo atributo de importación que arriba.
+import estilosCorreoCrudos from './app/shared/institutional-email-input/institutional-email-input.css' with { loader: 'text' };
+
 const estilos = estilosCrudos as string;
+const estilosCorreo = estilosCorreoCrudos as string;
 
 /** Los tokens de `:root` como mapa nombre → valor. */
 function tokens(): Map<string, string> {
@@ -86,6 +90,22 @@ describe('Sistema visual: styles.css (SCRUM-259)', () => {
     const regla = /\n\.button\s*\{([^}]*)\}/.exec(estilos)?.[1] ?? '';
     expect(regla).toMatch(/min-height:\s*50px/);
     expect(regla).not.toMatch(/(^|[;\s])height:/);
+  });
+
+  it('los rellenos rojo y ámbar del Figma nunca se usan como color de texto', () => {
+    for (const css of [estilos, estilosCorreo]) {
+      const reglas = css.split('}').map((regla) => regla.split('{'));
+      const usos = reglas.filter(([, cuerpo]) => /(^|[;\s])color:\s*var\(--color-(danger-line|warning)\)/.test(cuerpo ?? ''));
+      expect(usos.map(([selector]) => selector.trim())).toEqual([]);
+    }
+  });
+
+  it('un campo con error y foco se distingue con un anillo exterior, en el campo y en el de correo', () => {
+    const anillo = /box-shadow:[^;]*0 0 0 [3-4]px/;
+    const campo = /\.field__input\[aria-invalid='true'\]:focus\s*\{([^}]*)\}/.exec(estilos)?.[1] ?? '';
+    const correo = /\.institutional-email--invalid:focus-within\s*\{([^}]*)\}/.exec(estilosCorreo)?.[1] ?? '';
+    expect(campo).toMatch(anillo);
+    expect(correo).toMatch(anillo);
   });
 
   it('el pulsado y el spinner se apagan con movimiento reducido', () => {
