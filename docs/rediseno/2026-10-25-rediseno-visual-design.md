@@ -49,6 +49,8 @@ Nota de ajuste de la fase 2: el Figma pone «¿Olvidaste tu contraseña?» bajo 
 
 Nota de ajuste de la fase 3: el Figma trae relojes y marcadores en las tarjetas de clase, y una sección de próximas entregas; no se construyen porque no hay datos ni función detrás (solo se pintan datos reales). La Brújula usa un medidor decorativo simple (el nivel sigue escrito) en lugar de los indicadores completos del Figma. La barra inferior reemplaza a la prevista en la fase 1, ya con las rutas reales: Inicio (`/inicio`), Horario (`/horario`), Notas (`/calificaciones/mis-notas`; el Figma dice «Calificaciones», pero a 360 px no cabe en su celda), Pendientes (`/pendientes`) y «Más», que abre el menú de siempre.
 
+Nota de la fase 4 (por grupos, cada uno confirmado por Cristian en producción): el grupo A (SCRUM-264) cubre Mi horario, Mis notas y Mis pendientes, las tres pantallas de la barra inferior. Solo se aplican las piezas ya aprobadas (franjas de estado, insignias ámbar y verde); no se rehace ninguna estructura. Quedan para los siguientes grupos: Armar mi horario, Simulador y Brújula, Avisos, Guía y Cuenta.
+
 ## Reglas de implementación
 
 - Se reutiliza lo que existe: clases globales de `styles.css` y componentes de `shared/`. No se crean componentes nuevos si una clase alcanza.
