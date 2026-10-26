@@ -132,6 +132,22 @@ describe('Verification', () => {
     expect(html.querySelector('[role="alert"]')?.textContent).toContain('Te quedan 4 intentos');
   });
 
+  it('marca las seis casillas como inválidas cuando el código es incorrecto y no antes', () => {
+    const verificarCorreo = vi
+      .fn()
+      .mockReturnValue(throwError(() => ({ error: { detail: 'El código es incorrecto. Te quedan 4 intentos' } })));
+    const fixture = crear({ verificarCorreo });
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(0);
+    expect(casillas(html).every((casilla) => !casilla.hasAttribute('aria-invalid'))).toBe(true);
+
+    teclear(html, '000000');
+    enviar(fixture);
+
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(6);
+    expect(casillas(html).every((casilla) => casilla.getAttribute('aria-invalid') === 'true')).toBe(true);
+  });
+
   it('no envía un código incompleto y descarta lo que no es número', () => {
     const verificarCorreo = vi.fn();
     const fixture = crear({ verificarCorreo });
@@ -143,6 +159,35 @@ describe('Verification', () => {
     expect(casillas(html).map((c) => c.value).join('')).toBe('12');
     expect(verificarCorreo).not.toHaveBeenCalled();
     expect(html.querySelector('[role="alert"]')?.textContent).toContain('6 dígitos');
+  });
+
+  it('un error al reenviar no pinta de rojo ni marca inválidas las casillas del código', () => {
+    const reenviarCodigo = vi
+      .fn()
+      .mockReturnValue(throwError(() => ({ status: 429, error: { detail: 'Pediste demasiados códigos. Espera un momento' } })));
+    const fixture = crear({ reenviarCodigo });
+    const html = fixture.nativeElement as HTMLElement;
+
+    html.querySelector<HTMLButtonElement>('.verification__resend')!.click();
+    fixture.detectChanges();
+
+    expect(html.querySelector('[role="alert"]')?.textContent).toContain('demasiados códigos');
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(0);
+    expect(casillas(html).some((casilla) => casilla.hasAttribute('aria-invalid'))).toBe(false);
+  });
+
+  it('con el código incompleto marca las casillas inválidas, y al escribir de nuevo se limpian', () => {
+    const fixture = crear({ verificarCorreo: vi.fn() });
+    const html = fixture.nativeElement as HTMLElement;
+
+    teclear(html, '123');
+    enviar(fixture);
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(6);
+
+    teclear(html, '4');
+    fixture.detectChanges();
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(0);
+    expect(casillas(html).some((casilla) => casilla.hasAttribute('aria-invalid'))).toBe(false);
   });
 
   it('si el correo con el código nuevo no sale, muestra el mensaje del servidor', () => {

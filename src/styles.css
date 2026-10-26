@@ -252,12 +252,49 @@ a {
   color: var(--color-text);
 }
 
+/* Casilla del Figma: caja de 20 px con borde que se vuelve verde al marcarla y la marca dibujada con CSS. El borde sin marcar usa
+   el gris de texto secundario porque el gris de bordes no llega a 3:1 contra el fondo (WCAG 1.4.11). */
 .checkbox input {
+  appearance: none;
+  display: grid;
   flex: none;
-  width: 22px;
-  height: 22px;
-  margin: 1px 0 0;
-  accent-color: var(--color-primary);
+  place-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  border: 2px solid var(--color-muted);
+  border-radius: 6px;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.checkbox input::after {
+  content: '';
+  display: none;
+  width: 5px;
+  height: 10px;
+  margin-top: -2px;
+  border: solid var(--color-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox input:checked {
+  border-color: var(--color-primary);
+}
+
+.checkbox input:checked::after {
+  display: block;
+}
+
+.checkbox input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.checkbox input:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 /* Botones (Figma): 50 px como mínimo, para que un texto largo o un zoom grande los agrande en lugar de recortarlos. */

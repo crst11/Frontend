@@ -108,6 +108,15 @@ describe('Sistema visual: styles.css (SCRUM-259)', () => {
     expect(correo).toMatch(anillo);
   });
 
+  it('la casilla marcada se dibuja con borde verde y marca propia, sin perder el foco visible', () => {
+    expect(estilos).toMatch(/\.checkbox input\s*\{[^}]*appearance:\s*none/);
+    const marcada = /\.checkbox input:checked\s*\{([^}]*)\}/.exec(estilos)?.[1] ?? '';
+    expect(marcada).toMatch(/border-color:\s*var\(--color-primary\)/);
+    expect(estilos).toMatch(/\.checkbox input:checked::after/);
+    const foco = /\.checkbox input:focus-visible\s*\{([^}]*)\}/.exec(estilos)?.[1] ?? '';
+    expect(foco).toMatch(/outline:\s*[2-9]px solid var\(--color-primary\)/);
+  });
+
   it('el pulsado y el spinner se apagan con movimiento reducido', () => {
     const reducido = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(estilos)?.[1] ?? '';
     expect(reducido).toContain('.button--loading::before');
