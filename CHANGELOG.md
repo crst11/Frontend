@@ -5,6 +5,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y 
 ## [Sin publicar]
 
 ### Corregido
+- **Ajustes de «Armar mi horario»** (SCRUM-262, pedido de Cristian al verlo en producción). El enlace de «Consultar Horarios» queda con el mismo margen lateral que el texto de la tarjeta (antes se salía y se veía más ancho). La franja «Actualizado hoy, hora» y la de «Sin conexión» se quedan en la columna de la app, como la barra de arriba, y ya no aparecen pegadas al borde izquierdo en pantallas anchas. En «Podrías adelantar» «Te cabe» pasa a «Te alcanza» y los mensajes de abajo dicen «te alcanza para la primera de la lista» y «todavía no te alcanza para ninguna».
 - **Actualizar la aplicación nunca queda sin efecto** (SCRUM-260). Al aceptar «Actualizar ahora», si el service worker no contesta en 5 segundos la aplicación se recarga de todos modos (la versión ya está descargada), y al volver a abrirse avisa una sola vez «Listo, ya tienes la versión nueva de CundiApp.» para que se note que se actualizó. La sesión se conserva: se recupera sola con la cookie de refresco, como antes.
 
 ### Cambiado

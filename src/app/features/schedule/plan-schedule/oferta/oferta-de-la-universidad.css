@@ -19,9 +19,11 @@
   gap: 12px;
 }
 
+/* La tarjeta de la guía no tiene relleno: este margen lateral es el de los pasos y la advertencia de abajo. */
 .oferta__enlace {
   margin: 0;
-  font-size: 0.9rem;
+  padding: 0 16px 8px;
+  font-size: 14px;
 }
 
 .oferta__enlace-vinculo {

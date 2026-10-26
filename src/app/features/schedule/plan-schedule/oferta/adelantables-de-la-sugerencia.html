@@ -15,7 +15,7 @@
           {{ item.materia.requisito }}.
           @if (item.faltan !== null) {
             <span class="badge" [class.badge--ok]="item.faltan === 0">
-              {{ item.faltan === 0 ? 'Te cabe' : (item.faltan === 1 ? 'Te falta ' : 'Te faltan ') + textoDeLosCreditos(item.faltan) }}
+              {{ item.faltan === 0 ? 'Te alcanza' : (item.faltan === 1 ? 'Te falta ' : 'Te faltan ') + textoDeLosCreditos(item.faltan) }}
             </span>
           }
         </li>
@@ -48,7 +48,7 @@
 
     <div class="adelantables__resultado" role="status" aria-live="polite">
       @if (sobran() === null) {
-        <p>Escribe tus créditos para ver cuáles te caben.</p>
+        <p>Escribe tus créditos para ver para cuáles te alcanza.</p>
       } @else if (sobran()! <= 0) {
         <p>
           Ahora no puedes adelantar ninguna: con las materias que llevas marcadas ({{ creditosMarcados() }} de
@@ -56,13 +56,13 @@
         </p>
       } @else if (lasQueCaben().length === 0) {
         <p>
-          Te {{ sobran() === 1 ? 'sobra 1 crédito' : 'sobran ' + sobran() + ' créditos' }}, pero ninguna cabe todavía.
+          Te {{ sobran() === 1 ? 'sobra 1 crédito' : 'sobran ' + sobran() + ' créditos' }}, pero todavía no te alcanza para ninguna.
           Tendrías que tener más créditos disponibles.
         </p>
       } @else {
         <p>
           Te {{ sobran() === 1 ? 'sobra 1 crédito' : 'sobran ' + sobran() + ' créditos' }}:
-          {{ lasQueCaben().length === 1 ? 'te cabe la primera de la lista' : 'te caben las primeras ' + lasQueCaben().length + ' de la lista' }}.
+          {{ lasQueCaben().length === 1 ? 'te alcanza para la primera de la lista' : 'te alcanza para las primeras ' + lasQueCaben().length + ' de la lista' }}.
         </p>
       }
     </div>
