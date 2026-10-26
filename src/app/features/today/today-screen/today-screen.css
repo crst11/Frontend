@@ -1,9 +1,31 @@
+.hoy__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hoy__saludo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
 .hoy__fecha {
   margin: 0;
   font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
   color: var(--color-ink);
+}
+
+/* Con saludo, la fecha pasa a ser la línea de apoyo (sigue siendo el título de la pantalla para el lector). */
+.hoy__saludo + .hoy__fecha {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-muted);
 }
 
 .hoy__fecha::first-letter,
@@ -50,6 +72,7 @@
   cursor: pointer;
   font: inherit;
   color: inherit;
+  border-left: 4px solid var(--color-border);
 }
 
 .hoy__clase:focus-visible {
@@ -67,10 +90,6 @@
 .hoy__estado {
   align-self: start;
   padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-strong);
-  font-size: 12px;
   font-weight: 600;
 }
 
@@ -98,15 +117,13 @@
   color: var(--color-muted);
 }
 
-/* La clase que va y la que sigue se destacan; lo que ya pasó se apaga. */
+/* La clase que va y la que sigue se distinguen por la franja de la izquierda y su insignia; lo que ya pasó se apaga. */
 .hoy__clase--en-curso {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
+  border-left-color: var(--color-primary);
 }
 
 .hoy__clase--proxima {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-ring);
+  border-left-color: var(--color-warning);
 }
 
 .hoy__clase--pasada {
@@ -198,6 +215,64 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.hoy__riesgo {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.hoy__riesgo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Medidor semicircular decorativo: el nivel ya está escrito al lado, así que no se anuncia. */
+.hoy__medidor {
+  flex: 0 0 auto;
+  --medidor-color: var(--color-faint);
+}
+
+.hoy__medidor--medio {
+  --medidor-color: var(--color-warning);
+}
+
+.hoy__medidor--alto {
+  --medidor-color: var(--color-danger-line);
+}
+
+.hoy__medidor-arco {
+  fill: none;
+  stroke: var(--medidor-color);
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.35;
+}
+
+.hoy__medidor-aguja {
+  stroke: var(--medidor-color);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform-origin: 24px 26px;
+  transform: rotate(30deg);
+}
+
+.hoy__medidor--alto .hoy__medidor-aguja {
+  transform: rotate(65deg);
+}
+
+.hoy__acompanamiento {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
 }
 
 .hoy__por-atender-nombre {

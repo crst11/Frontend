@@ -1,8 +1,10 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { NotifierService } from '../../../core/feedback/notifier.service';
+import { SessionService } from '../../../core/session/session.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
 import { EvaluacionRepository } from '../../../data-access/evaluacion.repository';
@@ -12,6 +14,8 @@ import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.r
 import { TodayScreen } from './today-screen';
 
 describe('TodayScreen', () => {
+  const cuentaDePrueba = signal<{ nombres: string; apellidos: string } | null>(null);
+
   const notificador = { exito: vi.fn(), problema: vi.fn(), aviso: vi.fn(), confirmar: vi.fn() };
 
   const ECUACIONES: ClaseDelDia = {
@@ -61,6 +65,7 @@ describe('TodayScreen', () => {
 
   beforeEach(() => {
     notificador.problema.mockReset().mockResolvedValue(undefined);
+    cuentaDePrueba.set(null);
     vi.useFakeTimers();
   });
 
@@ -93,6 +98,7 @@ describe('TodayScreen', () => {
           useValue: { miBrujula: vi.fn().mockReturnValue(of({ meta: 3, umbrales: { medio: 3.5, alto: 4.5 }, asignaturas: brujula })) },
         },
         { provide: NotifierService, useValue: notificador },
+        { provide: SessionService, useValue: { cuenta: cuentaDePrueba.asReadonly() } },
         {
           provide: EntornoDelNavegador,
           useValue: { esIos: () => false, estaInstalada: () => false, permisoDeNotificaciones: () => 'default', ...navegador },
@@ -435,6 +441,70 @@ describe('TodayScreen', () => {
       const { html } = crear(undefined, AVANCE_A_MEDIAS, sinEstructura(), [], [riesgo(1, 'Cálculo', 'alto')]);
 
       expect(html.querySelector<HTMLAnchorElement>('.hoy__brujula a')?.getAttribute('href')).toBe('/brujula');
+    });
+  });
+
+  describe('rediseño de la pantalla del día (SCRUM-263)', () => {
+    it('saluda por el primer nombre según la hora: de día, de tarde y de noche', () => {
+      cuentaDePrueba.set({ nombres: 'Cristian Andrés', apellidos: 'Pérez' });
+
+      vi.setSystemTime(new Date(2026, 9, 13, 8, 30));
+      expect(crear().html.querySelector('.hoy__saludo')?.textContent?.trim()).toBe('Buenos días, Cristian');
+      TestBed.resetTestingModule();
+
+      vi.setSystemTime(new Date(2026, 9, 13, 15, 0));
+      expect(crear().html.querySelector('.hoy__saludo')?.textContent?.trim()).toBe('Buenas tardes, Cristian');
+      TestBed.resetTestingModule();
+
+      vi.setSystemTime(new Date(2026, 9, 13, 21, 0));
+      expect(crear().html.querySelector('.hoy__saludo')?.textContent?.trim()).toBe('Buenas noches, Cristian');
+    });
+
+    it('sin saber el nombre no pone saludo y la fecha sigue siendo el título', () => {
+      const { html } = crear();
+
+      expect(html.querySelector('.hoy__saludo')).toBeNull();
+      expect(html.querySelector('h1.hoy__fecha')).not.toBeNull();
+    });
+
+    it('la insignia de la clase que va es verde y la de la que sigue es ámbar; la de la que ya terminó no se colorea', () => {
+      const miDia = vi.fn().mockReturnValue(of({
+        ...MARTES,
+        clases: [
+          { ...ECUACIONES, estado: 'pasada' },
+          { ...SISTEMAS, estado: 'en_curso' },
+          { ...SISTEMAS, idMatricula: 9, horaInicio: '19:00', horaFin: '21:00', estado: 'proxima' },
+        ],
+      }));
+      const { html } = crear(miDia);
+
+      expect(html.querySelector('.hoy__clase--en-curso .badge.badge--live')?.textContent).toContain('En curso');
+      expect(html.querySelector('.hoy__clase--proxima .badge.badge--soon')?.textContent).toContain('Sigue');
+      const pasada = html.querySelector('.hoy__clase--pasada .badge');
+      expect(pasada?.classList).not.toContain('badge--live');
+      expect(pasada?.classList).not.toContain('badge--soon');
+    });
+
+    it('cada asignatura en riesgo lleva un medidor decorativo del nivel y el bloque cierra con un mensaje de ánimo', () => {
+      const riesgo = (id: number, nombre: string, nivel: RiesgoDeAsignatura['nivel']): RiesgoDeAsignatura => ({
+        asignatura: { idMatricula: id, nombre } as RiesgoDeAsignatura['asignatura'],
+        nivel,
+        motivo: 'x',
+        explicacion: `Explicación de ${nombre}`,
+        notaRequerida: null,
+        maximoPosible: null,
+      });
+      const { html } = crear(undefined, AVANCE_A_MEDIAS, vi.fn().mockReturnValue(of({ categorias: [] })), [], [
+        riesgo(1, 'Cálculo', 'alto'),
+        riesgo(2, 'Redes', 'medio'),
+      ]);
+
+      const medidores = html.querySelectorAll('.hoy__brujula .hoy__medidor');
+      expect(medidores).toHaveLength(2);
+      expect(medidores[0].classList).toContain('hoy__medidor--alto');
+      expect(medidores[1].classList).toContain('hoy__medidor--medio');
+      expect(medidores[0].getAttribute('aria-hidden')).toBe('true');
+      expect(html.querySelector('.hoy__brujula .hoy__acompanamiento')?.textContent?.trim()).toBe('Paso a paso, estamos contigo.');
     });
   });
 });
