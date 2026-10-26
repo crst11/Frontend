@@ -6,6 +6,12 @@ import { NotifierService } from '../feedback/notifier.service';
 /** Cada cuánto se busca una versión nueva con la aplicación abierta. */
 const CADA_CUANTO_BUSCAR_EN_MS = 30 * 60_000;
 
+/** Cuánto se espera la respuesta del service worker al activar la versión nueva antes de recargar de todos modos. */
+const ESPERA_DE_LA_ACTIVACION_EN_MS = 5_000;
+
+/** Marca que deja la actualización en la sesión de la pestaña para avisar, ya recargada, que salió bien. */
+const MARCA_DE_ACTUALIZADA = 'cundiapp.actualizada';
+
 /** Recargar la página: va en un token para poder probar el servicio sin recargar el navegador de las pruebas. */
 export const RECARGAR_LA_PAGINA = new InjectionToken<() => void>('RECARGAR_LA_PAGINA', {
   providedIn: 'root',
@@ -35,6 +41,7 @@ export class ActualizadorDeLaApp {
       return () => undefined;
     }
     this.iniciado = true;
+    this.confirmarSiVieneDeActualizar();
     const suscripciones = [
       this.serviceWorker.versionUpdates
         .pipe(filter((evento): evento is VersionReadyEvent => evento.type === 'VERSION_READY'))
@@ -98,12 +105,50 @@ export class ActualizadorDeLaApp {
 
   private async actualizar(): Promise<void> {
     try {
-      await this.serviceWorker.activateUpdate();
+      await this.activarSinEsperarParaSiempre();
     } catch {
       await this.notificador.problema('No pudimos actualizar', 'Cierra la aplicación y vuelve a abrirla para ver la versión nueva.');
       return;
     }
+    this.dejarMarcaDeActualizada();
     this.recargar();
+  }
+
+  /**
+   * Activa la versión nueva, pero si el service worker no contesta en unos segundos sigue de todos modos: la versión ya está
+   * descargada y una recarga la toma, así que aceptar nunca queda sin efecto.
+   */
+  private async activarSinEsperarParaSiempre(): Promise<void> {
+    let temporizador: ReturnType<typeof setTimeout> | undefined;
+    const sinRespuesta = new Promise<void>((resolver) => {
+      temporizador = setTimeout(resolver, ESPERA_DE_LA_ACTIVACION_EN_MS);
+    });
+    try {
+      await Promise.race([this.serviceWorker.activateUpdate(), sinRespuesta]);
+    } finally {
+      clearTimeout(temporizador);
+    }
+  }
+
+  private dejarMarcaDeActualizada(): void {
+    try {
+      sessionStorage.setItem(MARCA_DE_ACTUALIZADA, '1');
+    } catch {
+      // Sin almacenamiento de sesión solo se pierde el aviso de «ya está actualizada»; la actualización sigue.
+    }
+  }
+
+  /** La aplicación acaba de recargarse por una actualización aceptada: lo confirma una sola vez. */
+  private confirmarSiVieneDeActualizar(): void {
+    try {
+      if (sessionStorage.getItem(MARCA_DE_ACTUALIZADA) === null) {
+        return;
+      }
+      sessionStorage.removeItem(MARCA_DE_ACTUALIZADA);
+    } catch {
+      return;
+    }
+    void this.notificador.aviso('Listo, ya tienes la versión nueva de CundiApp.');
   }
 
   /** El service worker quedó con archivos dañados o incompletos: sin recargar la aplicación no se arregla. */
