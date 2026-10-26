@@ -29,6 +29,7 @@
 }
 
 .pendientes__item {
+  border-left: 4px solid var(--color-border);
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: start;
@@ -91,17 +92,17 @@
 }
 
 .pendientes__situacion--urgente {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-strong);
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
 }
 
+/* La franja de la izquierda marca el estado, como en la pantalla de hoy; la etiqueta lo dice con palabras. */
 .pendientes__item--vencido {
-  border-color: var(--color-danger);
+  border-left-color: var(--color-danger);
 }
 
 .pendientes__item--urgente {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px var(--color-primary-ring);
+  border-left-color: var(--color-warning);
 }
 
 .pendientes__item--hecho {
