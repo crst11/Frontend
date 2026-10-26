@@ -506,13 +506,14 @@ a {
   border: 2px solid var(--color-primary);
   border-radius: 50%;
   background: var(--color-surface);
-  color: #ffffff;
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
 }
 
 .steps__marker--done {
   background: var(--color-primary);
+  color: #ffffff;
 }
 
 /* Avisos emergentes (SweetAlert2, ver core/feedback/notifier.service.ts): mismos colores y tipografías que la app.

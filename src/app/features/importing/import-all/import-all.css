@@ -12,19 +12,6 @@
   color: var(--color-ink);
 }
 
-.todo__barra {
-  height: 12px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--color-border);
-}
-
-.todo__relleno {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--color-primary);
-  transition: width 0.4s ease;
-}
 
 .todo__cifras {
   display: flex;
@@ -58,18 +45,8 @@
 }
 
 .todo__marca {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--color-border);
-  border-radius: 50%;
-  color: #fff;
-}
-
-.todo__paso--hecho .todo__marca {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
+  width: 24px;
+  height: 24px;
 }
 
 .todo__texto {
@@ -98,10 +75,4 @@
   min-height: 44px;
   padding-inline: 16px;
   white-space: nowrap;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .todo__relleno {
-    transition: none;
-  }
 }
