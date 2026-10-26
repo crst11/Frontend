@@ -4,6 +4,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
+import { SessionService } from '../../../core/session/session.service';
 import { AvanceDeInformacion, AvanceRepository } from '../../../data-access/avance.repository';
 import { BrujulaRepository, NivelDeRiesgo, RiesgoDeAsignatura } from '../../../data-access/brujula.repository';
 import { ClaseDelDia, DiaRepository, MiDia } from '../../../data-access/dia.repository';
@@ -61,6 +62,7 @@ const DIAS: Record<string, string> = {
 })
 export class TodayScreen {
   private readonly repositorio = inject(DiaRepository);
+  private readonly sesion = inject(SessionService);
   private readonly avances = inject(AvanceRepository);
   private readonly notificador = inject(NotifierService);
   private readonly pendientesRepositorio = inject(PendienteRepository);
@@ -206,6 +208,17 @@ export class TodayScreen {
 
   protected fechaDelPendiente(pendiente: Pendiente): string {
     return FORMATO_DE_PENDIENTE.format(new Date(pendiente.fechaLimite));
+  }
+
+  /** «Buenos días, Cristian»: el primer nombre de la cuenta y la franja de la hora del dispositivo. Sin cuenta cargada no hay saludo. */
+  protected saludo(): string {
+    const primerNombre = this.sesion.cuenta()?.nombres.trim().split(/\s+/)[0];
+    if (!primerNombre) {
+      return '';
+    }
+    const hora = new Date().getHours();
+    const franja = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+    return `${franja}, ${primerNombre}`;
   }
 
   protected lugarDe(clase: ClaseDelDia): string {
