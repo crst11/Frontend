@@ -47,6 +47,8 @@ Nota de ajuste: la barra inferior y las celdas del código estaban previstas en 
 
 Nota de ajuste de la fase 2: el Figma pone «¿Olvidaste tu contraseña?» bajo el campo de contraseña, así que en «Entrar» el orden del teclado pasa a contraseña, ojo, enlace, casilla de dispositivo personal, botón (antes el enlace iba en el pie); y las casillas del código ganan `aria-invalid` cuando el código es incorrecto o incompleto, algo que el diseño necesita para mostrar el error y que ayuda al lector de pantalla. Son las dos excepciones a «`aria-*` y orden del teclado no cambian».
 
+Nota de ajuste de la fase 3: el Figma trae relojes y marcadores en las tarjetas de clase, y una sección de próximas entregas; no se construyen porque no hay datos ni función detrás (solo se pintan datos reales). La Brújula usa un medidor decorativo simple (el nivel sigue escrito) en lugar de los indicadores completos del Figma. La barra inferior reemplaza a la prevista en la fase 1, ya con las rutas reales: Inicio (`/inicio`), Horario (`/horario`), Calificaciones (`/calificaciones/mis-notas`), Pendientes (`/pendientes`) y «Más», que abre el menú de siempre.
+
 ## Reglas de implementación
 
 - Se reutiliza lo que existe: clases globales de `styles.css` y componentes de `shared/`. No se crean componentes nuevos si una clase alcanza.
