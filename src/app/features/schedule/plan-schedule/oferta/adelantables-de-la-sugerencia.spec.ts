@@ -60,18 +60,18 @@ describe('AdelantablesDeLaSugerencia (SCRUM-257)', () => {
   it('con créditos que sobran marca las que le caben y dice cuántos le faltarían para las otras', () => {
     crear(ADELANTABLES, 17, 15);
 
-    expect(resultado()).toContain('Te sobran 2 créditos: te cabe la primera de la lista');
+    expect(resultado()).toContain('Te sobran 2 créditos: te alcanza para la primera de la lista');
     expect(filas()[0]).toContain('Gestión');
-    expect(filas()[0]).toContain('Te cabe');
+    expect(filas()[0]).toContain('Te alcanza');
     expect(filas()[1]).toContain('Física I');
     expect(filas()[1]).toContain('Te falta 1 crédito');
   });
 
-  it('con más créditos disponibles le caben todas', () => {
+  it('con más créditos disponibles le alcanza para todas', () => {
     crear(ADELANTABLES, 17, 14);
 
-    expect(resultado()).toContain('Te sobran 3 créditos: te caben las primeras 2 de la lista');
-    expect(filas().every((fila) => fila.includes('Te cabe'))).toBe(true);
+    expect(resultado()).toContain('Te sobran 3 créditos: te alcanza para las primeras 2 de la lista');
+    expect(filas().every((fila) => fila.includes('Te alcanza'))).toBe(true);
   });
 
   it('pone primero las que le caben en lo que sobra, aunque la lista llegue en otro orden', () => {
@@ -88,7 +88,7 @@ describe('AdelantablesDeLaSugerencia (SCRUM-257)', () => {
 
     expect(resultado()).toContain('Te sobran 2 créditos');
     expect(filas()[0]).toContain('Gestión');
-    expect(filas()[0]).toContain('Te cabe');
+    expect(filas()[0]).toContain('Te alcanza');
     expect(pantalla().querySelector('.adelantables__restaurar')).not.toBeNull();
 
     pantalla().querySelector<HTMLButtonElement>('.adelantables__restaurar')!.click();
@@ -98,10 +98,10 @@ describe('AdelantablesDeLaSugerencia (SCRUM-257)', () => {
     expect(resultado()).toContain('Ahora no puedes adelantar ninguna');
   });
 
-  it('dice que ninguna le cabe todavía cuando sobra menos de lo que pide cada una', () => {
+  it('dice que no le alcanza para ninguna todavía cuando sobra menos de lo que pide cada una', () => {
     crear(ADELANTABLES, 17, 16);
 
-    expect(resultado()).toContain('Te sobra 1 crédito, pero ninguna cabe todavía');
+    expect(resultado()).toContain('Te sobra 1 crédito, pero todavía no te alcanza para ninguna');
     expect(resultado()).toContain('Tendrías que tener más créditos disponibles');
     expect(filas()[0]).toContain('Te falta 1 crédito');
   });
@@ -112,7 +112,7 @@ describe('AdelantablesDeLaSugerencia (SCRUM-257)', () => {
     escribir('');
     expect(resultado()).toContain('Escribe tus créditos');
     expect(filas()).toHaveLength(2);
-    expect(texto()).not.toContain('Te cabe');
+    expect(texto()).not.toContain('Te alcanza');
 
     escribir('2.5');
     expect(resultado()).toContain('Escribe tus créditos');
