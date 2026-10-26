@@ -232,7 +232,7 @@
         <ul class="evaluacion__lista">
           @for (asignatura of asignaturas(); track asignatura.idMatricula) {
             <li>
-              <button class="card evaluacion__asignatura" type="button" (click)="elegir(asignatura)">
+              <button class="card evaluacion__asignatura" [class.evaluacion__asignatura--lista]="asignatura.tieneEstructura" type="button" (click)="elegir(asignatura)">
                 <span class="evaluacion__asignatura-nombre">{{ asignatura.nombre }}</span>
                 <span class="field__hint">{{ asignatura.codigoPeriodo }} · {{ asignatura.creditos }} créditos</span>
                 @if (asignatura.tieneEstructura) {
@@ -245,7 +245,7 @@
                     }
                   </span>
                 } @else {
-                  <span class="badge">Sin configurar</span>
+                  <span class="badge badge--soon">Sin configurar</span>
                 }
               </button>
             </li>

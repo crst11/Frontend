@@ -101,14 +101,22 @@
   gap: 4px;
   width: 100%;
   border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-warning);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
+/* Ya configurada: la franja pasa a verde. La que falta por configurar queda ámbar y con su insignia escrita. */
+.evaluacion__asignatura--lista {
+  border-left-color: var(--color-primary);
+}
+
 .evaluacion__asignatura:hover,
 .evaluacion__asignatura:focus-visible {
-  border-color: var(--color-primary);
+  border-top-color: var(--color-primary);
+  border-right-color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 .evaluacion__asignatura-nombre {
