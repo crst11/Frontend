@@ -41,6 +41,8 @@ Cada fase: tarea en Jira (Sprint 8), rama `feature/SCRUM-XX-…` desde `desarrol
 3. **Importar y día.** `importing` (zona de arrastre punteada con insignia «REPORTE OFICIAL RF03» y progreso por pasos), `today` (saludo y avatar con iniciales, tarjetas de clases con franja de color e insignia de estado, próximas entregas, Brújula con indicadores semicirculares y mensaje de acompañamiento) y la barra inferior de `shell/app-shell`.
 4. **Resto.** `schedule`, `grading`, `tasks`, `simulator`, `compass`, `guide`, `notifications` y `account` (cuenta, plan, recuperación): sin diseño en Figma, se adaptan con los componentes de las fases 1 a 3 y Cristian confirma cada grupo antes de cerrarlo.
 
+Nota de ajuste de la fase 1: el ojo de `password-input` ya cumple el diseño y no cambia, y el estado «hecho» del checklist llega con la pantalla que lo muestra (fase 3), porque `pending-activities` hoy solo lista pendientes y mostrarlo exige tocar su plantilla. Los tokens de ámbar (`--color-warning*`) quedan definidos y los estrenan las fases 3 y 4.
+
 Nota de ajuste: la barra inferior y las celdas del código estaban previstas en la fase 1, pero dependen de la estructura de sus pantallas y del comportamiento de la verificación; se construyen en las fases 3 y 2 donde se usan.
 
 ## Reglas de implementación
