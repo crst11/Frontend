@@ -35,9 +35,12 @@ export class Verification {
 
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** Solo el código mal escrito o incompleto pinta las casillas de rojo; un error de correo o de reenvío no es culpa de ellas. */
+  protected readonly codigoInvalido = signal(false);
   protected readonly verificada = signal(false);
 
   protected escribir(posicion: number, evento: Event): void {
+    this.codigoInvalido.set(false);
     const campo = evento.target as HTMLInputElement;
     const soloNumeros = campo.value.replace(/\D/g, '');
     if (soloNumeros.length > 1) {
@@ -53,6 +56,7 @@ export class Verification {
 
   protected retroceder(posicion: number, evento: KeyboardEvent): void {
     if (evento.key === 'Backspace' && !this.digitos()[posicion] && posicion > 0) {
+      this.codigoInvalido.set(false);
       this.fijar(posicion - 1, '');
       this.enfocar(posicion - 1);
     }
@@ -60,6 +64,7 @@ export class Verification {
 
   protected pegar(posicion: number, evento: ClipboardEvent): void {
     evento.preventDefault();
+    this.codigoInvalido.set(false);
     this.repartir((evento.clipboardData?.getData('text') ?? '').replace(/\D/g, ''), posicion);
   }
 
@@ -67,11 +72,13 @@ export class Verification {
     if (this.formulario.invalid || !this.codigoCompleto()) {
       this.formulario.markAllAsTouched();
       this.error.set('Escribe los 6 dígitos del código.');
+      this.codigoInvalido.set(!this.codigoCompleto());
       return;
     }
 
     this.enviando.set(true);
     this.error.set(null);
+    this.codigoInvalido.set(false);
     this.repositorio.verificarCorreo(this.formulario.controls.correo.value, this.digitos().join('')).subscribe({
       next: () => {
         this.enviando.set(false);
@@ -87,6 +94,7 @@ export class Verification {
           return;
         }
         this.error.set(err.error?.detail ?? 'No se pudo verificar el código. Intenta de nuevo.');
+        this.codigoInvalido.set(true);
       },
     });
   }
