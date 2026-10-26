@@ -1,5 +1,8 @@
+/* En la misma columna que la barra de arriba (440 px): en pantallas anchas no se queda pegada al borde. */
 :host {
   display: block;
+  max-width: 440px;
+  margin: 0 auto;
 }
 
 /* Sin nada que decir, la franja no ocupa lugar. */
