@@ -132,6 +132,22 @@ describe('Verification', () => {
     expect(html.querySelector('[role="alert"]')?.textContent).toContain('Te quedan 4 intentos');
   });
 
+  it('marca las seis casillas como inválidas cuando el código es incorrecto y no antes', () => {
+    const verificarCorreo = vi
+      .fn()
+      .mockReturnValue(throwError(() => ({ error: { detail: 'El código es incorrecto. Te quedan 4 intentos' } })));
+    const fixture = crear({ verificarCorreo });
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(0);
+    expect(casillas(html).every((casilla) => !casilla.hasAttribute('aria-invalid'))).toBe(true);
+
+    teclear(html, '000000');
+    enviar(fixture);
+
+    expect(html.querySelectorAll('.verification__digit--error').length).toBe(6);
+    expect(casillas(html).every((casilla) => casilla.getAttribute('aria-invalid') === 'true')).toBe(true);
+  });
+
   it('no envía un código incompleto y descarta lo que no es número', () => {
     const verificarCorreo = vi.fn();
     const fixture = crear({ verificarCorreo });

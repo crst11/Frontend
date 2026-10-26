@@ -21,10 +21,10 @@
 .verification__email {
   padding: 6px 12px;
   border-radius: 8px;
-  background: #e8eaee;
+  background: var(--color-border);
   color: var(--color-ink);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   word-break: break-all;
 }
 
@@ -36,29 +36,50 @@
   display: flex;
   justify-content: center;
   gap: 8px;
+  /* Un fieldset no baja de su ancho mínimo de contenido: sin esto las seis casillas se salen del margen en 360 px. */
+  min-width: 0;
   margin: 8px 0 0;
   padding: 0;
   border: none;
 }
 
+/* Las seis casillas se reparten el ancho (hasta 48 px cada una) para que quepan en 360 px sin salirse de la pantalla. */
 .verification__digit {
-  width: 48px;
-  height: 56px;
+  flex: 1 1 0;
   min-width: 0;
+  max-width: 48px;
+  min-height: 56px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-field);
   background: var(--color-surface);
   color: var(--color-ink);
+  caret-color: var(--color-primary);
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   text-align: center;
 }
 
-.verification__digit:focus,
+/* Completa: borde verde claro del Figma. */
 .verification__digit--filled {
+  border: 2px solid #10b981;
+}
+
+/* Activa: borde verde oscuro y el cursor del navegador. Va después de «completa» para ganarle cuando se vuelve a una casilla llena. */
+.verification__digit:focus {
   outline: none;
-  border: 2px solid #2bb07a;
+  border: 2px solid var(--color-primary);
+}
+
+/* Error: fondo rojo muy suave y borde rojo; con el foco suma el anillo exterior para que se vea con el teclado. */
+.verification__digit--error {
+  border: 1px solid rgba(239, 68, 68, 0.65);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.verification__digit--error:focus {
+  border: 2px solid var(--color-danger-line);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.25);
 }
 
 .verification__resend {
