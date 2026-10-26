@@ -106,6 +106,25 @@ describe('ImportReport', () => {
     fixture.detectChanges();
   }
 
+  describe('zona de carga (SCRUM-263)', () => {
+    it('lleva la insignia del reporte oficial dentro de la zona', () => {
+      const { html } = crear();
+
+      const insignia = html.querySelector('.import__zona .badge--solid');
+      expect(insignia?.textContent?.trim()).toBe('Reporte oficial RF03');
+    });
+
+    it('ya con el análisis a la vista no hay zona ni insignia', async () => {
+      const { fixture, html } = crear();
+      subir(fixture, html);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(html.querySelector('.import__zona')).toBeNull();
+      expect(html.querySelector('.badge--solid')).toBeNull();
+    });
+  });
+
   describe('volver (SCRUM-82)', () => {
     function volver(html: HTMLElement): HTMLAnchorElement {
       return html.querySelector<HTMLAnchorElement>('.top-bar a.icon-button')!;

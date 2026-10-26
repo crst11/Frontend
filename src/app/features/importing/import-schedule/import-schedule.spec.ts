@@ -94,6 +94,12 @@ describe('ImportSchedule', () => {
     fixture.detectChanges();
   }
 
+  it('la zona de carga lleva la insignia del reporte oficial (SCRUM-263)', () => {
+    const { html } = crear();
+
+    expect(html.querySelector('.import__zona .badge--solid')?.textContent?.trim()).toBe('Reporte oficial RF03');
+  });
+
   it('empieza pidiendo el Reporte de Horario y aclara que el de notas es otro', () => {
     const { html } = crear();
 

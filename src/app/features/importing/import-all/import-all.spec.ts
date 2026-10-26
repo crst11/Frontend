@@ -46,8 +46,27 @@ describe('ImportAll', () => {
     expect(barra.getAttribute('aria-valuenow')).toBe('50');
     expect(barra.getAttribute('aria-valuemax')).toBe('100');
     expect(barra.getAttribute('aria-valuetext')).toBe('50 por ciento, 2 de 4 pasos');
-    expect((barra.firstElementChild as HTMLElement).style.width).toBe('50%');
     expect(html.querySelector('.todo__cifras')?.textContent).toContain('2 de 4 pasos');
+  });
+
+  it('la barra se parte en un segmento por paso y llena tantos como pasos hechos (SCRUM-263)', () => {
+    const { html } = crear();
+
+    const segmentos = html.querySelectorAll('[role="progressbar"] .steps__segment');
+    expect(segmentos).toHaveLength(4);
+    expect(html.querySelectorAll('[role="progressbar"] .steps__segment--done')).toHaveLength(2);
+    expect(segmentos[0].getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('cada paso lleva su marcador: numerado si falta y lleno con la marca si ya está (SCRUM-263)', () => {
+    const { html } = crear();
+
+    const marcadores = html.querySelectorAll('.todo__paso .steps__marker');
+    expect(marcadores).toHaveLength(4);
+    expect(marcadores[0].classList).toContain('steps__marker--done');
+    expect(marcadores[0].querySelector('svg')).not.toBeNull();
+    expect(marcadores[2].classList).not.toContain('steps__marker--done');
+    expect(marcadores[2].textContent?.trim()).toBe('3');
   });
 
   it('lista los dos reportes y una materia por paso, con lo que ya está y lo que falta', () => {

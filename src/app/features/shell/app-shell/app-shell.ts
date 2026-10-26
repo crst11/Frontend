@@ -37,6 +37,7 @@ export class AppShell {
   private readonly documento = inject(DOCUMENT);
   private readonly botonDelMenu = viewChild<ElementRef<HTMLButtonElement>>('botonDelMenu');
   private readonly botonDelAvatar = viewChild<ElementRef<HTMLButtonElement>>('botonDelAvatar');
+  private readonly botonMas = viewChild<ElementRef<HTMLButtonElement>>('botonMas');
 
   protected readonly secciones: Seccion[] = [
     { ruta: '/inicio', texto: 'Hoy' },
@@ -53,6 +54,8 @@ export class AppShell {
   ];
 
   protected readonly menuAbierto = signal(false);
+  /** Desde dónde se abrió el menú, para devolver el foco al mismo botón al cerrarlo. */
+  private origenDelMenu: 'barra' | 'inferior' = 'barra';
   protected readonly perfilAbierto = signal(false);
 
   protected readonly titulo = toSignal(
@@ -110,7 +113,8 @@ export class AppShell {
     return titulo;
   }
 
-  protected alternarMenu(): void {
+  protected alternarMenu(origen: 'barra' | 'inferior' = 'barra'): void {
+    this.origenDelMenu = origen;
     this.perfilAbierto.set(false);
     this.menuAbierto.update((abierto) => !abierto);
     if (this.menuAbierto()) {
@@ -134,7 +138,7 @@ export class AppShell {
     this.menuAbierto.set(false);
     this.perfilAbierto.set(false);
     if (eraMenu) {
-      this.botonDelMenu()?.nativeElement.focus();
+      (this.origenDelMenu === 'inferior' ? this.botonMas() : this.botonDelMenu())?.nativeElement.focus();
     } else if (eraPerfil) {
       this.botonDelAvatar()?.nativeElement.focus();
     }

@@ -5,7 +5,12 @@
     <p class="alert" role="alert">{{ mensaje }}</p>
     <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
   } @else if (dia(); as hoy) {
-    <h1 class="hoy__fecha">{{ fechaLarga(hoy.fecha, hoy.dia) }}</h1>
+    <header class="hoy__cabecera">
+      @if (saludo(); as texto) {
+        <p class="hoy__saludo">{{ texto }}</p>
+      }
+      <h1 class="hoy__fecha">{{ fechaLarga(hoy.fecha, hoy.dia) }}</h1>
+    </header>
 
     @if (avance(); as progreso) {
       @if (progreso.porcentaje < 100) {
@@ -55,15 +60,31 @@
         <h2 class="hoy__titulo">Brújula Académica</h2>
         <ul class="hoy__por-atender-lista">
           @for (riesgo of enRiesgo(); track riesgo.asignatura.idMatricula) {
-            <li class="hoy__por-atender-item">
-              <span class="hoy__por-atender-nombre">{{ riesgo.asignatura.nombre }}</span>
-              <span class="hoy__por-atender-datos">
-                <strong [class.hoy__por-atender-vencido]="riesgo.nivel === 'alto'">{{ etiquetaDeRiesgo(riesgo.nivel) }}</strong>
-                <span>{{ riesgo.explicacion }}</span>
+            <li class="hoy__por-atender-item hoy__riesgo">
+              <svg
+                class="hoy__medidor"
+                [class.hoy__medidor--alto]="riesgo.nivel === 'alto'"
+                [class.hoy__medidor--medio]="riesgo.nivel === 'medio'"
+                width="48"
+                height="28"
+                viewBox="0 0 48 28"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path class="hoy__medidor-arco" d="M4 26a20 20 0 0 1 40 0" />
+                <line class="hoy__medidor-aguja" x1="24" y1="26" x2="24" y2="10" />
+              </svg>
+              <span class="hoy__riesgo-texto">
+                <span class="hoy__por-atender-nombre">{{ riesgo.asignatura.nombre }}</span>
+                <span class="hoy__por-atender-datos">
+                  <strong [class.hoy__por-atender-vencido]="riesgo.nivel === 'alto'">{{ etiquetaDeRiesgo(riesgo.nivel) }}</strong>
+                  <span>{{ riesgo.explicacion }}</span>
+                </span>
               </span>
             </li>
           }
         </ul>
+        <p class="hoy__acompanamiento">Paso a paso, estamos contigo.</p>
         <a class="button button--outline" routerLink="/brujula">Ver mi Brújula</a>
       </section>
     }
@@ -106,7 +127,7 @@
               >
                 <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
                 @if (etiquetaDeEstado(clase); as etiqueta) {
-                  <span class="hoy__estado">{{ etiqueta }}</span>
+                  <span class="badge hoy__estado" [class.badge--live]="clase.estado === 'en_curso'" [class.badge--soon]="clase.estado === 'proxima'">{{ etiqueta }}</span>
                 }
                 <span class="hoy__asignatura">{{ clase.asignatura }}</span>
                 @if (lugarDe(clase); as lugar) {
