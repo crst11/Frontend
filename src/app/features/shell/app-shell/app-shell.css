@@ -221,6 +221,7 @@
 }
 
 .shell__tab {
+  position: relative;
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
@@ -253,4 +254,24 @@
 
 .shell__tab--activa {
   color: var(--color-primary);
+}
+
+/* La pestaña activa no depende solo del color: lleva una barra arriba (WCAG 1.4.1). */
+.shell__tab--activa::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 32px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--color-primary);
+  transform: translateX(-50%);
+}
+
+.shell__tab-texto {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

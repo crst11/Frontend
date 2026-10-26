@@ -263,7 +263,7 @@ describe('AppShell', () => {
       const { html } = await crear();
 
       const enlaces = Array.from(barra(html)!.querySelectorAll('a'));
-      expect(enlaces.map((enlace) => enlace.textContent?.trim())).toEqual(['Inicio', 'Horario', 'Calificaciones', 'Pendientes']);
+      expect(enlaces.map((enlace) => enlace.textContent?.trim())).toEqual(['Inicio', 'Horario', 'Notas', 'Pendientes']);
       expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
         '/inicio',
         '/horario',

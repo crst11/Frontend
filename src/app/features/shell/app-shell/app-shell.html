@@ -76,19 +76,19 @@
 <nav class="shell__inferior" aria-label="Navegación principal">
   <a class="shell__tab" routerLink="/inicio" routerLinkActive="shell__tab--activa" ariaCurrentWhenActive="page">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8" /><path d="M5 10v10h14V10" /></svg>
-    Inicio
+    <span class="shell__tab-texto">Inicio</span>
   </a>
   <a class="shell__tab" routerLink="/horario" routerLinkActive="shell__tab--activa" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>
-    Horario
+    <span class="shell__tab-texto">Horario</span>
   </a>
   <a class="shell__tab" routerLink="/calificaciones/mis-notas" routerLinkActive="shell__tab--activa" ariaCurrentWhenActive="page">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" /></svg>
-    Calificaciones
+    <span class="shell__tab-texto">Notas</span>
   </a>
   <a class="shell__tab" routerLink="/pendientes" routerLinkActive="shell__tab--activa" ariaCurrentWhenActive="page">
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8" /><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9" /></svg>
-    Pendientes
+    <span class="shell__tab-texto">Pendientes</span>
   </a>
   <button
     #botonMas
@@ -99,6 +99,6 @@
     (click)="alternarMenu('inferior')"
   >
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>
-    Más
+    <span class="shell__tab-texto">Más</span>
   </button>
 </nav>

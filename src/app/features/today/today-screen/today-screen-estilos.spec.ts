@@ -27,4 +27,9 @@ describe('estilos de la pantalla del día (SCRUM-263)', () => {
     expect(regla('.hoy__medidor--alto')).toMatch(/--medidor-color:\s*var\(--color-danger-line\)/);
     expect(regla('.hoy__medidor--medio')).toMatch(/--medidor-color:\s*var\(--color-warning\)/);
   });
+
+  it('la aguja del medidor marca un ángulo distinto por nivel: medio al centro, alto hacia el extremo', () => {
+    expect(regla('.hoy__medidor-aguja')).toMatch(/transform:\s*rotate\(0deg\)/);
+    expect(regla('.hoy__medidor--alto .hoy__medidor-aguja')).toMatch(/transform:\s*rotate\(60deg\)/);
+  });
 });

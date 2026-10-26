@@ -13,7 +13,7 @@ function regla(selector: string): string {
 describe('estilos de la zona de carga (SCRUM-263)', () => {
   it('es un recuadro punteado verde sobre fondo suave, como en el diseño', () => {
     const zona = regla('.import__zona');
-    expect(zona).toMatch(/border:\s*2px dashed/);
+    expect(zona).toMatch(/border:\s*2px dashed var\(--color-primary\)/);
     expect(zona).toMatch(/background:\s*var\(--color-primary-soft\)/);
   });
 

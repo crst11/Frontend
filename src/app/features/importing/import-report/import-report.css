@@ -33,7 +33,7 @@
   align-items: center;
   gap: 10px;
   padding: 32px 20px;
-  border: 2px dashed var(--color-primary-line);
+  border: 2px dashed var(--color-primary);
   border-radius: 20px;
   background: var(--color-primary-soft);
   text-align: center;
