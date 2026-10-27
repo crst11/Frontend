@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Cargando } from '../../../shared/cargando/cargando';
 import {
   AsignaturaCursada,
   HistorialRepository,
@@ -16,7 +17,7 @@ const ORDINALES = ['1er', '2do', '3er', '4to', '5to', '6to', '7mo', '8vo', '9no'
  */
 @Component({
   selector: 'app-academic-record',
-  imports: [RouterLink],
+  imports: [Cargando, RouterLink],
   templateUrl: './academic-record.html',
   styleUrl: './academic-record.css',
 })

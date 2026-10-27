@@ -141,7 +141,7 @@
     }
 
     @if (cargando()) {
-      <p class="subtitle">Buscando tu horario…</p>
+      <app-cargando mensaje="Buscando tu horario…" />
     } @else {
       <div class="chips" role="group" aria-label="Cómo quieres verlo">
         <button class="chip" type="button" [class.chip--active]="vista() === 'dia'" [attr.aria-pressed]="vista() === 'dia'" (click)="cambiarVista('dia')">Día</button>

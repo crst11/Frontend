@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { NotifierService } from '../../../core/feedback/notifier.service';
+import { Cargando } from '../../../shared/cargando/cargando';
 import {
   Asignatura,
   PerfilAcademico,
@@ -20,6 +21,7 @@ interface CampoDeAprendizaje {
  * período por período. El agrupado y los créditos vienen hechos del backend; aquí solo se muestran.
  */
 @Component({
+  imports: [Cargando],
   selector: 'app-study-plan',
   templateUrl: './study-plan.html',
   styleUrl: './study-plan.css',

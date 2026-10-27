@@ -165,7 +165,7 @@
     </p>
 
     @if (cargando()) {
-      <p class="subtitle">Buscando tus asignaturas…</p>
+      <app-cargando mensaje="Buscando tus asignaturas…" />
     } @else if (asignaturas().length === 0) {
       <p class="notice">
         No tienes asignaturas en curso en CundiApp. Importa tu Reporte de Horario y las del semestre aparecerán aquí.

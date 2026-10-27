@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { AvanceDeInformacion, AvanceRepository, PasoDeAvance } from '../../../data-access/avance.repository';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 /** A dónde lleva cada paso. Todas las pantallas de importar vuelven aquí gracias al origen. */
 const DESTINOS: Record<string, string> = {
@@ -22,7 +23,7 @@ const DESTINOS: Record<string, string> = {
  */
 @Component({
   selector: 'app-import-all',
-  imports: [RouterLink],
+  imports: [Cargando, RouterLink],
   templateUrl: './import-all.html',
   styleUrl: './import-all.css',
 })

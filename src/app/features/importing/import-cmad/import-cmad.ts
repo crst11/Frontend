@@ -14,6 +14,7 @@ import {
 import { SoltarArchivo } from '../../../shared/file-drop/file-drop';
 import { origenDeLaImportacion } from '../origen-de-la-importacion';
 import { extraerHtmlDeMhtml } from './mhtml';
+import { Cargando } from '../../../shared/cargando/cargando';
 import {
   TablaDelCmad,
   TablaDelCmadNoLegible,
@@ -64,7 +65,7 @@ const TOLERANCIA_DEL_TOTAL = 0.06;
  */
 @Component({
   selector: 'app-import-cmad',
-  imports: [RouterLink, SoltarArchivo],
+  imports: [Cargando, RouterLink, SoltarArchivo],
   templateUrl: './import-cmad.html',
   styleUrls: ['../import-report/import-report.css', './import-cmad.css'],
 })
