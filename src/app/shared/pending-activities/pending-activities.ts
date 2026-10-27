@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { CategoriaDeEvaluacion, EvaluacionRepository } from '../../data-access/evaluacion.repository';
+import { Cargando } from '../cargando/cargando';
 
 /** Una categoría con solo las actividades que todavía no tienen nota. */
 interface CategoriaPendiente {
@@ -21,7 +22,7 @@ const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 's
  */
 @Component({
   selector: 'app-pending-activities',
-  imports: [RouterLink],
+  imports: [Cargando, RouterLink],
   templateUrl: './pending-activities.html',
   styleUrl: './pending-activities.css',
 })

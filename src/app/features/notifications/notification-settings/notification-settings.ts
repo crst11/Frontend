@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { DispositivoConAvisos, DispositivoRepository } from '../../../data-access/dispositivo.repository';
+import { Cargando } from '../../../shared/cargando/cargando';
 import {
   PreferenciasDeAvisos,
   PreferenciasDeAvisosRepository,
@@ -28,7 +29,7 @@ const FORMATO_DE_FECHA = new Intl.DateTimeFormat('es-CO', {
  */
 @Component({
   selector: 'app-notification-settings',
-  imports: [RouterLink],
+  imports: [Cargando, RouterLink],
   templateUrl: './notification-settings.html',
   styleUrl: './notification-settings.css',
 })

@@ -58,7 +58,7 @@
 
   <div class="guide__results" aria-live="polite" #resultados>
     @if (cargando()) {
-      <p class="subtitle">Buscando…</p>
+      <app-cargando mensaje="Buscando…" />
     } @else if (error()) {
       <p class="alert" role="alert">No se pudo cargar la guía. Intenta de nuevo más tarde.</p>
     } @else if (!grupos().length) {

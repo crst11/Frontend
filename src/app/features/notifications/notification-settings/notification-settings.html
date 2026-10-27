@@ -2,7 +2,7 @@
   <a class="button button--outline" routerLink="/avisos">Volver a mis avisos</a>
 
   @if (cargando()) {
-    <p class="subtitle">Buscando tus preferencias…</p>
+    <app-cargando mensaje="Buscando tus preferencias…" />
   } @else if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
     <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>

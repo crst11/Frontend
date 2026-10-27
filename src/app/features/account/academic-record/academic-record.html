@@ -10,7 +10,7 @@
   }
 
   @if (cargando()) {
-    <p class="subtitle">Cargando tu historial…</p>
+    <app-cargando mensaje="Cargando tu historial…" />
   } @else if (error()) {
     <p class="alert" role="alert">No pudimos cargar tu historial. Intenta de nuevo más tarde.</p>
   } @else if (vacio()) {

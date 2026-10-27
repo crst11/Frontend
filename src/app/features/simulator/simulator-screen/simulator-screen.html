@@ -1,6 +1,6 @@
 <main class="screen simulador">
   @if (cargando()) {
-    <p class="subtitle">Preparando tu simulador…</p>
+    <app-cargando mensaje="Preparando tu simulador…" />
   } @else if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
     <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
