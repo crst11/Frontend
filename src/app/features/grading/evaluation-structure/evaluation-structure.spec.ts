@@ -402,6 +402,20 @@ describe('EvaluationStructure', () => {
     expect(creado.html.querySelector('app-activity-grades')).not.toBeNull();
   });
 
+  it('una estructura guardada sin actividades sigue ofreciendo importar del CMAD y no deja una tarjeta vacía', () => {
+    const guardadaSinActividades: EstructuraDeEvaluacion = {
+      ...PROPUESTA,
+      guardada: true,
+      asignatura: { ...ALGEBRA, tieneEstructura: true, categorias: 3, actividades: 0 },
+    };
+    const creado = crear(undefined, vi.fn().mockReturnValue(of(guardadaSinActividades)));
+    abrirAlgebra(creado);
+
+    const importar = creado.html.querySelector<HTMLAnchorElement>('a[href*="importar-cmad"]');
+    expect(importar?.textContent).toContain('Importar mis actividades del CMAD');
+    expect(creado.html.querySelector('.evaluacion__cabecera')?.textContent?.trim()).not.toBe('');
+  });
+
   it('antes de quitar una actividad con nota pregunta, y si dice que no la conserva', async () => {
     notificador.confirmar.mockResolvedValue(false);
     const creado = crear(undefined, vi.fn().mockReturnValue(of(CON_NOTA)));
