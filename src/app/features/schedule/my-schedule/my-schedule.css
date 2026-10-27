@@ -119,6 +119,34 @@
   color: var(--color-ink);
 }
 
+/* Actividades extra: su propio módulo, separado de las clases y del formulario de agregar una clase. */
+.horario__extras {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.horario__extra-pasos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+}
+
+.horario__extra-pasos li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.horario__extra-dias {
+  flex-wrap: wrap;
+}
+
 .horario__acciones {
   display: flex;
   flex-direction: column;

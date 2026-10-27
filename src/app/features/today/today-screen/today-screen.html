@@ -1,4 +1,19 @@
 <main class="screen hoy">
+  <!-- Lo que se ve de una clase de hoy, sea una asignatura o una actividad extra. -->
+  <ng-template #contenidoDeLaClase let-clase>
+    <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
+    @if (etiquetaDeEstado(clase); as etiqueta) {
+      <span class="badge hoy__estado" [class.badge--live]="clase.estado === 'en_curso'" [class.badge--soon]="clase.estado === 'proxima'">{{ etiqueta }}</span>
+    }
+    <span class="hoy__asignatura">{{ clase.asignatura }}</span>
+    @if (lugarDe(clase); as lugar) {
+      <span class="hoy__detalle">{{ lugar }}</span>
+    }
+    @if (docenteDe(clase); as docente) {
+      <span class="hoy__detalle">{{ docente }}</span>
+    }
+  </ng-template>
+
   @if (cargando()) {
     <p class="subtitle">Armando tu día…</p>
   } @else if (error(); as mensaje) {
@@ -113,37 +128,39 @@
         </section>
       } @else {
         <ul class="hoy__clases" aria-label="Tus clases de hoy">
-          @for (clase of hoy.clases; track clase.idMatricula + clase.horaInicio) {
+          @for (clase of hoy.clases; track claveDe(clase) + $index) {
             <li>
-              <button
-                class="card hoy__clase"
-                type="button"
-                [class.hoy__clase--en-curso]="clase.estado === 'en_curso'"
-                [class.hoy__clase--proxima]="clase.estado === 'proxima'"
-                [class.hoy__clase--pasada]="clase.estado === 'pasada'"
-                [attr.aria-expanded]="estaAbierta(clase)"
-                [attr.aria-controls]="'pendientes-' + claveDe(clase)"
-                (click)="alternar(clase)"
-              >
-                <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
-                @if (etiquetaDeEstado(clase); as etiqueta) {
-                  <span class="badge hoy__estado" [class.badge--live]="clase.estado === 'en_curso'" [class.badge--soon]="clase.estado === 'proxima'">{{ etiqueta }}</span>
-                }
-                <span class="hoy__asignatura">{{ clase.asignatura }}</span>
-                @if (lugarDe(clase); as lugar) {
-                  <span class="hoy__detalle">{{ lugar }}</span>
-                }
-                @if (docenteDe(clase); as docente) {
-                  <span class="hoy__detalle">{{ docente }}</span>
-                }
-                <span class="hoy__actividades" [class.hoy__actividades--faltan]="clase.actividades === 0">
-                  {{ textoDeActividades(clase) }}
-                </span>
-              </button>
-              @if (estaAbierta(clase)) {
-                <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
-                  <app-pending-activities [idMatricula]="clase.idMatricula" origen="/inicio" />
+              @if (clase.esExtra) {
+                <!-- Una actividad extra se ve como una clase, pero no tiene notas: no se despliega. -->
+                <div
+                  class="card hoy__clase"
+                  [class.hoy__clase--en-curso]="clase.estado === 'en_curso'"
+                  [class.hoy__clase--proxima]="clase.estado === 'proxima'"
+                  [class.hoy__clase--pasada]="clase.estado === 'pasada'"
+                >
+                  <ng-container [ngTemplateOutlet]="contenidoDeLaClase" [ngTemplateOutletContext]="{ $implicit: clase }" />
                 </div>
+              } @else {
+                <button
+                  class="card hoy__clase"
+                  type="button"
+                  [class.hoy__clase--en-curso]="clase.estado === 'en_curso'"
+                  [class.hoy__clase--proxima]="clase.estado === 'proxima'"
+                  [class.hoy__clase--pasada]="clase.estado === 'pasada'"
+                  [attr.aria-expanded]="estaAbierta(clase)"
+                  [attr.aria-controls]="'pendientes-' + claveDe(clase)"
+                  (click)="alternar(clase)"
+                >
+                  <ng-container [ngTemplateOutlet]="contenidoDeLaClase" [ngTemplateOutletContext]="{ $implicit: clase }" />
+                  <span class="hoy__actividades" [class.hoy__actividades--faltan]="clase.actividades === 0">
+                    {{ textoDeActividades(clase) }}
+                  </span>
+                </button>
+                @if (estaAbierta(clase)) {
+                  <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
+                    <app-pending-activities [idMatricula]="clase.idMatricula!" origen="/inicio" />
+                  </div>
+                }
               }
             </li>
           }
@@ -153,25 +170,35 @@
       @if (hoy.siguiente; as siguiente) {
         <h2 class="hoy__siguiente">{{ tituloDelSiguiente(hoy) }}</h2>
         <ul class="hoy__clases hoy__clases--siguiente" aria-label="Tus clases del próximo día">
-          @for (clase of siguiente.clases; track clase.idMatricula + clase.horaInicio) {
+          @for (clase of siguiente.clases; track claveDe(clase) + $index) {
             <li>
-              <button
-                class="card hoy__clase"
-                type="button"
-                [attr.aria-expanded]="estaAbierta(clase)"
-                [attr.aria-controls]="'pendientes-' + claveDe(clase)"
-                (click)="alternar(clase)"
-              >
-                <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
-                <span class="hoy__asignatura">{{ clase.asignatura }}</span>
-                @if (lugarDe(clase); as lugar) {
-                  <span class="hoy__detalle">{{ lugar }}</span>
-                }
-              </button>
-              @if (estaAbierta(clase)) {
-                <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
-                  <app-pending-activities [idMatricula]="clase.idMatricula" origen="/inicio" />
+              @if (clase.esExtra) {
+                <div class="card hoy__clase">
+                  <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
+                  <span class="hoy__asignatura">{{ clase.asignatura }}</span>
+                  @if (lugarDe(clase); as lugar) {
+                    <span class="hoy__detalle">{{ lugar }}</span>
+                  }
                 </div>
+              } @else {
+                <button
+                  class="card hoy__clase"
+                  type="button"
+                  [attr.aria-expanded]="estaAbierta(clase)"
+                  [attr.aria-controls]="'pendientes-' + claveDe(clase)"
+                  (click)="alternar(clase)"
+                >
+                  <span class="hoy__hora">{{ clase.horaInicio }} – {{ clase.horaFin }}</span>
+                  <span class="hoy__asignatura">{{ clase.asignatura }}</span>
+                  @if (lugarDe(clase); as lugar) {
+                    <span class="hoy__detalle">{{ lugar }}</span>
+                  }
+                </button>
+                @if (estaAbierta(clase)) {
+                  <div class="hoy__pendientes" [id]="'pendientes-' + claveDe(clase)">
+                    <app-pending-activities [idMatricula]="clase.idMatricula!" origen="/inicio" />
+                  </div>
+                }
               }
             </li>
           }

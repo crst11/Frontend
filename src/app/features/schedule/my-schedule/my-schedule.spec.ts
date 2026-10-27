@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -14,6 +15,8 @@ import { MySchedule } from './my-schedule';
 
 describe('MySchedule', () => {
   const notificador = { aviso: vi.fn(), problema: vi.fn(), confirmar: vi.fn() };
+  const anadirExtra = vi.fn();
+  const quitarExtra = vi.fn();
 
   const ALGEBRA: AsignaturaMatriculada = {
     idMatricula: 7,
@@ -43,6 +46,10 @@ describe('MySchedule', () => {
       bloque: 'Bloque F',
       sede: 'Fusagasugá',
       docente: { nombres: 'María José', apellidos: 'Pérez Gómez' },
+      esExtra: false,
+      idActividadExtra: null,
+      lugar: null,
+      responsable: null,
       ...parcial,
     };
   }
@@ -75,6 +82,8 @@ describe('MySchedule', () => {
     notificador.aviso.mockReset().mockResolvedValue(undefined);
     notificador.problema.mockReset().mockResolvedValue(undefined);
     notificador.confirmar.mockReset().mockResolvedValue(true);
+    anadirExtra.mockReset().mockReturnValue(of([]));
+    quitarExtra.mockReset().mockReturnValue(of(undefined));
   });
 
   afterEach(() => vi.useRealTimers());
@@ -92,7 +101,7 @@ describe('MySchedule', () => {
       imports: [MySchedule],
       providers: [
         provideRouter([]),
-        { provide: HorarioRepository, useValue: { miHorario, agregar, quitar, miPreferencia, guardarPreferencia } },
+        { provide: HorarioRepository, useValue: { miHorario, agregar, quitar, miPreferencia, guardarPreferencia, anadirActividadExtra: anadirExtra, quitarActividadExtra: quitarExtra } },
         { provide: EvaluacionRepository, useValue: { misAsignaturas: vi.fn().mockReturnValue(of(asignaturas)), estructuraDe } },
         { provide: NotifierService, useValue: notificador },
       ],
@@ -512,5 +521,278 @@ describe('MySchedule', () => {
 
     expect(html.querySelector('[role="alert"]')?.textContent).toContain('No pudimos traer tu horario');
     expect(notificador.problema).toHaveBeenCalled();
+  });
+
+  describe('actividades extra (SCRUM-266)', () => {
+    // Hoy es miércoles: la vista por día abre ahí.
+    const BAILE = clase({
+      idMatricula: null,
+      codigoAsignatura: null,
+      asignatura: 'Baile',
+      dia: 'miercoles',
+      horaInicio: '17:00',
+      horaFin: '19:00',
+      duracionEnMinutos: 120,
+      salon: null,
+      bloque: null,
+      sede: null,
+      docente: null,
+      esExtra: true,
+      idActividadExtra: 5,
+      lugar: 'Coliseo',
+      responsable: 'Profe Ana',
+    });
+    const SEMILLERO = { ...BAILE, asignatura: 'Semillero', idActividadExtra: 6, horaInicio: '10:00', horaFin: '12:00', lugar: null, responsable: null };
+    const CON_EXTRA: Horario = {
+      totalDeClases: 1,
+      dias: [{ dia: 'miercoles', clases: [BAILE] }],
+      sedes: [],
+      asignaturas: [],
+      aplicado: SIN_FILTRO,
+    };
+
+    function formularioExtra(html: HTMLElement): HTMLElement {
+      return html.querySelector<HTMLElement>('.horario__extra-formulario')!;
+    }
+
+    function abrirElFormularioExtra(html: HTMLElement, fixture: { detectChanges(): void }): void {
+      boton(html, 'Añadir actividad extra').click();
+      fixture.detectChanges();
+    }
+
+    function chipExtra(html: HTMLElement, nombre: string): HTMLButtonElement {
+      return formularioExtra(html).querySelector<HTMLButtonElement>(`.horario__extra-dias button[aria-label$=", ${nombre}"]`)!;
+    }
+
+    function llenarExtra(html: HTMLElement, fixture: { detectChanges(): void }): void {
+      escribir(formularioExtra(html), 'input[formControlName="nombre"]', 'Baile');
+      chipExtra(html, 'Lunes').click();
+      chipExtra(html, 'Miércoles').click();
+      escribir(formularioExtra(html), 'input[formControlName="horaInicio"]', '17:00');
+      escribir(formularioExtra(html), 'input[formControlName="horaFin"]', '19:00');
+      fixture.detectChanges();
+    }
+
+    it('el bloque de filtros se llama «Filtrar y ordenar» para no confundirlo con armar el horario', () => {
+      const { html } = crear();
+
+      const resumen = html.querySelector('.horario__resumen')?.textContent ?? '';
+
+      expect(resumen).toContain('Filtrar y ordenar');
+      expect(html.textContent).not.toContain('Organizar mi horario');
+    });
+
+    it('ofrece añadir una actividad extra aunque todavía no haya asignaturas en curso', () => {
+      const { html } = crear(vi.fn().mockReturnValue(of(VACIO)), []);
+
+      expect(html.querySelector('.horario__extras h2')?.textContent).toContain('Actividades extra');
+      expect(boton(html, 'Añadir actividad extra')).toBeTruthy();
+    });
+
+    it('al abrirla muestra la guía de tres pasos y aclara que no es una asignatura', () => {
+      const { fixture, html } = crear();
+
+      abrirElFormularioExtra(html, fixture);
+
+      const pasos = Array.from(formularioExtra(html).querySelectorAll('.horario__extra-pasos li')).map((p) => p.textContent);
+      expect(pasos).toHaveLength(3);
+      expect(pasos[0]).toContain('Escribe qué es');
+      expect(pasos[1]).toContain('Elige los días y la hora');
+      expect(pasos[2]).toContain('Guarda');
+      expect(formularioExtra(html).textContent).toContain('no tiene notas ni cuenta en tu Brújula Académica');
+    });
+
+    it('el nombre accesible de cada día incluye el texto que se ve (WCAG 2.5.3)', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+
+      const chips = Array.from(formularioExtra(html).querySelectorAll<HTMLButtonElement>('.horario__extra-dias button'));
+
+      expect(chips).toHaveLength(7);
+      for (const chip of chips) {
+        const visible = (chip.textContent ?? '').trim();
+        expect((chip.getAttribute('aria-label') ?? '').split(/[\s,]+/)).toContain(visible);
+      }
+    });
+
+    it('no deja guardar sin nombre, sin un día o sin las horas', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+      const guardar = () => boton(formularioExtra(html), 'Añadir');
+
+      expect(guardar().disabled).toBe(true);
+      escribir(formularioExtra(html), 'input[formControlName="nombre"]', 'Baile');
+      escribir(formularioExtra(html), 'input[formControlName="horaInicio"]', '17:00');
+      escribir(formularioExtra(html), 'input[formControlName="horaFin"]', '19:00');
+      fixture.detectChanges();
+      expect(guardar().disabled, 'falta elegir un día').toBe(true);
+
+      chipExtra(html, 'Lunes').click();
+      fixture.detectChanges();
+      expect(guardar().disabled).toBe(false);
+
+      chipExtra(html, 'Lunes').click();
+      fixture.detectChanges();
+      expect(guardar().disabled, 'quitar el único día lo vuelve a bloquear').toBe(true);
+    });
+
+    it('manda el nombre, los días elegidos en orden de semana y las horas, sin lugar ni responsable vacíos', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+      // Se eligen al revés para comprobar que viajan en orden de semana.
+      escribir(formularioExtra(html), 'input[formControlName="nombre"]', '  Baile ');
+      chipExtra(html, 'Miércoles').click();
+      chipExtra(html, 'Lunes').click();
+      escribir(formularioExtra(html), 'input[formControlName="horaInicio"]', '17:00');
+      escribir(formularioExtra(html), 'input[formControlName="horaFin"]', '19:00');
+      fixture.detectChanges();
+
+      boton(formularioExtra(html), 'Añadir').click();
+
+      expect(anadirExtra).toHaveBeenCalledWith({ nombre: 'Baile', dias: ['lunes', 'miercoles'], horaInicio: '17:00', horaFin: '19:00' });
+    });
+
+    it('manda el lugar y el responsable cuando los escribió, recortados', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+      llenarExtra(html, fixture);
+      escribir(formularioExtra(html), 'input[formControlName="lugar"]', ' Coliseo ');
+      escribir(formularioExtra(html), 'input[formControlName="responsable"]', 'Profe Ana');
+      fixture.detectChanges();
+
+      boton(formularioExtra(html), 'Añadir').click();
+
+      expect(anadirExtra).toHaveBeenCalledWith({
+        nombre: 'Baile',
+        dias: ['lunes', 'miercoles'],
+        horaInicio: '17:00',
+        horaFin: '19:00',
+        lugar: 'Coliseo',
+        responsable: 'Profe Ana',
+      });
+    });
+
+    it('al añadir cierra el formulario, vuelve a pedir el horario, muestra el primer día y avisa', () => {
+      const miHorario = vi.fn().mockReturnValue(of(HORARIO));
+      anadirExtra.mockReturnValue(of([{ ...BAILE, dia: 'lunes' }]));
+      const { fixture, html } = crear(miHorario);
+      abrirElFormularioExtra(html, fixture);
+      llenarExtra(html, fixture);
+      miHorario.mockClear();
+
+      boton(formularioExtra(html), 'Añadir').click();
+      fixture.detectChanges();
+
+      expect(html.querySelector('.horario__extra-formulario')).toBeNull();
+      expect(miHorario).toHaveBeenCalledTimes(1);
+      expect(chipDelDia(html, 'Lunes').getAttribute('aria-pressed')).toBe('true');
+      expect(notificador.aviso).toHaveBeenCalledWith('Añadimos la actividad a tu horario.');
+    });
+
+    it('un rechazo del servidor se muestra junto al formulario, con su mensaje, y no lo cierra', () => {
+      anadirExtra.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 422, error: { detail: 'Puedes tener hasta 20 actividades extra' } })),
+      );
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+      llenarExtra(html, fixture);
+
+      boton(formularioExtra(html), 'Añadir').click();
+      fixture.detectChanges();
+
+      expect(formularioExtra(html).querySelector('[role="alert"]')?.textContent).toContain('Puedes tener hasta 20 actividades extra');
+      expect(notificador.problema).not.toHaveBeenCalled();
+    });
+
+    it('una caída del servidor al añadir va a la ventana emergente', () => {
+      anadirExtra.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+      llenarExtra(html, fixture);
+
+      boton(formularioExtra(html), 'Añadir').click();
+
+      expect(notificador.problema).toHaveBeenCalledWith('No pudimos guardar la actividad', expect.any(String));
+    });
+
+    it('se ve como una clase más, marcada como actividad extra, con su lugar y su responsable', () => {
+      const { html } = crear(vi.fn().mockReturnValue(of(CON_EXTRA)));
+
+      const tarjeta = html.querySelector('.horario__clase')!;
+
+      expect(tarjeta.textContent).toContain('Baile');
+      expect(tarjeta.textContent).toContain('17:00 – 19:00');
+      expect(tarjeta.querySelector('.badge')?.textContent).toContain('Actividad extra');
+      expect(tarjeta.textContent).toContain('Coliseo');
+      expect(tarjeta.textContent).toContain('Profe Ana');
+      expect(tarjeta.textContent).not.toContain('Todavía sin salón');
+    });
+
+    it('no ofrece ver lo que falta por calificar: una actividad extra no tiene notas', () => {
+      const { html } = crear(vi.fn().mockReturnValue(of(CON_EXTRA)));
+
+      expect(html.querySelector('.horario__clase')?.textContent).not.toContain('calificar');
+    });
+
+    it('los filtros avisan que con una asignatura o una sede elegida las actividades extra no se muestran', () => {
+      const { html } = crear();
+
+      expect(html.querySelector('.horario__filtros')?.textContent).toContain('actividades extra no se muestran');
+    });
+
+    it('si se añade con un filtro puesto, el aviso dice que hay que quitarlo para verla', () => {
+      anadirExtra.mockReturnValue(of([{ ...BAILE, dia: 'lunes' }]));
+      const { fixture, html } = crear();
+      elegir(html, 'Sede', 'Fusagasugá');
+      fixture.detectChanges();
+      abrirElFormularioExtra(html, fixture);
+      llenarExtra(html, fixture);
+
+      boton(formularioExtra(html), 'Añadir').click();
+
+      expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Quita los filtros'));
+    });
+
+    it('abrir «Agregar una clase» cierra el formulario de la actividad extra: nunca hay dos abiertos', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+
+      boton(html, 'Agregar una clase').click();
+      fixture.detectChanges();
+
+      expect(html.querySelector('.horario__extra-formulario')).toBeNull();
+      expect(html.querySelector('.horario__formulario')).not.toBeNull();
+    });
+
+    it('dice que hay que elegir al menos un día', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+
+      expect(formularioExtra(html).textContent).toContain('elige al menos un día');
+    });
+
+    it('dos actividades extra del mismo día se dibujan las dos', () => {
+      const dos: Horario = { ...CON_EXTRA, totalDeClases: 2, dias: [{ dia: 'miercoles', clases: [SEMILLERO, BAILE] }] };
+      const { html } = crear(vi.fn().mockReturnValue(of(dos)));
+
+      const nombres = Array.from(html.querySelectorAll('.horario__clase .horario__asignatura')).map((n) => n.textContent?.trim());
+
+      expect(nombres).toEqual(['Semillero', 'Baile']);
+    });
+
+    it('quitar una actividad extra pregunta antes y la quita por su propia ruta, no por la de una asignatura', async () => {
+      const miHorario = vi.fn().mockReturnValue(of(CON_EXTRA));
+      const { html, quitar } = crear(miHorario);
+      miHorario.mockClear();
+
+      boton(html.querySelector<HTMLElement>('.horario__clase')!, 'Quitar').click();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(notificador.confirmar).toHaveBeenCalled();
+      expect(quitarExtra).toHaveBeenCalledWith(5);
+      expect(quitar).not.toHaveBeenCalled();
+      expect(miHorario).toHaveBeenCalledTimes(1);
+    });
   });
 });
