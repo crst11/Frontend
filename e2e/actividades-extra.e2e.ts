@@ -21,7 +21,7 @@ test.describe('Actividades extra (SCRUM-266)', () => {
   test.beforeEach(async ({ page, request }) => {
     await iniciarSesion(page, await crearCuenta(request));
     await page.goto('/horario');
-    await expect(page.getByRole('heading', { name: 'Actividades extra' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Añadir actividad extra' })).toBeVisible();
   });
 
   test('añade una actividad extra sin tener asignaturas, la ve en el horario y la quita', async ({ page }) => {
