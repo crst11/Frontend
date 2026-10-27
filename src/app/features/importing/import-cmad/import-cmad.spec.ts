@@ -320,6 +320,15 @@ describe('ImportCmad', () => {
     });
   });
 
+  it('la flecha de volver no deja la importación en el historial del teléfono', () => {
+    const { html } = crear();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    html.querySelector<HTMLAnchorElement>('.top-bar a.icon-button')!.click();
+
+    expect(navegar).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ replaceUrl: true }));
+  });
+
   describe('con una imagen', () => {
     function soltar(html: HTMLElement, archivo: File): void {
       const evento = new Event('drop', { bubbles: true, cancelable: true });
