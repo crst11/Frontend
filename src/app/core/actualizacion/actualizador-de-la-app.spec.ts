@@ -6,7 +6,7 @@ import { NotifierService } from '../feedback/notifier.service';
 import { ActualizadorDeLaApp, RECARGAR_LA_PAGINA } from './actualizador-de-la-app';
 
 describe('ActualizadorDeLaApp (SCRUM-258)', () => {
-  const MEDIA_HORA = 30 * 60_000;
+  const CADA_CUANTO = 5 * 60_000;
   const versionLista = { type: 'VERSION_READY', currentVersion: { hash: 'a' }, latestVersion: { hash: 'b' } };
 
   const versionUpdates = new Subject<unknown>();
@@ -113,24 +113,23 @@ describe('ActualizadorDeLaApp (SCRUM-258)', () => {
     expect(confirmar).not.toHaveBeenCalled();
   });
 
-  it('busca una versión nueva al volver a la aplicación y cada media hora', async () => {
+  it('busca una versión nueva apenas abre la aplicación, al volver a ella y cada cinco minutos', async () => {
     vi.useFakeTimers();
     iniciar();
-    expect(checkForUpdate).not.toHaveBeenCalled();
-
-    document.dispatchEvent(new Event('visibilitychange'));
     expect(checkForUpdate).toHaveBeenCalledTimes(1);
 
-    await vi.advanceTimersByTimeAsync(MEDIA_HORA);
+    document.dispatchEvent(new Event('visibilitychange'));
     expect(checkForUpdate).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(CADA_CUANTO);
+    expect(checkForUpdate).toHaveBeenCalledTimes(3);
   });
 
   it('si la búsqueda falla (sin conexión) no rompe nada y lo intenta en la próxima', async () => {
     checkForUpdate.mockRejectedValueOnce(new Error('sin conexión'));
     iniciar();
-
-    document.dispatchEvent(new Event('visibilitychange'));
     await asentar();
+
     document.dispatchEvent(new Event('visibilitychange'));
     await asentar();
 
@@ -230,6 +229,7 @@ describe('ActualizadorDeLaApp (SCRUM-258)', () => {
     iniciar();
     detener!();
     detener = null;
+    checkForUpdate.mockClear();
 
     versionUpdates.next(versionLista);
     document.dispatchEvent(new Event('visibilitychange'));
