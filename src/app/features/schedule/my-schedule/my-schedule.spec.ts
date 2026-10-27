@@ -174,7 +174,11 @@ describe('MySchedule', () => {
     expect(tarde.textContent).not.toContain('Docente');
   });
 
-  it('una clase se despliega hacia abajo con lo que falta por calificar, y se vuelve a recoger', () => {
+  function botonDeClase(html: HTMLElement, posicion: number): HTMLButtonElement {
+    return html.querySelectorAll<HTMLButtonElement>('.horario__clase button[aria-expanded]')[posicion];
+  }
+
+  it('tocar la clase despliega hacia abajo lo que falta por calificar, y tocarla otra vez la recoge', () => {
     const estructuraDe = vi.fn().mockReturnValue(
       of({
         categorias: [
@@ -195,7 +199,7 @@ describe('MySchedule', () => {
     chipDelDia(html, 'Lunes').click();
     fixture.detectChanges();
 
-    boton(html, 'Ver lo que falta por calificar').click();
+    botonDeClase(html, 0).click();
     fixture.detectChanges();
 
     expect(estructuraDe).toHaveBeenCalledWith(7);
@@ -203,12 +207,23 @@ describe('MySchedule', () => {
     expect(panel.textContent).toContain('Te falta 1 actividad por calificar');
     expect(panel.textContent).toContain('Taller 2');
     expect(panel.textContent).not.toContain('Taller 1');
-    expect(boton(html, 'Ocultar lo que falta por calificar').getAttribute('aria-expanded')).toBe('true');
+    expect(botonDeClase(html, 0).getAttribute('aria-expanded')).toBe('true');
+    expect(botonDeClase(html, 0).getAttribute('aria-controls')).toBe(panel.id);
 
-    boton(html, 'Ocultar lo que falta por calificar').click();
+    botonDeClase(html, 0).click();
     fixture.detectChanges();
 
     expect(html.querySelector('.horario__notas')).toBeNull();
+    expect(botonDeClase(html, 0).getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('ya no hay un botón aparte para ver lo que falta por calificar: es la propia clase', () => {
+    const { fixture, html } = crear();
+    chipDelDia(html, 'Lunes').click();
+    fixture.detectChanges();
+
+    expect(html.textContent).not.toContain('lo que falta por calificar');
+    expect(botonDeClase(html, 0).textContent).toContain('Álgebra Lineal');
   });
 
   it('una clase sin actividades subidas ofrece subirlas, de vuelta aquí', () => {
@@ -216,13 +231,14 @@ describe('MySchedule', () => {
     chipDelDia(html, 'Lunes').click();
     fixture.detectChanges();
 
-    boton(html, 'Ver lo que falta por calificar').click();
+    botonDeClase(html, 0).click();
     fixture.detectChanges();
 
     const subir = html.querySelector<HTMLAnchorElement>('.horario__notas a')!;
     expect(subir.textContent).toContain('Subir actividades');
     expect(subir.getAttribute('href')).toBe('/calificaciones/importar-cmad?matricula=7');
   });
+
 
   it('la vista por semana muestra los siete días y marca los que no tienen clases', () => {
     const { fixture, html } = crear();
@@ -235,284 +251,94 @@ describe('MySchedule', () => {
     expect(html.textContent?.match(/Sin clases\./g)).toHaveLength(5);
   });
 
-  it('sin asignaturas en curso manda a importar el horario, no el reporte de notas, en vez de ofrecer agregar', () => {
-    const { html } = crear(vi.fn().mockReturnValue(of(VACIO)), [TERMINADA]);
+  it('sin clases en el horario manda a importar el Reporte de Horario, no el reporte de notas', () => {
+    const { html } = crear(vi.fn().mockReturnValue(of(VACIO)), []);
 
-    expect(html.textContent).toContain('necesitas tener asignaturas en curso');
     expect(html.textContent).toContain('Reporte de Horario');
     expect(html.querySelector('a[href="/cuenta/importar-horario"]')).not.toBeNull();
     expect(html.querySelector('a[href="/cuenta/importar-reporte"]')).toBeNull();
-    expect(boton(html, 'Agregar una clase')).toBeUndefined();
   });
 
-  it('con asignaturas en curso sigue ofreciendo importar el horario desde el reporte', () => {
+  it('con clases en el horario no repite el aviso de importar', () => {
     const { html } = crear();
 
-    expect(html.querySelector('a[href="/cuenta/importar-horario"]')?.textContent).toContain('Importar mi horario');
+    expect(html.querySelector('.notice')?.textContent ?? '').not.toContain('Reporte de Horario');
   });
 
-  it('un horario vacío con asignaturas en curso invita a agregar la primera clase', () => {
-    const { html } = crear(vi.fn().mockReturnValue(of(VACIO)));
 
-    expect(html.textContent).toContain('Cuando agregues una, la verás aquí');
-    expect(boton(html, 'Agregar una clase')).toBeDefined();
-  });
-
-  it('solo se pueden elegir las asignaturas que se están cursando', () => {
-    const { fixture, html } = crear();
-
-    boton(html, 'Agregar una clase').click();
-    fixture.detectChanges();
-
-    const opciones = Array.from(html.querySelectorAll('select[formControlName="idMatricula"] option')).map((o) => o.textContent?.trim());
-    expect(opciones).toEqual(['Álgebra Lineal']);
-  });
-
-  it('no deja agregar mientras falten las horas', () => {
-    const { fixture, html } = crear();
-    boton(html, 'Agregar una clase').click();
-    fixture.detectChanges();
-
-    expect(boton(html, 'Agregar').disabled).toBe(true);
-
-    escribir(html, 'input[formControlName="horaInicio"]', '08:00');
-    escribir(html, 'input[formControlName="horaFin"]', '10:00');
-    fixture.detectChanges();
-    expect(boton(html, 'Agregar').disabled).toBe(false);
-  });
-
-  it('manda solo lo que el estudiante escribió: sin lugar ni docente si los dejó vacíos', () => {
-    const { fixture, html, agregar } = crear();
-    boton(html, 'Agregar una clase').click();
-    fixture.detectChanges();
-
-    escribir(html, 'select[formControlName="dia"]', 'martes');
-    escribir(html, 'input[formControlName="horaInicio"]', '08:00');
-    escribir(html, 'input[formControlName="horaFin"]', '10:00');
-    fixture.detectChanges();
-    boton(html, 'Agregar').click();
-
-    expect(agregar).toHaveBeenCalledWith(7, { dia: 'martes', horaInicio: '08:00', horaFin: '10:00' });
-  });
-
-  it('manda el lugar y el docente cuando los escribió, recortados', () => {
-    const { fixture, html, agregar } = crear();
-    boton(html, 'Agregar una clase').click();
-    fixture.detectChanges();
-
-    escribir(html, 'input[formControlName="horaInicio"]', '14:00');
-    escribir(html, 'input[formControlName="horaFin"]', '16:00');
-    escribir(html, 'input[formControlName="salon"]', ' F-203 ');
-    escribir(html, 'input[formControlName="sede"]', 'Fusagasugá');
-    escribir(html, 'input[formControlName="docenteNombres"]', 'María');
-    escribir(html, 'input[formControlName="docenteApellidos"]', 'Pérez');
-    fixture.detectChanges();
-    boton(html, 'Agregar').click();
-
-    const [, enviada] = agregar.mock.calls[0];
-    expect(enviada.salon).toBe('F-203');
-    expect(enviada.sede).toBe('Fusagasugá');
-    expect(enviada.bloque).toBeUndefined();
-    expect(enviada.docente).toEqual({ nombres: 'María', apellidos: 'Pérez' });
-  });
-
-  it('al agregar cierra el formulario, vuelve a pedir el horario y avisa', () => {
-    const miHorario = vi.fn().mockReturnValue(of(HORARIO));
-    const { fixture, html } = crear(miHorario);
-    boton(html, 'Agregar una clase').click();
-    fixture.detectChanges();
-    escribir(html, 'input[formControlName="horaInicio"]', '08:00');
-    escribir(html, 'input[formControlName="horaFin"]', '10:00');
-    fixture.detectChanges();
-
-    boton(html, 'Agregar').click();
-    fixture.detectChanges();
-
-    expect(miHorario).toHaveBeenCalledTimes(2);
-    expect(html.querySelector('form')).toBeNull();
-    expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Agregamos la clase'));
-    // Se muestra el día de la clase que acaba de agregar.
-    expect(chipDelDia(html, 'Lunes').getAttribute('aria-pressed')).toBe('true');
-  });
-
-  it('un rechazo del servidor se muestra junto al formulario, con su mensaje, y no lo cierra', () => {
-    const agregar = vi.fn().mockReturnValue(
-      throwError(() => ({ status: 422, error: { detail: 'La clase tiene que empezar antes de terminar' } })),
-    );
-    const { fixture, html } = crear(undefined, undefined, agregar);
-    boton(html, 'Agregar una clase').click();
-    fixture.detectChanges();
-    escribir(html, 'input[formControlName="horaInicio"]', '10:00');
-    escribir(html, 'input[formControlName="horaFin"]', '08:00');
-    fixture.detectChanges();
-
-    boton(html, 'Agregar').click();
-    fixture.detectChanges();
-
-    expect(html.querySelector('form [role="alert"]')?.textContent).toContain('empezar antes de terminar');
-    expect(html.querySelector('form')).not.toBeNull();
-    expect(notificador.problema).not.toHaveBeenCalled();
-  });
-
-  it('una caída del servidor al agregar va a la ventana emergente', () => {
-    const agregar = vi.fn().mockReturnValue(throwError(() => ({ status: 500 })));
-    const { fixture, html } = crear(undefined, undefined, agregar);
-    boton(html, 'Agregar una clase').click();
-    fixture.detectChanges();
-    escribir(html, 'input[formControlName="horaInicio"]', '08:00');
-    escribir(html, 'input[formControlName="horaFin"]', '10:00');
-    fixture.detectChanges();
-
-    boton(html, 'Agregar').click();
-
-    expect(notificador.problema).toHaveBeenCalledWith('No pudimos guardar la clase', expect.any(String));
-  });
-
-  it('quitar una clase pregunta antes, y si se confirma la quita y recarga', async () => {
-    const miHorario = vi.fn().mockReturnValue(of(HORARIO));
-    const { fixture, html, quitar } = crear(miHorario);
-    chipDelDia(html, 'Viernes').click();
-    fixture.detectChanges();
-
-    boton(html, 'Quitar').click();
-    await fixture.whenStable();
-
-    expect(notificador.confirmar).toHaveBeenCalledWith('Quitar esta clase', expect.stringContaining('Electrónica'), 'Quitar');
-    expect(quitar).toHaveBeenCalledWith(7, 3);
-    expect(miHorario).toHaveBeenCalledTimes(2);
-  });
-
-  it('si se cancela la confirmación no se quita nada', async () => {
-    notificador.confirmar.mockResolvedValue(false);
-    const { fixture, html, quitar } = crear();
-    chipDelDia(html, 'Viernes').click();
-    fixture.detectChanges();
-
-    boton(html, 'Quitar').click();
-    await fixture.whenStable();
-
-    expect(quitar).not.toHaveBeenCalled();
-  });
-
-  function elegir(html: HTMLElement, etiqueta: string, valor: string): void {
-    const campo = Array.from(html.querySelectorAll<HTMLLabelElement>('.horario__filtros label')).find((l) =>
-      l.textContent?.includes(etiqueta),
-    )!.querySelector('select')!;
-    campo.value = valor;
-    campo.dispatchEvent(new Event('change'));
-  }
-
-  describe('organizar el horario (SCRUM-26)', () => {
-    it('ofrece elegir asignatura, sede y orden con las opciones que trae el servidor', () => {
+  describe('lo que se puede hacer desde Mi horario', () => {
+    it('arriba hay dos acciones, importar el horario y añadir una actividad extra, antes de las clases', () => {
       const { html } = crear();
 
-      const asignaturas = Array.from(html.querySelectorAll('.horario__filtros label')[0].querySelectorAll('option')).map((o) => o.textContent?.trim());
-      const sedes = Array.from(html.querySelectorAll('.horario__filtros label')[1].querySelectorAll('option')).map((o) => o.textContent?.trim());
-      expect(asignaturas).toEqual(['Todas', 'Álgebra Lineal', 'Electrónica']);
-      expect(sedes).toEqual(['Todas', 'Fusagasugá', 'Soacha']);
+      const acciones = html.querySelector('.horario__acciones-superiores')!;
+      const textos = Array.from(acciones.querySelectorAll('a, button')).map((e) => e.textContent?.trim());
+
+      expect(textos).toEqual(['Importar mi horario', 'Añadir actividad extra']);
+      expect(acciones.compareDocumentPosition(html.querySelector('.horario__dias')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
-    it('sin clases en el horario no muestra filtros que no tendrían nada que filtrar', () => {
-      const { html } = crear(vi.fn().mockReturnValue(of(VACIO)));
+    it('no repite botones: sin armar el horario, sin agregar clases, sin filtros y con un solo importar', () => {
+      const { html } = crear();
 
+      expect(html.querySelector('a[href="/horario/armar"]')).toBeNull();
+      expect(html.textContent).not.toContain('Armar mi horario');
+      expect(html.textContent).not.toContain('Agregar una clase');
+      expect(html.textContent).not.toContain('Filtrar y ordenar');
       expect(html.querySelector('.horario__filtros')).toBeNull();
+      expect(html.querySelectorAll('a[href="/cuenta/importar-horario"]')).toHaveLength(1);
+      const extras = Array.from(html.querySelectorAll('button')).filter((b) => b.textContent?.includes('actividad extra'));
+      expect(extras).toHaveLength(1);
     });
 
-    it('abre con la vista, la sede y el orden guardados y se los pide al servidor', () => {
-      const guardada: PreferenciaDeHorario = { vista: 'semana', sede: 'Soacha', orden: 'asignatura' };
-      const { html, miHorario } = crear(undefined, undefined, undefined, undefined, vi.fn().mockReturnValue(of(guardada)));
+    it('las clases de la universidad no se pueden quitar: llegan por el reporte', () => {
+      const { fixture, html } = crear();
+      chipDelDia(html, 'Lunes').click();
+      fixture.detectChanges();
 
-      expect(miHorario).toHaveBeenCalledWith({ asignatura: undefined, sede: 'Soacha', orden: 'asignatura' });
+      expect(html.querySelectorAll('.horario__clase')).toHaveLength(2);
+      expect(boton(html, 'Quitar')).toBeUndefined();
+    });
+  });
+
+  describe('la vista (día o semana)', () => {
+    it('abre con la vista guardada y pide el horario por hora y sin filtros, aunque haya una sede guardada', () => {
+      const miPreferencia = vi.fn().mockReturnValue(of({ vista: 'semana', sede: 'Soacha', orden: 'asignatura' }));
+      const miHorario = vi.fn().mockReturnValue(of(HORARIO));
+      const { html } = crear(miHorario, undefined, undefined, undefined, miPreferencia);
+
+      expect(miHorario).toHaveBeenCalledWith({ asignatura: undefined, sede: undefined, orden: 'hora' });
       expect(html.querySelectorAll('.horario__dia-semana')).toHaveLength(7);
-      expect(html.textContent).toContain('Esta es tu vista guardada');
     });
 
     it('si no se puede leer la preferencia abre con lo predeterminado sin decirle nada a nadie', () => {
-      const { html, miHorario } = crear(undefined, undefined, undefined, undefined, vi.fn().mockReturnValue(throwError(() => ({ status: 500 }))));
+      const miPreferencia = vi.fn().mockReturnValue(throwError(() => ({ status: 500 })));
+      const { html } = crear(undefined, undefined, undefined, undefined, miPreferencia);
 
-      expect(miHorario).toHaveBeenCalledWith({ asignatura: undefined, sede: undefined, orden: 'hora' });
-      expect(notificador.problema).not.toHaveBeenCalled();
+      expect(html.querySelector('.horario__dias')).not.toBeNull();
       expect(html.querySelector('[role="alert"]')).toBeNull();
+      expect(notificador.problema).not.toHaveBeenCalled();
     });
 
-    it('elegir una sede vuelve a pedir el horario con ese filtro y no filtra en el navegador', () => {
-      const { fixture, html, miHorario } = crear();
-
-      elegir(html, 'Sede', 'Soacha');
-      fixture.detectChanges();
-
-      expect(miHorario).toHaveBeenLastCalledWith({ asignatura: undefined, sede: 'Soacha', orden: 'hora' });
-      expect(html.textContent).toContain('Quitar filtros');
-    });
-
-    it('elegir una asignatura y un orden también los manda al servidor', () => {
-      const { fixture, html, miHorario } = crear();
-
-      elegir(html, 'Asignatura', 'CAD612021101');
-      fixture.detectChanges();
-      elegir(html, 'Ordenar por', 'asignatura');
-      fixture.detectChanges();
-
-      expect(miHorario).toHaveBeenLastCalledWith({ asignatura: 'CAD612021101', sede: undefined, orden: 'asignatura' });
-    });
-
-    it('quitar los filtros vuelve a pedir todo, pero conserva el orden', () => {
-      const { fixture, html, miHorario } = crear();
-      elegir(html, 'Sede', 'Soacha');
-      elegir(html, 'Ordenar por', 'asignatura');
-      fixture.detectChanges();
-
-      boton(html, 'Quitar filtros').click();
-      fixture.detectChanges();
-
-      expect(miHorario).toHaveBeenLastCalledWith({ asignatura: undefined, sede: undefined, orden: 'asignatura' });
-      expect(html.textContent).not.toContain('Quitar filtros');
-    });
-
-    it('un filtro sin coincidencias dice que ninguna clase coincide y deja las opciones para quitarlo', () => {
-      const sinCoincidencias: Horario = { ...VACIO, sedes: HORARIO.sedes, asignaturas: HORARIO.asignaturas, aplicado: { asignatura: null, sede: 'Soacha', orden: 'hora' } };
-      const miHorario = vi.fn().mockReturnValueOnce(of(HORARIO)).mockReturnValue(of(sinCoincidencias));
-      const { fixture, html } = crear(miHorario);
-
-      elegir(html, 'Sede', 'Soacha');
-      fixture.detectChanges();
-
-      expect(html.textContent).toContain('Ninguna clase coincide con tus filtros');
-      expect(html.querySelector('.horario__filtros')).not.toBeNull();
-    });
-
-    it('guardar como mi vista manda la vista, la sede y el orden, pero no la asignatura', () => {
+    it('cambiar entre Día y Semana se recuerda para la próxima vez, sin botón de guardar', () => {
       const { fixture, html, guardarPreferencia } = crear();
-      elegir(html, 'Asignatura', 'CAD612021101');
-      elegir(html, 'Sede', 'Fusagasugá');
-      elegir(html, 'Ordenar por', 'asignatura');
+
       boton(html, 'Semana').click();
       fixture.detectChanges();
 
-      boton(html, 'Guardar como mi vista').click();
-      fixture.detectChanges();
-
-      expect(guardarPreferencia).toHaveBeenCalledWith({ vista: 'semana', sede: 'Fusagasugá', orden: 'asignatura' });
-      expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Guardamos tu vista'));
-      expect(html.textContent).toContain('Esta es tu vista guardada');
+      expect(guardarPreferencia).toHaveBeenCalledWith({ vista: 'semana', sede: null, orden: 'hora' });
+      expect(html.textContent).not.toContain('Guardar como mi vista');
     });
 
-    it('no deja guardar lo que ya está guardado', () => {
-      const { html } = crear();
-
-      expect(boton(html, 'Esta es tu vista guardada').disabled).toBe(true);
-    });
-
-    it('si no se puede guardar la vista lo dice en la pantalla', () => {
-      const guardarPreferencia = vi.fn().mockReturnValue(throwError(() => ({ status: 422, error: { detail: 'La sede no puede pasar de 60 caracteres' } })));
+    it('si no se puede recordar la vista no se le dice nada a nadie', () => {
+      const guardarPreferencia = vi.fn().mockReturnValue(throwError(() => ({ status: 500 })));
       const { fixture, html } = crear(undefined, undefined, undefined, undefined, undefined, guardarPreferencia);
+
       boton(html, 'Semana').click();
       fixture.detectChanges();
 
-      boton(html, 'Guardar como mi vista').click();
-      fixture.detectChanges();
-
-      expect(html.querySelector('[role="alert"]')?.textContent).toContain('60 caracteres');
+      expect(html.querySelectorAll('.horario__dia-semana')).toHaveLength(7);
+      expect(html.querySelector('[role="alert"]')).toBeNull();
+      expect(notificador.problema).not.toHaveBeenCalled();
     });
   });
 
@@ -573,21 +399,18 @@ describe('MySchedule', () => {
       fixture.detectChanges();
     }
 
-    it('el bloque de filtros se llama «Filtrar y ordenar» para no confundirlo con armar el horario', () => {
-      const { html } = crear();
-
-      const resumen = html.querySelector('.horario__resumen')?.textContent ?? '';
-
-      expect(resumen).toContain('Filtrar y ordenar');
-      expect(html.textContent).not.toContain('Organizar mi horario');
-    });
-
-    it('ofrece añadir una actividad extra aunque todavía no haya asignaturas en curso', () => {
+    it('ofrece añadir una actividad extra aunque todavía no haya clases en el horario', () => {
       const { html } = crear(vi.fn().mockReturnValue(of(VACIO)), []);
 
-      expect(html.querySelector('.horario__extras h2')?.textContent).toContain('Actividades extra');
       expect(boton(html, 'Añadir actividad extra')).toBeTruthy();
     });
+
+    it('una actividad extra no se despliega: no tiene notas que mostrar', () => {
+      const { html } = crear(vi.fn().mockReturnValue(of(CON_EXTRA)));
+
+      expect(html.querySelectorAll('.horario__clase button[aria-expanded]')).toHaveLength(0);
+    });
+
 
     it('al abrirla muestra la guía de tres pasos y aclara que no es una asignatura', () => {
       const { fixture, html } = crear();
@@ -732,36 +555,6 @@ describe('MySchedule', () => {
       const { html } = crear(vi.fn().mockReturnValue(of(CON_EXTRA)));
 
       expect(html.querySelector('.horario__clase')?.textContent).not.toContain('calificar');
-    });
-
-    it('los filtros avisan que con una asignatura o una sede elegida las actividades extra no se muestran', () => {
-      const { html } = crear();
-
-      expect(html.querySelector('.horario__filtros')?.textContent).toContain('actividades extra no se muestran');
-    });
-
-    it('si se añade con un filtro puesto, el aviso dice que hay que quitarlo para verla', () => {
-      anadirExtra.mockReturnValue(of([{ ...BAILE, dia: 'lunes' }]));
-      const { fixture, html } = crear();
-      elegir(html, 'Sede', 'Fusagasugá');
-      fixture.detectChanges();
-      abrirElFormularioExtra(html, fixture);
-      llenarExtra(html, fixture);
-
-      boton(formularioExtra(html), 'Añadir').click();
-
-      expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Quita los filtros'));
-    });
-
-    it('abrir «Agregar una clase» cierra el formulario de la actividad extra: nunca hay dos abiertos', () => {
-      const { fixture, html } = crear();
-      abrirElFormularioExtra(html, fixture);
-
-      boton(html, 'Agregar una clase').click();
-      fixture.detectChanges();
-
-      expect(html.querySelector('.horario__extra-formulario')).toBeNull();
-      expect(html.querySelector('.horario__formulario')).not.toBeNull();
     });
 
     it('dice que hay que elegir al menos un día', () => {

@@ -5,20 +5,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
-import {
-  AsignaturaMatriculada,
-  EvaluacionRepository,
-} from '../../../data-access/evaluacion.repository';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
 import {
   ActividadExtraPorAnadir,
   ClaseDelHorario,
-  ClasePorAgregar,
   ConsultaDelHorario,
   Horario,
   HorarioRepository,
-  OrdenDelHorario,
-  PreferenciaDeHorario,
   VistaDelHorario,
 } from '../../../data-access/horario.repository';
 
@@ -33,22 +26,19 @@ const DIAS = [
   { valor: 'domingo', texto: 'Domingo', corto: 'Dom' },
 ] as const;
 
+/** Siempre por hora: es como se consulta un horario. */
+const CONSULTA: ConsultaDelHorario = { orden: 'hora' };
+
 /**
  * Mi horario (RF04, SCRUM-25).
  *
  * <p>Dos vistas del mismo dato: por día (la que se consulta en el momento: ¿dónde es mi próxima
- * clase?) y por semana. Abre en el día de hoy.
+ * clase?) y por semana. Abre en el día de hoy y recuerda la última vista que se eligió.
  *
- * <p>Aquí no se ordena, no se agrupa ni se filtra nada (SCRUM-26): el servidor entrega los días con
- * clases de lunes a domingo y, dentro de cada uno, las clases en el orden y con el filtro que se le
- * pidieron. La pantalla solo las dibuja y rellena con «sin clases» los días que no vienen. Elegir una
- * asignatura, una sede o un orden vuelve a pedir el horario.
- *
- * <p>La vista, la sede y el orden se pueden guardar como «mi vista» y la próxima vez abre con ellos. El
- * filtro por asignatura no se guarda: cambia cada período.
- *
- * <p>Las clases se agregan a mano, una por bloque, a las asignaturas que se están cursando. El
- * lugar y el docente son opcionales: se puede saber la hora antes que el salón.
+ * <p>Las clases son las que la universidad entrega en el Reporte de Horario: aquí no se agregan ni se
+ * quitan, se vuelve a importar el reporte. Lo que sí se puede añadir son actividades extra (un
+ * semillero, un deporte, una clase de baile): cosas con día y hora que no son una asignatura y que se
+ * ven, como una clase más, aquí y en Hoy. Tocar una clase despliega lo que falta por calificar.
  */
 @Component({
   selector: 'app-my-schedule',
@@ -58,66 +48,21 @@ const DIAS = [
 })
 export class MySchedule {
   private readonly repositorio = inject(HorarioRepository);
-  private readonly evaluaciones = inject(EvaluacionRepository);
   private readonly notificador = inject(NotifierService);
   private readonly fb = inject(FormBuilder).nonNullable;
 
   protected readonly dias = DIAS;
 
   protected readonly horario = signal<Horario | null>(null);
-  protected readonly asignaturas = signal<AsignaturaMatriculada[]>([]);
   protected readonly cargando = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly vista = signal<VistaDelHorario>('dia');
-  protected readonly asignaturaElegida = signal('');
-  protected readonly sedeElegida = signal('');
-  protected readonly ordenElegido = signal<OrdenDelHorario>('hora');
-  /** Lo que hay guardado como «mi vista»; sirve para saber si lo que se ve ya es eso. */
-  protected readonly guardadaComoMiVista = signal<PreferenciaDeHorario | null>(null);
-  protected readonly guardandoMiVista = signal(false);
-  protected readonly actualizando = signal(false);
   protected readonly diaElegido = signal<string>(diaDeHoy());
-  protected readonly agregando = signal(false);
-  protected readonly guardando = signal(false);
-  protected readonly errorDelFormulario = signal<string | null>(null);
 
   /** Las clases desplegadas, por `idMatricula-consecutivo`. */
   protected readonly abiertas = signal<ReadonlySet<string>>(new Set());
 
   protected readonly clasesDelDia = computed(() => this.clasesDe(this.diaElegido()));
-  protected readonly sinAsignaturas = computed(() => this.asignaturas().length === 0);
-
-  protected readonly hayFiltro = computed(() => !!this.asignaturaElegida() || !!this.sedeElegida());
-
-  /** Las sedes que se pueden elegir, más la elegida si el horario ya no la trae (se puede quitar). */
-  protected readonly sedesParaElegir = computed(() => {
-    const sedes = this.horario()?.sedes ?? [];
-    const elegida = this.sedeElegida();
-    return elegida && !sedes.includes(elegida) ? [...sedes, elegida] : sedes;
-  });
-
-  /** Verdadero si lo que se ve ya es lo que está guardado: no hay nada nuevo que guardar. */
-  protected readonly yaEsMiVista = computed(() => {
-    const guardada = this.guardadaComoMiVista();
-    return (
-      !!guardada &&
-      guardada.vista === this.vista() &&
-      (guardada.sede ?? '') === this.sedeElegida() &&
-      guardada.orden === this.ordenElegido()
-    );
-  });
-
-  protected readonly formulario = this.fb.group({
-    idMatricula: [0, [Validators.min(1)]],
-    dia: [diaDeHoy(), Validators.required],
-    horaInicio: ['', Validators.required],
-    horaFin: ['', Validators.required],
-    salon: [''],
-    bloque: [''],
-    sede: [''],
-    docenteNombres: [''],
-    docenteApellidos: [''],
-  });
 
   /** Una actividad extra no es una asignatura: se guarda un registro por cada día que se elige. */
   protected readonly agregandoExtra = signal(false);
@@ -174,101 +119,14 @@ export class MySchedule {
     return clase.docente ? `${clase.docente.nombres} ${clase.docente.apellidos}` : null;
   }
 
+  /** Cambia la vista y la recuerda para la próxima vez; si no se puede recordar, no es motivo para avisar. */
   protected cambiarVista(vista: VistaDelHorario): void {
     this.vista.set(vista);
-  }
-
-  protected elegirAsignatura(codigo: string): void {
-    this.asignaturaElegida.set(codigo);
-    this.pedirElHorario();
-  }
-
-  protected elegirSede(sede: string): void {
-    this.sedeElegida.set(sede);
-    this.pedirElHorario();
-  }
-
-  protected elegirOrden(orden: string): void {
-    this.ordenElegido.set(orden === 'asignatura' ? 'asignatura' : 'hora');
-    this.pedirElHorario();
-  }
-
-  protected quitarFiltros(): void {
-    this.asignaturaElegida.set('');
-    this.sedeElegida.set('');
-    this.pedirElHorario();
-  }
-
-  /** Guarda la vista, la sede y el orden de ahora. El filtro por asignatura no se guarda. */
-  protected guardarMiVista(): void {
-    if (this.guardandoMiVista() || this.yaEsMiVista()) {
-      return;
-    }
-    this.guardandoMiVista.set(true);
-    this.repositorio
-      .guardarPreferencia({ vista: this.vista(), sede: this.sedeElegida() || null, orden: this.ordenElegido() })
-      .subscribe({
-        next: (guardada) => {
-          this.guardandoMiVista.set(false);
-          this.guardadaComoMiVista.set(guardada);
-          void this.notificador.aviso('Guardamos tu vista: la próxima vez abre así.');
-        },
-        error: (err: HttpErrorResponse) => {
-          this.guardandoMiVista.set(false);
-          this.mostrarEnLaPantalla(err);
-        },
-      });
+    this.repositorio.guardarPreferencia({ vista, sede: null, orden: 'hora' }).subscribe({ error: () => undefined });
   }
 
   protected elegirDia(dia: string): void {
     this.diaElegido.set(dia);
-  }
-
-  protected abrirFormulario(): void {
-    // El formulario está al final de la pantalla: se lleva a la vista para que no pase desapercibido.
-    setTimeout(() => document.querySelector('.horario__formulario')?.scrollIntoView({ block: 'start' }));
-    const primera = this.asignaturas()[0];
-    this.formulario.reset({
-      idMatricula: primera?.idMatricula ?? 0,
-      dia: this.diaElegido(),
-      horaInicio: '',
-      horaFin: '',
-      salon: '',
-      bloque: '',
-      sede: '',
-      docenteNombres: '',
-      docenteApellidos: '',
-    });
-    this.errorDelFormulario.set(null);
-    this.agregandoExtra.set(false);
-    this.agregando.set(true);
-  }
-
-  protected cerrarFormulario(): void {
-    this.agregando.set(false);
-  }
-
-  protected agregar(): void {
-    if (this.formulario.invalid || this.guardando()) {
-      this.formulario.markAllAsTouched();
-      return;
-    }
-    const v = this.formulario.getRawValue();
-    this.guardando.set(true);
-    this.errorDelFormulario.set(null);
-    this.repositorio.agregar(Number(v.idMatricula), aClase(v)).subscribe({
-      next: (clase) => {
-        this.guardando.set(false);
-        this.agregando.set(false);
-        this.diaElegido.set(clase.dia);
-        this.recargarElHorario();
-        void this.notificador.aviso('Agregamos la clase a tu horario.');
-      },
-      error: (err: HttpErrorResponse) => {
-        this.guardando.set(false);
-        this.mostrarEnElFormulario(err);
-      },
-    });
   }
 
   protected abrirFormularioExtra(): void {
@@ -281,7 +139,6 @@ export class MySchedule {
     this.formularioExtra.reset({ nombre: '', horaInicio: '', horaFin: '', lugar: '', responsable: '' });
     this.diasExtra.set([]);
     this.errorDelFormularioExtra.set(null);
-    this.agregando.set(false);
     this.agregandoExtra.set(true);
   }
 
@@ -292,7 +149,7 @@ export class MySchedule {
 
   /** Al cerrar el formulario, el foco vuelve al botón que lo abre. */
   private devolverElFoco(): void {
-    setTimeout(() => document.querySelector<HTMLElement>('.horario__extras > button')?.focus());
+    setTimeout(() => document.querySelector<HTMLElement>('.horario__acciones-superiores > button')?.focus());
   }
 
   protected alternarDiaExtra(dia: string): void {
@@ -320,11 +177,7 @@ export class MySchedule {
         }
         this.recargarElHorario();
         this.devolverElFoco();
-        void this.notificador.aviso(
-          this.hayFiltro()
-            ? 'Añadimos la actividad. Quita los filtros para verla en tu horario.'
-            : 'Añadimos la actividad a tu horario.',
-        );
+        void this.notificador.aviso('Añadimos la actividad a tu horario.');
       },
       error: (err: HttpErrorResponse) => {
         this.guardandoExtra.set(false);
@@ -340,63 +193,41 @@ export class MySchedule {
     });
   }
 
+  /** Solo las actividades extra se quitan: las clases llegan por el reporte de la universidad. */
   protected async quitar(clase: ClaseDelHorario): Promise<void> {
+    if (!clase.esExtra || clase.idActividadExtra === null) {
+      return;
+    }
     const confirmada = await this.notificador.confirmar(
-      clase.esExtra ? 'Quitar esta actividad' : 'Quitar esta clase',
+      'Quitar esta actividad',
       `${clase.asignatura}, ${this.textoDelDia(clase.dia)} de ${clase.horaInicio} a ${clase.horaFin}.`,
       'Quitar',
     );
     if (!confirmada) {
       return;
     }
-    const peticion =
-      clase.esExtra && clase.idActividadExtra !== null
-        ? this.repositorio.quitarActividadExtra(clase.idActividadExtra)
-        : clase.idMatricula !== null
-          ? this.repositorio.quitar(clase.idMatricula, clase.consecutivo)
-          : null;
-    peticion?.subscribe({
+    this.repositorio.quitarActividadExtra(clase.idActividadExtra).subscribe({
       next: () => this.recargarElHorario(),
       error: (err: HttpErrorResponse) => this.mostrarEnLaPantalla(err),
     });
   }
 
   /**
-   * Abre con la preferencia guardada. Si no se puede leer, no es motivo para no mostrar el horario:
-   * se abre con lo predeterminado y no se le dice nada a quien no pidió nada.
+   * Abre con la última vista que se eligió. Si no se puede leer, no es motivo para no mostrar el
+   * horario: se abre con lo predeterminado y no se le dice nada a quien no pidió nada.
    */
   private cargar(): void {
     this.repositorio.miPreferencia().subscribe({
       next: (preferencia) => {
-        this.guardadaComoMiVista.set(preferencia);
         this.vista.set(preferencia.vista);
-        this.sedeElegida.set(preferencia.sede ?? '');
-        this.ordenElegido.set(preferencia.orden);
         this.cargarElHorario();
       },
       error: () => this.cargarElHorario(),
     });
-    this.cargarLasAsignaturas();
-  }
-
-  /** Para poder agregar: solo las asignaturas que se están cursando tienen horario. */
-  private cargarLasAsignaturas(): void {
-    this.evaluaciones.misAsignaturas().subscribe({
-      next: (asignaturas) => this.asignaturas.set(asignaturas.filter((a) => a.enCurso)),
-      error: () => this.asignaturas.set([]),
-    });
-  }
-
-  private consulta(): ConsultaDelHorario {
-    return {
-      asignatura: this.asignaturaElegida() || undefined,
-      sede: this.sedeElegida() || undefined,
-      orden: this.ordenElegido(),
-    };
   }
 
   private cargarElHorario(): void {
-    this.repositorio.miHorario(this.consulta()).subscribe({
+    this.repositorio.miHorario(CONSULTA).subscribe({
       next: (horario) => {
         this.horario.set(horario);
         this.cargando.set(false);
@@ -414,36 +245,15 @@ export class MySchedule {
     });
   }
 
-  /** Un filtro o un orden nuevos: se vuelve a pedir y la pantalla sigue mostrando lo anterior mientras tanto. */
-  private pedirElHorario(): void {
-    this.actualizando.set(true);
-    this.repositorio.miHorario(this.consulta()).subscribe({
+  /** Se vuelve a pedir y la pantalla sigue mostrando lo anterior mientras tanto. */
+  private recargarElHorario(): void {
+    this.repositorio.miHorario(CONSULTA).subscribe({
       next: (horario) => {
         this.horario.set(horario);
         this.error.set(null);
-        this.actualizando.set(false);
       },
-      error: (err: HttpErrorResponse) => {
-        this.actualizando.set(false);
-        this.mostrarEnLaPantalla(err);
-      },
+      error: (err: HttpErrorResponse) => this.mostrarEnLaPantalla(err),
     });
-  }
-
-  private recargarElHorario(): void {
-    this.pedirElHorario();
-  }
-
-  /** Lo que el estudiante puede corregir va junto al formulario; una caída del servidor, a la ventana. */
-  private mostrarEnElFormulario(err: HttpErrorResponse): void {
-    if (esFalloDelServidor(err)) {
-      void this.notificador.problema(
-        'No pudimos guardar la clase',
-        'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
-      );
-      return;
-    }
-    this.errorDelFormulario.set(err.error?.detail ?? 'No pudimos guardar la clase. Revisa los datos.');
   }
 
   private mostrarEnLaPantalla(err: HttpErrorResponse): void {
@@ -478,24 +288,4 @@ function aActividadExtra(
   if (v.lugar.trim()) actividad.lugar = v.lugar.trim();
   if (v.responsable.trim()) actividad.responsable = v.responsable.trim();
   return actividad;
-}
-
-function aClase(v: {
-  dia: string;
-  horaInicio: string;
-  horaFin: string;
-  salon: string;
-  bloque: string;
-  sede: string;
-  docenteNombres: string;
-  docenteApellidos: string;
-}): ClasePorAgregar {
-  const clase: ClasePorAgregar = { dia: v.dia, horaInicio: v.horaInicio, horaFin: v.horaFin };
-  if (v.salon.trim()) clase.salon = v.salon.trim();
-  if (v.bloque.trim()) clase.bloque = v.bloque.trim();
-  if (v.sede.trim()) clase.sede = v.sede.trim();
-  if (v.docenteNombres.trim() || v.docenteApellidos.trim()) {
-    clase.docente = { nombres: v.docenteNombres.trim(), apellidos: v.docenteApellidos.trim() };
-  }
-  return clase;
 }
