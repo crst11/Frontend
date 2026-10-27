@@ -11,6 +11,7 @@ import {
 } from '../../../data-access/evaluacion.repository';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
 import {
+  ActividadExtraPorAnadir,
   ClaseDelHorario,
   ClasePorAgregar,
   ConsultaDelHorario,
@@ -118,6 +119,19 @@ export class MySchedule {
     docenteApellidos: [''],
   });
 
+  /** Una actividad extra no es una asignatura: se guarda un registro por cada día que se elige. */
+  protected readonly agregandoExtra = signal(false);
+  protected readonly guardandoExtra = signal(false);
+  protected readonly errorDelFormularioExtra = signal<string | null>(null);
+  protected readonly diasExtra = signal<readonly string[]>([]);
+  protected readonly formularioExtra = this.fb.group({
+    nombre: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(80)]],
+    horaInicio: ['', Validators.required],
+    horaFin: ['', Validators.required],
+    lugar: ['', Validators.maxLength(80)],
+    responsable: ['', Validators.maxLength(80)],
+  });
+
   constructor() {
     this.cargar();
   }
@@ -137,7 +151,7 @@ export class MySchedule {
   }
 
   protected claveDe(clase: ClaseDelHorario): string {
-    return `${clase.idMatricula}-${clase.consecutivo}`;
+    return clase.esExtra ? `extra-${clase.idActividadExtra}` : `${clase.idMatricula}-${clase.consecutivo}`;
   }
 
   protected estaAbierta(clase: ClaseDelHorario): boolean {
@@ -256,16 +270,76 @@ export class MySchedule {
     });
   }
 
+  protected abrirFormularioExtra(): void {
+    setTimeout(() => document.querySelector('.horario__extra-formulario')?.scrollIntoView({ block: 'start' }));
+    this.formularioExtra.reset({ nombre: '', horaInicio: '', horaFin: '', lugar: '', responsable: '' });
+    this.diasExtra.set([]);
+    this.errorDelFormularioExtra.set(null);
+    this.agregando.set(false);
+    this.agregandoExtra.set(true);
+  }
+
+  protected cerrarFormularioExtra(): void {
+    this.agregandoExtra.set(false);
+  }
+
+  protected alternarDiaExtra(dia: string): void {
+    this.diasExtra.update((elegidos) => (elegidos.includes(dia) ? elegidos.filter((d) => d !== dia) : [...elegidos, dia]));
+  }
+
+  protected puedeGuardarExtra(): boolean {
+    return this.formularioExtra.valid && this.diasExtra().length > 0 && !this.guardandoExtra();
+  }
+
+  protected anadirExtra(): void {
+    if (!this.puedeGuardarExtra()) {
+      this.formularioExtra.markAllAsTouched();
+      return;
+    }
+    this.guardandoExtra.set(true);
+    this.errorDelFormularioExtra.set(null);
+    const orden = DIAS.map((d) => d.valor as string);
+    const dias = orden.filter((d) => this.diasExtra().includes(d));
+    this.repositorio.anadirActividadExtra(aActividadExtra(this.formularioExtra.getRawValue(), dias)).subscribe({
+      next: (clases) => {
+        this.guardandoExtra.set(false);
+        this.agregandoExtra.set(false);
+        if (clases.length > 0) {
+          this.diaElegido.set(clases[0].dia);
+        }
+        this.recargarElHorario();
+        void this.notificador.aviso('Añadimos la actividad a tu horario.');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.guardandoExtra.set(false);
+        if (esFalloDelServidor(err)) {
+          void this.notificador.problema(
+            'No pudimos guardar la actividad',
+            'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.',
+          );
+          return;
+        }
+        this.errorDelFormularioExtra.set(err.error?.detail ?? 'No pudimos guardar la actividad. Revisa los datos.');
+      },
+    });
+  }
+
   protected async quitar(clase: ClaseDelHorario): Promise<void> {
     const confirmada = await this.notificador.confirmar(
-      'Quitar esta clase',
+      clase.esExtra ? 'Quitar esta actividad' : 'Quitar esta clase',
       `${clase.asignatura}, ${this.textoDelDia(clase.dia)} de ${clase.horaInicio} a ${clase.horaFin}.`,
       'Quitar',
     );
     if (!confirmada) {
       return;
     }
-    this.repositorio.quitar(clase.idMatricula, clase.consecutivo).subscribe({
+    const peticion =
+      clase.esExtra && clase.idActividadExtra !== null
+        ? this.repositorio.quitarActividadExtra(clase.idActividadExtra)
+        : clase.idMatricula !== null
+          ? this.repositorio.quitar(clase.idMatricula, clase.consecutivo)
+          : null;
+    peticion?.subscribe({
       next: () => this.recargarElHorario(),
       error: (err: HttpErrorResponse) => this.mostrarEnLaPantalla(err),
     });
@@ -373,6 +447,21 @@ function diaDeHoy(): string {
   // Date va de domingo (0) a sábado (6); DIAS, de lunes a domingo.
   const hoy = new Date().getDay();
   return DIAS[hoy === 0 ? 6 : hoy - 1].valor;
+}
+
+function aActividadExtra(
+  v: { nombre: string; horaInicio: string; horaFin: string; lugar: string; responsable: string },
+  dias: string[],
+): ActividadExtraPorAnadir {
+  const actividad: ActividadExtraPorAnadir = {
+    nombre: v.nombre.trim(),
+    dias,
+    horaInicio: v.horaInicio,
+    horaFin: v.horaFin,
+  };
+  if (v.lugar.trim()) actividad.lugar = v.lugar.trim();
+  if (v.responsable.trim()) actividad.responsable = v.responsable.trim();
+  return actividad;
 }
 
 function aClase(v: {
