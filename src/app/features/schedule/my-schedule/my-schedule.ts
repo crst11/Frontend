@@ -240,6 +240,7 @@ export class MySchedule {
       docenteApellidos: '',
     });
     this.errorDelFormulario.set(null);
+    this.agregandoExtra.set(false);
     this.agregando.set(true);
   }
 
@@ -271,7 +272,12 @@ export class MySchedule {
   }
 
   protected abrirFormularioExtra(): void {
-    setTimeout(() => document.querySelector('.horario__extra-formulario')?.scrollIntoView({ block: 'start' }));
+    // El botón que se tocó desaparece: el foco pasa al primer campo para que el teclado no se pierda.
+    setTimeout(() => {
+      const formulario = document.querySelector('.horario__extra-formulario');
+      formulario?.scrollIntoView({ block: 'start' });
+      formulario?.querySelector<HTMLElement>('input')?.focus();
+    });
     this.formularioExtra.reset({ nombre: '', horaInicio: '', horaFin: '', lugar: '', responsable: '' });
     this.diasExtra.set([]);
     this.errorDelFormularioExtra.set(null);
@@ -281,6 +287,12 @@ export class MySchedule {
 
   protected cerrarFormularioExtra(): void {
     this.agregandoExtra.set(false);
+    this.devolverElFoco();
+  }
+
+  /** Al cerrar el formulario, el foco vuelve al botón que lo abre. */
+  private devolverElFoco(): void {
+    setTimeout(() => document.querySelector<HTMLElement>('.horario__extras > button')?.focus());
   }
 
   protected alternarDiaExtra(dia: string): void {
@@ -293,7 +305,6 @@ export class MySchedule {
 
   protected anadirExtra(): void {
     if (!this.puedeGuardarExtra()) {
-      this.formularioExtra.markAllAsTouched();
       return;
     }
     this.guardandoExtra.set(true);
@@ -308,7 +319,12 @@ export class MySchedule {
           this.diaElegido.set(clases[0].dia);
         }
         this.recargarElHorario();
-        void this.notificador.aviso('Añadimos la actividad a tu horario.');
+        this.devolverElFoco();
+        void this.notificador.aviso(
+          this.hayFiltro()
+            ? 'Añadimos la actividad. Quita los filtros para verla en tu horario.'
+            : 'Añadimos la actividad a tu horario.',
+        );
       },
       error: (err: HttpErrorResponse) => {
         this.guardandoExtra.set(false);

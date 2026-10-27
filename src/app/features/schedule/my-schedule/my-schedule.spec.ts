@@ -734,6 +734,43 @@ describe('MySchedule', () => {
       expect(html.querySelector('.horario__clase')?.textContent).not.toContain('calificar');
     });
 
+    it('los filtros avisan que con una asignatura o una sede elegida las actividades extra no se muestran', () => {
+      const { html } = crear();
+
+      expect(html.querySelector('.horario__filtros')?.textContent).toContain('actividades extra no se muestran');
+    });
+
+    it('si se añade con un filtro puesto, el aviso dice que hay que quitarlo para verla', () => {
+      anadirExtra.mockReturnValue(of([{ ...BAILE, dia: 'lunes' }]));
+      const { fixture, html } = crear();
+      elegir(html, 'Sede', 'Fusagasugá');
+      fixture.detectChanges();
+      abrirElFormularioExtra(html, fixture);
+      llenarExtra(html, fixture);
+
+      boton(formularioExtra(html), 'Añadir').click();
+
+      expect(notificador.aviso).toHaveBeenCalledWith(expect.stringContaining('Quita los filtros'));
+    });
+
+    it('abrir «Agregar una clase» cierra el formulario de la actividad extra: nunca hay dos abiertos', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+
+      boton(html, 'Agregar una clase').click();
+      fixture.detectChanges();
+
+      expect(html.querySelector('.horario__extra-formulario')).toBeNull();
+      expect(html.querySelector('.horario__formulario')).not.toBeNull();
+    });
+
+    it('dice que hay que elegir al menos un día', () => {
+      const { fixture, html } = crear();
+      abrirElFormularioExtra(html, fixture);
+
+      expect(formularioExtra(html).textContent).toContain('elige al menos un día');
+    });
+
     it('dos actividades extra del mismo día se dibujan las dos', () => {
       const dos: Horario = { ...CON_EXTRA, totalDeClases: 2, dias: [{ dia: 'miercoles', clases: [SEMILLERO, BAILE] }] };
       const { html } = crear(vi.fn().mockReturnValue(of(dos)));

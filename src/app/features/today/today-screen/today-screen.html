@@ -128,7 +128,7 @@
         </section>
       } @else {
         <ul class="hoy__clases" aria-label="Tus clases de hoy">
-          @for (clase of hoy.clases; track claveDe(clase)) {
+          @for (clase of hoy.clases; track claveDe(clase) + $index) {
             <li>
               @if (clase.esExtra) {
                 <!-- Una actividad extra se ve como una clase, pero no tiene notas: no se despliega. -->
@@ -170,7 +170,7 @@
       @if (hoy.siguiente; as siguiente) {
         <h2 class="hoy__siguiente">{{ tituloDelSiguiente(hoy) }}</h2>
         <ul class="hoy__clases hoy__clases--siguiente" aria-label="Tus clases del próximo día">
-          @for (clase of siguiente.clases; track claveDe(clase)) {
+          @for (clase of siguiente.clases; track claveDe(clase) + $index) {
             <li>
               @if (clase.esExtra) {
                 <div class="card hoy__clase">

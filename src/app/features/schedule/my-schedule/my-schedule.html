@@ -115,6 +115,7 @@
             </button>
           </div>
           <p class="field__hint">Se guarda la vista, la sede y el orden. La asignatura no: cambia cada período.</p>
+          <p class="field__hint">Con una asignatura o una sede elegida, las actividades extra no se muestran.</p>
         </details>
       }
 
@@ -253,7 +254,7 @@
         <h2 id="titulo-extras" class="horario__titulo-formulario">Actividades extra</h2>
         @if (agregandoExtra()) {
           <form class="card horario__formulario horario__extra-formulario" [formGroup]="formularioExtra" (ngSubmit)="anadirExtra()" aria-label="Añadir una actividad extra">
-            <ol class="horario__extra-pasos">
+            <ol class="horario__extra-pasos" role="list">
               <li><span class="steps__marker" aria-hidden="true">1</span> Escribe qué es</li>
               <li><span class="steps__marker" aria-hidden="true">2</span> Elige los días y la hora</li>
               <li><span class="steps__marker" aria-hidden="true">3</span> Guarda</li>
@@ -266,7 +267,7 @@
             </label>
 
             <div class="field">
-              <span class="field__label" id="etiqueta-dias-extra">Días</span>
+              <span class="field__label" id="etiqueta-dias-extra">Días <span class="field__hint">(elige al menos un día)</span></span>
               <div class="chips horario__extra-dias" role="group" aria-labelledby="etiqueta-dias-extra">
                 @for (dia of dias; track dia.valor) {
                   <button
