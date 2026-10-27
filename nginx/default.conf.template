@@ -30,7 +30,7 @@ server {
 
     # El service worker y su lista de archivos NUNCA se cachean: si se cacheara, una version nueva
     # no llegaria hasta que el navegador decidiera revisar, y la PWA se quedaria atras.
-    location ~* ^/(index\.html|ngsw\.json|ngsw-worker\.js|safety-worker\.js|worker-basic\.min\.js|manifest\.webmanifest)$ {
+    location ~* ^/(index\.html|ngsw\.json|ngsw-worker\.js|safety-worker\.js|worker-basic\.min\.js|manifest\.webmanifest|version\.json)$ {
         add_header Cache-Control "no-cache, no-store, must-revalidate" always;
         try_files $uri =404;
     }
