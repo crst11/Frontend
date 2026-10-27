@@ -6,6 +6,7 @@ import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { Brujula, BrujulaRepository, NivelDeRiesgo } from '../../../data-access/brujula.repository';
 import { leerNumero } from '../../../shared/leer-numero';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 const SIN_CONEXION =
   'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.';
@@ -28,7 +29,7 @@ const ETIQUETAS: Record<NivelDeRiesgo, string> = {
  */
 @Component({
   selector: 'app-compass-screen',
-  imports: [DecimalPipe, RouterLink],
+  imports: [Cargando, DecimalPipe, RouterLink],
   templateUrl: './compass-screen.html',
   styleUrl: './compass-screen.css',
 })

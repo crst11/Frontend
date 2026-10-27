@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { SessionService } from '../../../core/session/session.service';
 import { EstudianteRepository, DispositivoConSesion } from '../../../data-access/estudiante.repository';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 /** Un dispositivo reconocible a partir del user agent, para no mostrarle al estudiante la cadena cruda. */
 interface Dispositivo {
@@ -17,6 +18,7 @@ interface Dispositivo {
  * reconocer los dispositivos y poder cerrar todo de una vez.
  */
 @Component({
+  imports: [Cargando],
   selector: 'app-my-sessions',
   templateUrl: './my-sessions.html',
   styleUrl: './my-sessions.css',

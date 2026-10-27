@@ -3,8 +3,8 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter } from 'rxjs';
 import { NotifierService } from '../feedback/notifier.service';
 
-/** Cada cuánto se busca una versión nueva con la aplicación abierta. */
-const CADA_CUANTO_BUSCAR_EN_MS = 30 * 60_000;
+/** Cada cuánto se busca una versión nueva con la aplicación abierta (SCRUM-267: antes media hora, y el aviso tardaba en salir). */
+const CADA_CUANTO_BUSCAR_EN_MS = 5 * 60_000;
 
 /** Cuánto se espera la respuesta del service worker al activar la versión nueva antes de recargar de todos modos. */
 const ESPERA_DE_LA_ACTIVACION_EN_MS = 5_000;
@@ -21,7 +21,8 @@ export const RECARGAR_LA_PAGINA = new InjectionToken<() => void>('RECARGAR_LA_PA
 /**
  * Mantiene la aplicación al día (SCRUM-258). El service worker baja la versión nueva en segundo plano, pero sigue mostrando la
  * vieja hasta que la aplicación se cierra y se vuelve a abrir, y como la sesión se restaura sola, casi nunca se cierra. Este
- * servicio busca la versión nueva al volver a la aplicación y cada media hora, y cuando está lista pregunta si se actualiza ahora.
+ * servicio busca la versión nueva al abrir la aplicación, al volver a ella y cada cinco minutos, y cuando está lista pregunta si se
+ * actualiza ahora.
  *
  * <p>No recarga sin preguntar: «Armar mi horario» guarda la oferta que se sube solo en memoria, y una recarga a mitad de trabajo la
  * borraría. Si la persona deja la actualización para después, vuelve a preguntar cuando regresa a la aplicación.
@@ -62,6 +63,8 @@ export class ActualizadorDeLaApp {
       { signal: escuchas.signal },
     );
     const temporizador = setInterval(() => this.revisar(), CADA_CUANTO_BUSCAR_EN_MS);
+    // Al abrir también se busca: si no, el aviso esperaba a que la persona saliera y volviera, o a la primera revisión periódica.
+    this.revisar();
     return () => {
       suscripciones.forEach((suscripcion) => suscripcion.unsubscribe());
       escuchas.abort();

@@ -15,7 +15,7 @@
   </ng-template>
 
   @if (cargando()) {
-    <p class="subtitle">Armando tu día…</p>
+    <app-cargando mensaje="Armando tu día…" />
   } @else if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
     <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>

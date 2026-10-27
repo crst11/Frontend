@@ -5,6 +5,7 @@ import { Subject, catchError, debounceTime, distinctUntilChanged, map, of, switc
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { CategoriaDeRecurso, GuiaRepository, RecursoInstitucional } from '../../../data-access/guia.repository';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 interface Filtros {
   texto: string;
@@ -33,7 +34,7 @@ function normalizar(texto: string): string {
  */
 @Component({
   selector: 'app-institutional-guide',
-  imports: [RouterLink],
+  imports: [Cargando, RouterLink],
   templateUrl: './institutional-guide.html',
   styleUrl: './institutional-guide.css',
 })
