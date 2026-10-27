@@ -315,7 +315,8 @@ describe('ImportCmad', () => {
 
       boton(html, 'Ver mis notas').click();
 
-      expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], { queryParams: { matricula: 7 } });
+      // Reemplaza la entrada de la importación en el historial: con el botón atrás del teléfono no se vuelve a ella.
+      expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], { queryParams: { matricula: 7 }, replaceUrl: true });
     });
   });
 

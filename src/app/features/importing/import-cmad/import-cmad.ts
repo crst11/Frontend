@@ -356,6 +356,7 @@ export class ImportCmad {
 
   protected verMisNotas(): void {
     const id = this.idElegido();
-    void this.router.navigate(['/calificaciones/mis-notas'], id ? { queryParams: { matricula: id } } : {});
+    // replaceUrl: la importación no queda en el historial, así que el botón atrás del teléfono no vuelve a ella.
+    void this.router.navigate(['/calificaciones/mis-notas'], id ? { queryParams: { matricula: id }, replaceUrl: true } : { replaceUrl: true });
   }
 }
