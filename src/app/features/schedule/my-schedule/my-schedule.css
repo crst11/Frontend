@@ -1,7 +1,19 @@
+/* Un solo ritmo vertical: 16 px entre tarjetas, botones y módulos (como .screen__body). */
 .horario__cuerpo {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+/* Lo que se puede hacer desde aquí: importar el horario y añadir una actividad extra. */
+.horario__acciones-superiores {
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
+}
+
+.horario__acciones-superiores > .button {
+  flex: 1 1 150px;
 }
 
 .horario__dias {
@@ -20,14 +32,20 @@
 .horario__dia-semana {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .horario__clase {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   border-left: 4px solid var(--color-primary);
+}
+
+/* La hora deja sitio a la flecha que avisa que la tarjeta se despliega. */
+.horario__clase--desplegable > .horario__hora {
+  padding-right: 32px;
 }
 
 .horario__hora {
@@ -44,6 +62,56 @@
   font-size: 17px;
   font-weight: 700;
   color: var(--color-ink);
+}
+
+/*
+ * Tocar la clase despliega lo que falta por calificar. El botón es el nombre de la asignatura (así lo anuncia
+ * un lector de pantalla) y su ::after se estira sobre toda la tarjeta para que cualquier parte se pueda tocar.
+ */
+.horario__clase-boton {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.horario__clase-boton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+}
+
+.horario__clase-boton:focus-visible {
+  outline: none;
+}
+
+/* El foco se ve sobre toda la tarjeta, no solo sobre el nombre. */
+.horario__clase-boton:focus-visible::after {
+  outline: 3px solid var(--color-primary-ring);
+  outline-offset: 2px;
+}
+
+.horario__flecha {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+
+.horario__clase--abierta .horario__flecha {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .horario__flecha {
+    transition: transform 150ms ease;
+  }
 }
 
 .horario__detalle {
@@ -67,64 +135,15 @@
   width: auto;
   height: auto;
   min-height: 36px;
+  margin-top: 4px;
   padding: 6px 14px;
   font-size: 13px;
-}
-
-.horario__importar {
-  align-self: flex-start;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-primary-strong);
-  text-decoration: underline;
-}
-
-.horario__filtros {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Plegado, el espacio entre el título y el contenido oculto sobra. */
-.horario__filtros:not([open]) {
-  gap: 0;
-}
-
-.horario__acciones-filtros {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* Los botones compartidos ocupan todo el ancho: aquí son acciones chicas. */
-.horario__chico {
-  width: auto;
-  height: auto;
-  min-height: 40px;
-  padding: 8px 16px;
-  font-size: 14px;
 }
 
 .horario__formulario {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.horario__titulo-formulario {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-ink);
-}
-
-/* Actividades extra: su propio módulo, separado de las clases y del formulario de agregar una clase. */
-.horario__extras {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
 }
 
 .horario__extra-pasos {
@@ -166,53 +185,14 @@
   border: 0;
 }
 
-.horario__ver {
-  width: 100%;
-  min-height: 44px;
-}
-
+/* Lo desplegado queda por encima de la zona que se toca para poder usar sus enlaces y botones. */
 .horario__notas {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 4px;
-}
-
-/* Los filtros arrancan plegados: lo primero que se ve son las clases. */
-.horario__resumen {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 44px;
-  font-weight: 600;
-  color: var(--color-ink);
-  cursor: pointer;
-  list-style: none;
-}
-
-.horario__resumen::-webkit-details-marker {
-  display: none;
-}
-
-/* La flechita avisa que se despliega, y gira cuando está abierto. */
-.horario__resumen::after {
-  content: '';
-  flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
-  margin: 0 4px 4px auto;
-  border: solid var(--color-muted);
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.horario__filtros[open] > .horario__resumen::after {
-  margin-bottom: 0;
   margin-top: 4px;
-  transform: rotate(-135deg);
-}
-
-.horario__filtros[open] > .horario__resumen {
-  margin-bottom: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
 }

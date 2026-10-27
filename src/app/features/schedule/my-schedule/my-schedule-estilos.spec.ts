@@ -20,7 +20,23 @@ describe('estilos de Mi horario (SCRUM-264)', () => {
     expect(regla('.horario__detalle svg')).toMatch(/flex:\s*0 0 auto/);
   });
 
-  it('los filtros plegados no dejan un hueco vacío bajo el título', () => {
-    expect(regla('.horario__filtros:not([open])')).toMatch(/gap:\s*0/);
+  it('las tarjetas, los botones y los módulos van separados por 16 px, nunca pegados', () => {
+    expect(regla('.horario__cuerpo')).toMatch(/gap:\s*16px/);
+    expect(regla('.horario__acciones-superiores')).toMatch(/gap:\s*12px/);
+  });
+
+  it('toda la tarjeta de una clase se puede tocar, no solo su nombre', () => {
+    expect(regla('.horario__clase')).toMatch(/position:\s*relative/);
+    expect(regla('.horario__clase-boton::after')).toMatch(/position:\s*absolute/);
+    expect(regla('.horario__clase-boton::after')).toMatch(/inset:\s*0/);
+  });
+
+  it('lo que se despliega queda por encima de la zona que se toca, para poder usar sus enlaces', () => {
+    expect(regla('.horario__notas')).toMatch(/position:\s*relative/);
+    expect(regla('.horario__notas')).toMatch(/z-index:\s*1/);
+  });
+
+  it('el foco de teclado se ve sobre toda la tarjeta', () => {
+    expect(regla('.horario__clase-boton:focus-visible::after')).toMatch(/outline:\s*3px solid var\(--color-primary-ring\)/);
   });
 });
