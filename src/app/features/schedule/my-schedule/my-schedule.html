@@ -63,42 +63,44 @@
               <span class="badge badge--ok">Con filtros</span>
             }
           </summary>
-          <div class="field-row">
+          <div class="horario__filtros-cuerpo">
+            <div class="field-row">
+              <label class="field">
+                <span class="field__label">Asignatura</span>
+                <select class="field__input" (change)="elegirAsignatura($any($event.target).value)">
+                  <option value="" [selected]="asignaturaElegida() === ''">Todas</option>
+                  @for (asignatura of horario()?.asignaturas; track asignatura.codigo) {
+                    <option [value]="asignatura.codigo" [selected]="asignatura.codigo === asignaturaElegida()">{{ asignatura.nombre }}</option>
+                  }
+                </select>
+              </label>
+              <label class="field">
+                <span class="field__label">Sede</span>
+                <select class="field__input" (change)="elegirSede($any($event.target).value)">
+                  <option value="" [selected]="sedeElegida() === ''">Todas</option>
+                  @for (sede of sedesParaElegir(); track sede) {
+                    <option [value]="sede" [selected]="sede === sedeElegida()">{{ sede }}</option>
+                  }
+                </select>
+              </label>
+            </div>
             <label class="field">
-              <span class="field__label">Asignatura</span>
-              <select class="field__input" (change)="elegirAsignatura($any($event.target).value)">
-                <option value="" [selected]="asignaturaElegida() === ''">Todas</option>
-                @for (asignatura of horario()?.asignaturas; track asignatura.codigo) {
-                  <option [value]="asignatura.codigo" [selected]="asignatura.codigo === asignaturaElegida()">{{ asignatura.nombre }}</option>
-                }
+              <span class="field__label">Ordenar por</span>
+              <select class="field__input" (change)="elegirOrden($any($event.target).value)">
+                <option value="hora" [selected]="ordenElegido() === 'hora'">Hora</option>
+                <option value="asignatura" [selected]="ordenElegido() === 'asignatura'">Asignatura</option>
               </select>
             </label>
-            <label class="field">
-              <span class="field__label">Sede</span>
-              <select class="field__input" (change)="elegirSede($any($event.target).value)">
-                <option value="" [selected]="sedeElegida() === ''">Todas</option>
-                @for (sede of sedesParaElegir(); track sede) {
-                  <option [value]="sede" [selected]="sede === sedeElegida()">{{ sede }}</option>
-                }
-              </select>
-            </label>
+            <div class="horario__acciones-filtros">
+              @if (hayFiltro()) {
+                <button class="button button--outline horario__chico" type="button" (click)="quitarFiltros()">Quitar filtros</button>
+              }
+              <button class="button button--soft horario__chico" type="button" [disabled]="yaEsMiVista() || guardandoMiVista()" (click)="guardarMiVista()">
+                {{ yaEsMiVista() ? 'Esta es tu vista guardada' : guardandoMiVista() ? 'Guardando…' : 'Guardar como mi vista' }}
+              </button>
+            </div>
+            <p class="field__hint">Se guarda la vista, la sede y el orden. La asignatura no: cambia cada período.</p>
           </div>
-          <label class="field">
-            <span class="field__label">Ordenar por</span>
-            <select class="field__input" (change)="elegirOrden($any($event.target).value)">
-              <option value="hora" [selected]="ordenElegido() === 'hora'">Hora</option>
-              <option value="asignatura" [selected]="ordenElegido() === 'asignatura'">Asignatura</option>
-            </select>
-          </label>
-          <div class="horario__acciones-filtros">
-            @if (hayFiltro()) {
-              <button class="button button--outline horario__chico" type="button" (click)="quitarFiltros()">Quitar filtros</button>
-            }
-            <button class="button button--soft horario__chico" type="button" [disabled]="yaEsMiVista() || guardandoMiVista()" (click)="guardarMiVista()">
-              {{ yaEsMiVista() ? 'Esta es tu vista guardada' : guardandoMiVista() ? 'Guardando…' : 'Guardar como mi vista' }}
-            </button>
-          </div>
-          <p class="field__hint">Se guarda la vista, la sede y el orden. La asignatura no: cambia cada período.</p>
         </details>
       }
 

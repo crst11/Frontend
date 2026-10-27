@@ -90,6 +90,16 @@
   gap: 0;
 }
 
+/*
+ * Dentro de un <details> el contenido va en una ranura aparte, así que el gap de arriba solo separa el título de todo el bloque: los
+ * campos de adentro quedaban pegados. Este contenedor es el que los separa.
+ */
+.horario__filtros-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .horario__acciones-filtros {
   display: flex;
   flex-wrap: wrap;
@@ -185,6 +195,3 @@
   transform: rotate(-135deg);
 }
 
-.horario__filtros[open] > .horario__resumen {
-  margin-bottom: 12px;
-}
