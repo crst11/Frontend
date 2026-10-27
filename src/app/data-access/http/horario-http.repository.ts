@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ActividadExtraPorAnadir,
   ClaseDelHorario,
   ClasePorAgregar,
   ConsultaDelHorario,
@@ -30,6 +31,14 @@ export class HorarioHttpRepository extends HorarioRepository {
 
   override quitar(idMatricula: number, consecutivo: number): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/mis/matriculas/${idMatricula}/horario/${consecutivo}`);
+  }
+
+  override anadirActividadExtra(actividad: ActividadExtraPorAnadir): Observable<ClaseDelHorario[]> {
+    return this.http.post<ClaseDelHorario[]>(`${environment.apiUrl}/mis/actividades-extra`, actividad);
+  }
+
+  override quitarActividadExtra(idActividadExtra: number): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/mis/actividades-extra/${idActividadExtra}`);
   }
 
   override miPreferencia(): Observable<PreferenciaDeHorario> {

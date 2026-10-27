@@ -7,33 +7,49 @@
         <span class="field__hint">· {{ clase.duracionEnMinutos }} min</span>
       </p>
       <h3 class="horario__asignatura">{{ clase.asignatura }}</h3>
-      @if (ubicacion(clase); as lugar) {
-        <p class="horario__detalle">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
-          <span><span class="visually-hidden">Lugar: </span>{{ lugar }}</span>
-        </p>
+      @if (clase.esExtra) {
+        <p><span class="badge">Actividad extra</span></p>
+        @if (clase.lugar) {
+          <p class="horario__detalle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+            <span><span class="visually-hidden">Lugar: </span>{{ clase.lugar }}</span>
+          </p>
+        }
+        @if (clase.responsable) {
+          <p class="horario__detalle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>
+            <span><span class="visually-hidden">Responsable: </span>{{ clase.responsable }}</span>
+          </p>
+        }
       } @else {
-        <p class="field__hint">Todavía sin salón.</p>
-      }
-      @if (docente(clase); as profesor) {
-        <p class="horario__detalle">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>
-          <span><span class="visually-hidden">Docente: </span>{{ profesor }}</span>
-        </p>
-      }
-      <button
-        class="button button--soft horario__ver"
-        type="button"
-        [attr.aria-expanded]="estaAbierta(clase)"
-        [attr.aria-controls]="'notas-' + claveDe(clase)"
-        (click)="alternarDetalle(clase)"
-      >
-        {{ estaAbierta(clase) ? 'Ocultar lo que falta por calificar' : 'Ver lo que falta por calificar' }}
-      </button>
-      @if (estaAbierta(clase)) {
-        <div class="horario__notas" [id]="'notas-' + claveDe(clase)">
-          <app-pending-activities [idMatricula]="clase.idMatricula" origen="/horario" />
-        </div>
+        @if (ubicacion(clase); as lugar) {
+          <p class="horario__detalle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+            <span><span class="visually-hidden">Lugar: </span>{{ lugar }}</span>
+          </p>
+        } @else {
+          <p class="field__hint">Todavía sin salón.</p>
+        }
+        @if (docente(clase); as profesor) {
+          <p class="horario__detalle">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" /></svg>
+            <span><span class="visually-hidden">Docente: </span>{{ profesor }}</span>
+          </p>
+        }
+        <button
+          class="button button--soft horario__ver"
+          type="button"
+          [attr.aria-expanded]="estaAbierta(clase)"
+          [attr.aria-controls]="'notas-' + claveDe(clase)"
+          (click)="alternarDetalle(clase)"
+        >
+          {{ estaAbierta(clase) ? 'Ocultar lo que falta por calificar' : 'Ver lo que falta por calificar' }}
+        </button>
+        @if (estaAbierta(clase)) {
+          <div class="horario__notas" [id]="'notas-' + claveDe(clase)">
+            <app-pending-activities [idMatricula]="clase.idMatricula" origen="/horario" />
+          </div>
+        }
       }
       <button class="button button--outline horario__quitar" type="button" (click)="quitar(clase)">Quitar</button>
     </article>
@@ -58,7 +74,7 @@
       @if ((horario()?.asignaturas?.length ?? 0) > 0) {
         <details class="card horario__filtros" [open]="hayFiltro()" [attr.aria-busy]="actualizando()">
           <summary class="horario__resumen">
-            Organizar mi horario
+            Filtrar y ordenar
             @if (hayFiltro()) {
               <span class="badge badge--ok">Con filtros</span>
             }
@@ -99,6 +115,7 @@
             </button>
           </div>
           <p class="field__hint">Se guarda la vista, la sede y el orden. La asignatura no: cambia cada período.</p>
+          <p class="field__hint">Con una asignatura o una sede elegida, las actividades extra no se muestran.</p>
         </details>
       }
 
@@ -127,7 +144,7 @@
         </div>
 
         <h2 class="horario__titulo-dia">{{ textoDelDia(diaElegido()) }}</h2>
-        @for (clase of clasesDelDia(); track clase.idMatricula + '-' + clase.consecutivo) {
+        @for (clase of clasesDelDia(); track claveDe(clase)) {
           <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
         } @empty {
           <p class="notice">
@@ -145,7 +162,7 @@
         @for (dia of dias; track dia.valor) {
           <section class="horario__dia-semana" [attr.aria-label]="dia.texto">
             <h2 class="horario__titulo-dia">{{ dia.texto }}</h2>
-            @for (clase of clasesDe(dia.valor); track clase.idMatricula + '-' + clase.consecutivo) {
+            @for (clase of clasesDe(dia.valor); track claveDe(clase)) {
               <ng-container [ngTemplateOutlet]="tarjeta" [ngTemplateOutletContext]="{ $implicit: clase }" />
             } @empty {
               <p class="field__hint">Sin clases.</p>
@@ -231,6 +248,81 @@
           Importar mi horario desde el reporte
         </a>
       }
+
+      <!-- Actividades extra: cosas de la universidad con día y hora que no son una asignatura (baile, semillero, deporte). -->
+      <section class="horario__extras" aria-labelledby="titulo-extras">
+        <h2 id="titulo-extras" class="horario__titulo-formulario">Actividades extra</h2>
+        @if (agregandoExtra()) {
+          <form class="card horario__formulario horario__extra-formulario" [formGroup]="formularioExtra" (ngSubmit)="anadirExtra()" aria-label="Añadir una actividad extra">
+            <ol class="horario__extra-pasos" role="list">
+              <li><span class="steps__marker" aria-hidden="true">1</span> Escribe qué es</li>
+              <li><span class="steps__marker" aria-hidden="true">2</span> Elige los días y la hora</li>
+              <li><span class="steps__marker" aria-hidden="true">3</span> Guarda</li>
+            </ol>
+            <p class="field__hint">Una actividad extra no es una asignatura: no tiene notas ni cuenta en tu Brújula Académica.</p>
+
+            <label class="field">
+              <span class="field__label">¿Qué es?</span>
+              <input class="field__input" type="text" maxlength="80" placeholder="Clase de baile" formControlName="nombre" />
+            </label>
+
+            <div class="field">
+              <span class="field__label" id="etiqueta-dias-extra">Días <span class="field__hint">(elige al menos un día)</span></span>
+              <div class="chips horario__extra-dias" role="group" aria-labelledby="etiqueta-dias-extra">
+                @for (dia of dias; track dia.valor) {
+                  <button
+                    class="chip"
+                    type="button"
+                    [class.chip--active]="diasExtra().includes(dia.valor)"
+                    [attr.aria-pressed]="diasExtra().includes(dia.valor)"
+                    [attr.aria-label]="dia.corto + ', ' + dia.texto"
+                    (click)="alternarDiaExtra(dia.valor)"
+                  >
+                    {{ dia.corto }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="field-row">
+              <label class="field">
+                <span class="field__label">Desde</span>
+                <input class="field__input" type="time" formControlName="horaInicio" />
+              </label>
+              <label class="field">
+                <span class="field__label">Hasta</span>
+                <input class="field__input" type="time" formControlName="horaFin" />
+              </label>
+            </div>
+
+            <p class="field__hint">Dónde es y quién la dirige son opcionales.</p>
+            <div class="field-row">
+              <label class="field">
+                <span class="field__label">Lugar</span>
+                <input class="field__input" type="text" maxlength="80" placeholder="Coliseo" formControlName="lugar" />
+              </label>
+              <label class="field">
+                <span class="field__label">Responsable</span>
+                <input class="field__input" type="text" maxlength="80" formControlName="responsable" />
+              </label>
+            </div>
+
+            @if (errorDelFormularioExtra(); as mensaje) {
+              <p class="alert" role="alert">{{ mensaje }}</p>
+            }
+
+            <div class="horario__acciones">
+              <button class="button button--primary" type="submit" [disabled]="!puedeGuardarExtra()">
+                {{ guardandoExtra() ? 'Guardando…' : 'Añadir' }}
+              </button>
+              <button class="button button--outline" type="button" (click)="cerrarFormularioExtra()">Cancelar</button>
+            </div>
+          </form>
+        } @else {
+          <p class="field__hint">Una clase de baile, un semillero, un deporte: lo que tengas en la universidad con día y hora.</p>
+          <button class="button button--soft" type="button" (click)="abrirFormularioExtra()">Añadir actividad extra</button>
+        }
+      </section>
     }
   </section>
 </main>

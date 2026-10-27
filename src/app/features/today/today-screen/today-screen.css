@@ -75,6 +75,11 @@
   border-left: 4px solid var(--color-border);
 }
 
+/* La actividad extra no se despliega (no tiene notas): se ve como una clase, pero no se toca. */
+div.hoy__clase {
+  cursor: default;
+}
+
 .hoy__clase:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
