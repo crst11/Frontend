@@ -30,6 +30,9 @@ describe('TodayScreen', () => {
     docente: { nombres: 'Ana', apellidos: 'Gomez' },
     estado: 'proxima',
     actividades: 12,
+    esExtra: false,
+    lugar: null,
+    responsable: null,
   };
   const SISTEMAS: ClaseDelDia = {
     ...ECUACIONES,
@@ -308,6 +311,73 @@ describe('TodayScreen', () => {
     expect(html.querySelector('.hoy__fecha')).not.toBeNull();
     expect(html.querySelector('[role="alert"]')).toBeNull();
   });
+  describe('actividades extra (SCRUM-266)', () => {
+    const BAILE: ClaseDelDia = {
+      ...ECUACIONES,
+      idMatricula: null,
+      codigoAsignatura: null,
+      asignatura: 'Baile',
+      horaInicio: '17:00',
+      horaFin: '19:00',
+      salon: null,
+      bloque: null,
+      sede: null,
+      docente: null,
+      estado: 'luego',
+      actividades: 0,
+      esExtra: true,
+      lugar: 'Coliseo',
+      responsable: 'Profe Ana',
+    };
+    const CON_BAILE: MiDia = { ...MARTES, clases: [ECUACIONES, BAILE], siguiente: null };
+
+    function tarjetaDelBaile(html: HTMLElement): HTMLElement {
+      return html.querySelectorAll<HTMLElement>('.hoy__clases:not(.hoy__clases--siguiente) .hoy__clase')[1];
+    }
+
+    it('se ve como una clase más, con su hora, su lugar y su responsable', () => {
+      const { html } = crear(vi.fn().mockReturnValue(of(CON_BAILE)));
+
+      const baile = tarjetaDelBaile(html);
+
+      expect(baile.textContent).toContain('17:00 – 19:00');
+      expect(baile.textContent).toContain('Baile');
+      expect(baile.textContent).toContain('Coliseo');
+      expect(baile.textContent).toContain('Profe Ana');
+    });
+
+    it('no pide actividades por subir ni se despliega: no tiene notas', () => {
+      const { fixture, html } = crear(vi.fn().mockReturnValue(of(CON_BAILE)));
+      const baile = tarjetaDelBaile(html);
+
+      expect(baile.textContent).not.toContain('Aún no has subido');
+      expect(baile.tagName).not.toBe('BUTTON');
+      expect(baile.hasAttribute('aria-expanded')).toBe(false);
+      baile.click();
+      fixture.detectChanges();
+      expect(html.querySelector('.hoy__clases:not(.hoy__clases--siguiente) .hoy__pendientes')).toBeNull();
+    });
+
+    it('conserva el estado de la clase: la que va se marca en curso', () => {
+      const enCurso: MiDia = { ...CON_BAILE, clases: [{ ...BAILE, estado: 'en_curso' }] };
+      const { html } = crear(vi.fn().mockReturnValue(of(enCurso)));
+
+      expect(html.querySelector('.hoy__clase--en-curso')?.textContent).toContain('Baile');
+      expect(html.querySelector('.hoy__estado')?.textContent).toContain('En curso');
+    });
+
+    it('en el día siguiente también aparece, sin poder desplegarse', () => {
+      const conSiguiente: MiDia = { ...MARTES, siguiente: { fecha: '2026-10-14', dia: 'miercoles', clases: [BAILE] } };
+      const { html } = crear(vi.fn().mockReturnValue(of(conSiguiente)));
+
+      const baile = html.querySelector<HTMLElement>('.hoy__clases--siguiente .hoy__clase')!;
+
+      expect(baile.textContent).toContain('Baile');
+      expect(baile.textContent).toContain('Coliseo');
+      expect(baile.tagName).not.toBe('BUTTON');
+    });
+  });
+
   describe('pendientes por atender', () => {
     const base: Pendiente = {
       id: 1,
