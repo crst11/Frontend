@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { AsignaturaMatriculada, EvaluacionRepository } from '../../../data-access/evaluacion.repository';
+import { Cargando } from '../../../shared/cargando/cargando';
 import {
   Pendiente,
   PendienteRepository,
@@ -40,7 +41,7 @@ const SIN_CONEXION = 'No logramos comunicarnos con el servidor. Revisa tu conexi
  */
 @Component({
   selector: 'app-my-tasks',
-  imports: [ReactiveFormsModule],
+  imports: [Cargando, ReactiveFormsModule],
   templateUrl: './my-tasks.html',
   styleUrl: './my-tasks.css',
 })

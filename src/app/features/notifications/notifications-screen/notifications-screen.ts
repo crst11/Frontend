@@ -7,6 +7,7 @@ import { AvisosSinLeer } from '../../../core/notifications/avisos-sin-leer.servi
 import { AvisosPush } from '../../../core/push/avisos-push.service';
 import { Aviso, AvisoRepository } from '../../../data-access/aviso.repository';
 import { IosInstallGuide } from '../../../shared/ios-install-guide/ios-install-guide';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 const SIN_CONEXION =
   'No logramos comunicarnos con el servidor. Revisa tu conexión e intenta de nuevo en unos minutos.';
@@ -29,7 +30,7 @@ const FORMATO_DE_AVISO = new Intl.DateTimeFormat('es-CO', {
  */
 @Component({
   selector: 'app-notifications-screen',
-  imports: [RouterLink, IosInstallGuide],
+  imports: [Cargando, RouterLink, IosInstallGuide],
   templateUrl: './notifications-screen.html',
   styleUrl: './notifications-screen.css',
 })

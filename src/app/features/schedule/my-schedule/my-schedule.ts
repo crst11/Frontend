@@ -6,6 +6,7 @@ import { RouterLink } from '@angular/router';
 import { NotifierService } from '../../../core/feedback/notifier.service';
 import { esFalloDelServidor } from '../../../core/feedback/server-failure';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
+import { Cargando } from '../../../shared/cargando/cargando';
 import {
   ActividadExtraPorAnadir,
   ClaseDelHorario,
@@ -42,7 +43,7 @@ const CONSULTA: ConsultaDelHorario = { orden: 'hora' };
  */
 @Component({
   selector: 'app-my-schedule',
-  imports: [RouterLink, ReactiveFormsModule, NgTemplateOutlet, PendingActivities],
+  imports: [Cargando, RouterLink, ReactiveFormsModule, NgTemplateOutlet, PendingActivities],
   templateUrl: './my-schedule.html',
   styleUrl: './my-schedule.css',
 })

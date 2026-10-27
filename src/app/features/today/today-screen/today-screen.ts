@@ -12,6 +12,7 @@ import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.r
 import { EntornoDelNavegador } from '../../../core/push/entorno-del-navegador';
 import { IosInstallGuide } from '../../../shared/ios-install-guide/ios-install-guide';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 /** Cuántos pendientes por atender se muestran en Hoy; el resto se ve en Mis pendientes. */
 const PENDIENTES_QUE_SE_MUESTRAN = 3;
@@ -56,7 +57,7 @@ const DIAS: Record<string, string> = {
  */
 @Component({
   selector: 'app-today-screen',
-  imports: [RouterLink, NgTemplateOutlet, PendingActivities, IosInstallGuide],
+  imports: [Cargando, RouterLink, NgTemplateOutlet, PendingActivities, IosInstallGuide],
   templateUrl: './today-screen.html',
   styleUrl: './today-screen.css',
 })

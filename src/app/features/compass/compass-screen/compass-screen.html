@@ -1,6 +1,6 @@
 <main class="screen brujula">
   @if (cargando()) {
-    <p class="subtitle">Calculando tu Brújula…</p>
+    <app-cargando mensaje="Calculando tu Brújula…" />
   } @else if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
     <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
