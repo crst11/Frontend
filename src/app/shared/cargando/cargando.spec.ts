@@ -32,6 +32,12 @@ describe('Cargando', () => {
     expect(estilos).toMatch(/animation-delay:\s*0\.45s/);
   });
 
+  it('los puntos son finos (5 px) y el conjunto gira despacio mientras respiran', () => {
+    expect(estilos).toMatch(/\.cargando__punto\s*\{[^}]*width:\s*5px/);
+    expect(estilos).toMatch(/\.cargando__punto\s*\{[^}]*height:\s*5px/);
+    expect(estilos).toMatch(/\.cargando__puntos\s*\{[^}]*animation:\s*cargando-giro/);
+  });
+
   it('con movimiento reducido los puntos quedan quietos', () => {
     expect(estilos).toMatch(/prefers-reduced-motion:\s*reduce\)\s*\{[^}]*animation:\s*none/);
   });
