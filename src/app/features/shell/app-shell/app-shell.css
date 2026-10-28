@@ -167,6 +167,14 @@
   cursor: pointer;
 }
 
+/* La versión de la app, discreta al pie del menú (SCRUM-272). */
+.shell__version {
+  margin: 12px 12px 0;
+  font-size: 12px;
+  text-align: center;
+  color: var(--color-muted);
+}
+
 .shell__perfil {
   position: fixed;
   top: 60px;

@@ -6,6 +6,7 @@ import { filter, map } from 'rxjs';
 import { AvisosSinLeer } from '../../../core/notifications/avisos-sin-leer.service';
 import { CierreDeSesion } from '../../../core/session/cierre-de-sesion.service';
 import { SessionService } from '../../../core/session/session.service';
+import { VersionDeLaApp } from '../../../core/version/version-de-la-app';
 import { EstadoDeConexion } from '../../../shared/estado-de-conexion/estado-de-conexion';
 
 interface Seccion {
@@ -66,6 +67,10 @@ export class AppShell {
     { initialValue: this.tituloDeLaRuta() },
   );
 
+  private readonly versionDeLaApp = inject(VersionDeLaApp);
+  /** Con qué versión corre la app, al pie del menú (SCRUM-272); nula si el sitio no la publica o no hay red. */
+  protected readonly version = this.versionDeLaApp.version;
+
   private readonly avisos = inject(AvisosSinLeer);
   /** La campana: cuántos avisos faltan por leer, escrito en su etiqueta para quien no la ve. */
   protected readonly etiquetaDeAvisos = computed(() => {
@@ -118,6 +123,8 @@ export class AppShell {
     this.perfilAbierto.set(false);
     this.menuAbierto.update((abierto) => !abierto);
     if (this.menuAbierto()) {
+      // La versión se pide al abrir el menú y no al arrancar: quien nunca lo abre no gasta esa petición.
+      void this.versionDeLaApp.cargar();
       setTimeout(() => this.documento.querySelector<HTMLElement>('#menu-lateral a, #menu-lateral button')?.focus());
     }
   }
