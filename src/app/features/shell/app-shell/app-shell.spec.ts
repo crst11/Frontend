@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { AvisoRepository } from '../../../data-access/aviso.repository';
 import { CierreDeSesion } from '../../../core/session/cierre-de-sesion.service';
 import { SessionService } from '../../../core/session/session.service';
+import { VersionDeLaApp } from '../../../core/version/version-de-la-app';
 import { AppShell } from './app-shell';
 
 @Component({ template: '<p class="hija">Contenido</p>' })
@@ -14,6 +15,7 @@ class Hija {}
 
 describe('AppShell', () => {
   const cierre = { conConfirmacion: vi.fn() };
+  const versionDeLaApp = { version: signal<string | null>(null), cargar: vi.fn() };
 
   async function crear(
     cuenta: { nombres: string; apellidos: string; correo: string } | null = {
@@ -22,8 +24,11 @@ describe('AppShell', () => {
       correo: 'calbeiromorales@ucundinamarca.edu.co',
     },
     sinLeer = 0,
+    version: string | null = 'db43b76',
   ) {
     cierre.conConfirmacion.mockReset().mockResolvedValue(undefined);
+    versionDeLaApp.version.set(version);
+    versionDeLaApp.cargar.mockReset().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
@@ -38,6 +43,7 @@ describe('AppShell', () => {
         ]),
         { provide: SessionService, useValue: { cuenta: signal(cuenta) } },
         { provide: CierreDeSesion, useValue: cierre },
+        { provide: VersionDeLaApp, useValue: versionDeLaApp },
         { provide: AvisoRepository, useValue: { misAvisos: vi.fn().mockReturnValue(of({ sinLeer, avisos: [] })) } },
       ],
     });
@@ -122,6 +128,35 @@ describe('AppShell', () => {
 
       expect(menu(html)).not.toBeNull();
       expect(botonDelMenu(html).getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('al pie dice con qué versión de CundiApp se está usando (SCRUM-272)', async () => {
+      const { arnes, html } = await crear();
+
+      botonDelMenu(html).click();
+      arnes.detectChanges();
+
+      expect(menu(html)?.querySelector('.shell__version')?.textContent?.trim()).toBe('Versión db43b76');
+    });
+
+    it('sin una versión publicada no deja una línea vacía (SCRUM-272)', async () => {
+      const { arnes, html } = await crear(undefined, 0, null);
+
+      botonDelMenu(html).click();
+      arnes.detectChanges();
+
+      expect(menu(html)).not.toBeNull();
+      expect(menu(html)?.querySelector('.shell__version')).toBeNull();
+    });
+
+    it('la versión se pide al abrir el menú y no al arrancar la app (SCRUM-272)', async () => {
+      const { arnes, html } = await crear();
+      expect(versionDeLaApp.cargar).not.toHaveBeenCalled();
+
+      botonDelMenu(html).click();
+      arnes.detectChanges();
+
+      expect(versionDeLaApp.cargar).toHaveBeenCalledTimes(1);
     });
 
     it('lista las secciones de la app', async () => {

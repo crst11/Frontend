@@ -315,8 +315,18 @@ describe('ImportCmad', () => {
 
       boton(html, 'Ver mis notas').click();
 
-      expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], { queryParams: { matricula: 7 } });
+      // Reemplaza la entrada de la importación en el historial: con el botón atrás del teléfono no se vuelve a ella.
+      expect(navegar).toHaveBeenCalledWith(['/calificaciones/mis-notas'], { queryParams: { matricula: 7 }, replaceUrl: true });
     });
+  });
+
+  it('la flecha de volver no deja la importación en el historial del teléfono', () => {
+    const { html } = crear();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    html.querySelector<HTMLAnchorElement>('.top-bar a.icon-button')!.click();
+
+    expect(navegar).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ replaceUrl: true }));
   });
 
   describe('con una imagen', () => {

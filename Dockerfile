@@ -29,6 +29,12 @@ COPY . .
 ARG CONFIGURACION=dev
 RUN npx ng build --configuration "${CONFIGURACION}"
 
+# Con que version quedo construida la imagen (el commit de desarrollo en Compose): se publica en /version.json, sin cache,
+# para comprobar de un vistazo que lo que se ve en el navegador es lo ultimo mergeado. Va despues de compilar: no cambia el
+# bundle ni invalida la capa lenta. infra/actualizar-desarrollo.sh del Backend lo compara con el commit de la rama.
+ARG VERSION=desconocida
+RUN printf '{"version":"%s"}\n' "${VERSION}" > dist/cundiapp/browser/version.json
+
 # ---- Etapa 2: servir ------------------------------------------------------------------------------
 FROM ${REGISTRO_NGINX}/nginx-unprivileged:alpine@sha256:378d0c32f6562f7fd9629170797f57d2b953aa09be983b3daaf4809bb039ca00
 

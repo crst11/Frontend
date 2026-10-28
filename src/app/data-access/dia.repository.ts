@@ -14,8 +14,8 @@ export type TipoDeDia = 'lectivo' | 'festivo' | 'fuera_de_periodo';
  * vienen nulos cuando el estudiante todavía no los conoce.
  */
 export interface ClaseDelDia {
-  idMatricula: number;
-  codigoAsignatura: string;
+  idMatricula: number | null;
+  codigoAsignatura: string | null;
   asignatura: string;
   horaInicio: string;
   horaFin: string;
@@ -25,6 +25,10 @@ export interface ClaseDelDia {
   docente: DocenteDeClase | null;
   estado: EstadoDeLaClase;
   actividades: number;
+  /** Una actividad extra (SCRUM-266) se ve como una clase pero no tiene matrícula, ni actividades, ni notas. */
+  esExtra: boolean;
+  lugar: string | null;
+  responsable: string | null;
 }
 
 /** El próximo día que sí tiene clases, para mostrar mañana o el lunes después de un festivo. */

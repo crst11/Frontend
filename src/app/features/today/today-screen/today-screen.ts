@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -12,6 +12,7 @@ import { Pendiente, PendienteRepository } from '../../../data-access/pendiente.r
 import { EntornoDelNavegador } from '../../../core/push/entorno-del-navegador';
 import { IosInstallGuide } from '../../../shared/ios-install-guide/ios-install-guide';
 import { PendingActivities } from '../../../shared/pending-activities/pending-activities';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 /** Cuántos pendientes por atender se muestran en Hoy; el resto se ve en Mis pendientes. */
 const PENDIENTES_QUE_SE_MUESTRAN = 3;
@@ -56,7 +57,7 @@ const DIAS: Record<string, string> = {
  */
 @Component({
   selector: 'app-today-screen',
-  imports: [RouterLink, PendingActivities, IosInstallGuide],
+  imports: [Cargando, RouterLink, NgTemplateOutlet, PendingActivities, IosInstallGuide],
   templateUrl: './today-screen.html',
   styleUrl: './today-screen.css',
 })
@@ -222,10 +223,17 @@ export class TodayScreen {
   }
 
   protected lugarDe(clase: ClaseDelDia): string {
+    if (clase.esExtra) {
+      return clase.lugar ?? '';
+    }
     return [clase.salon, clase.bloque].filter((parte) => !!parte).join(' · ');
   }
 
+  /** El docente de una clase o el responsable de una actividad extra. */
   protected docenteDe(clase: ClaseDelDia): string {
+    if (clase.esExtra) {
+      return clase.responsable ?? '';
+    }
     return clase.docente ? `${clase.docente.nombres} ${clase.docente.apellidos}` : '';
   }
 
@@ -250,7 +258,7 @@ export class TodayScreen {
   }
 
   protected claveDe(clase: ClaseDelDia): string {
-    return `${clase.idMatricula}-${clase.horaInicio}`;
+    return clase.esExtra ? `extra-${clase.horaInicio}-${clase.asignatura}` : `${clase.idMatricula}-${clase.horaInicio}`;
   }
 
   protected estaAbierta(clase: ClaseDelDia): boolean {

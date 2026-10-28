@@ -1,6 +1,6 @@
 <main class="screen plan">
   @if (cargando()) {
-    <p class="subtitle">Cargando tu plan…</p>
+    <app-cargando mensaje="Cargando tu plan…" />
   } @else if (error()) {
     <p class="alert" role="alert">No pudimos cargar tu plan de estudios. Intenta de nuevo más tarde.</p>
   } @else if (plan(); as miPlan) {

@@ -1,11 +1,7 @@
 // @ts-expect-error El constructor de pruebas entrega el archivo como texto con este atributo de importación; el tipo no lo conoce.
 import estilosCrudos from './my-schedule.css' with { loader: 'text' };
 
-// @ts-expect-error Igual que el CSS: el archivo llega como texto.
-import plantillaCruda from './my-schedule.html' with { loader: 'text' };
-
 const estilos = estilosCrudos as string;
-const plantilla = plantillaCruda as string;
 
 /** Las declaraciones de las reglas de ese selector exacto, juntas y sin comentarios. */
 function regla(selector: string): string {
@@ -24,21 +20,23 @@ describe('estilos de Mi horario (SCRUM-264)', () => {
     expect(regla('.horario__detalle svg')).toMatch(/flex:\s*0 0 auto/);
   });
 
-  it('los filtros plegados no dejan un hueco vacío bajo el título', () => {
-    expect(regla('.horario__filtros:not([open])')).toMatch(/gap:\s*0/);
+  it('las tarjetas, los botones y los módulos van separados por 16 px, nunca pegados', () => {
+    expect(regla('.horario__cuerpo')).toMatch(/gap:\s*16px/);
+    expect(regla('.horario__acciones-superiores')).toMatch(/gap:\s*12px/);
   });
 
-  // Dentro de un <details> el contenido va en una ranura aparte: el gap del <details> solo separa el título de todo el bloque, no los
-  // campos entre sí. Por eso los campos van en su propio contenedor, que es quien los separa.
-  it('los campos de los filtros van en un contenedor propio que los separa, no pegados', () => {
-    expect(plantilla).toMatch(/<details[^>]*horario__filtros[\s\S]*?<div class="horario__filtros-cuerpo">/);
-    const cuerpo = regla('.horario__filtros-cuerpo');
-    expect(cuerpo).toMatch(/display:\s*flex/);
-    expect(cuerpo).toMatch(/flex-direction:\s*column/);
-    expect(cuerpo).toMatch(/gap:\s*16px/);
+  it('toda la tarjeta de una clase se puede tocar, no solo su nombre', () => {
+    expect(regla('.horario__clase')).toMatch(/position:\s*relative/);
+    expect(regla('.horario__clase-boton::after')).toMatch(/position:\s*absolute/);
+    expect(regla('.horario__clase-boton::after')).toMatch(/inset:\s*0/);
   });
 
-  it('el título abierto no suma un margen al espacio que ya da el contenedor', () => {
-    expect(regla('.horario__filtros[open] > .horario__resumen')).not.toMatch(/margin-bottom/);
+  it('lo que se despliega queda por encima de la zona que se toca, para poder usar sus enlaces', () => {
+    expect(regla('.horario__notas')).toMatch(/position:\s*relative/);
+    expect(regla('.horario__notas')).toMatch(/z-index:\s*1/);
+  });
+
+  it('el foco de teclado se ve sobre toda la tarjeta', () => {
+    expect(regla('.horario__clase-boton:focus-visible::after')).toMatch(/outline:\s*3px solid var\(--color-primary-ring\)/);
   });
 });

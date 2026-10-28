@@ -1,0 +1,74 @@
+.cargando {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-muted);
+  font-size: 15px;
+}
+
+/* Cuatro puntos en rombo que giran despacio y respiran uno tras otro, como el indicador de «pensando». */
+.cargando__puntos {
+  position: relative;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  animation: cargando-giro 2.4s linear infinite;
+}
+
+.cargando__punto {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: cargando-pulso 1.2s ease-in-out infinite;
+}
+
+.cargando__punto:nth-child(1) {
+  top: 0;
+  left: 8.5px;
+}
+
+.cargando__punto:nth-child(2) {
+  top: 8.5px;
+  right: 0;
+  animation-delay: 0.15s;
+}
+
+.cargando__punto:nth-child(3) {
+  bottom: 0;
+  left: 8.5px;
+  animation-delay: 0.3s;
+}
+
+.cargando__punto:nth-child(4) {
+  top: 8.5px;
+  left: 0;
+  animation-delay: 0.45s;
+}
+
+@keyframes cargando-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes cargando-pulso {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.6);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+/* Sin movimiento los puntos quedan quietos y completos: el texto sigue diciendo qué pasa. */
+@media (prefers-reduced-motion: reduce) {
+  .cargando__punto,
+  .cargando__puntos {
+    animation: none;
+  }
+}

@@ -47,7 +47,7 @@
   }
 
   @if (cargando()) {
-    <p class="subtitle">Buscando tus avisos…</p>
+    <app-cargando mensaje="Buscando tus avisos…" />
   } @else if (error(); as mensaje) {
     <p class="alert" role="alert">{{ mensaje }}</p>
     <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>

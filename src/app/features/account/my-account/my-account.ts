@@ -7,11 +7,12 @@ import { GoogleIdentityService } from '../../../core/google/google-identity.serv
 import { CierreDeSesion } from '../../../core/session/cierre-de-sesion.service';
 import { SessionService } from '../../../core/session/session.service';
 import { Cuenta, EstudianteRepository, VinculoConGoogle } from '../../../data-access/estudiante.repository';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 /** Pantalla protegida: pide al backend los datos de la cuenta con el token; el estudiante sale del token. */
 @Component({
   selector: 'app-my-account',
-  imports: [RouterLink],
+  imports: [Cargando, RouterLink],
   templateUrl: './my-account.html',
   styleUrl: './my-account.css',
 })

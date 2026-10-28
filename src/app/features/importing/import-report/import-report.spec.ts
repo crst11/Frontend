@@ -251,7 +251,16 @@ describe('ImportReport', () => {
     boton(html, 'Confirmar y guardar').click();
     await fixture.whenStable();
 
-    expect(navegar).toHaveBeenCalledWith(['/cuenta/historial']);
+    expect(navegar).toHaveBeenCalledWith(['/cuenta/historial'], { replaceUrl: true });
+  });
+
+  it('la flecha de volver no deja la importación en el historial del teléfono', () => {
+    const { html } = crear();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    html.querySelector<HTMLAnchorElement>('.top-bar a.icon-button')!.click();
+
+    expect(navegar).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ replaceUrl: true }));
   });
 
   it('si el archivo no se puede leer lo explica y ofrece el registro manual', () => {

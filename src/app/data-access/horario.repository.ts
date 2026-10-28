@@ -14,9 +14,9 @@ export interface DocenteDeClase {
  * sede vienen nulos cuando el estudiante todavía no los conoce: la pantalla no los inventa.
  */
 export interface ClaseDelHorario {
-  idMatricula: number;
+  idMatricula: number | null;
   consecutivo: number;
-  codigoAsignatura: string;
+  codigoAsignatura: string | null;
   asignatura: string;
   dia: string;
   horaInicio: string;
@@ -26,6 +26,12 @@ export interface ClaseDelHorario {
   bloque: string | null;
   sede: string | null;
   docente: DocenteDeClase | null;
+  /** Una actividad extra (SCRUM-266) no es de ninguna asignatura: sin matrícula ni código, con su nombre en `asignatura`. */
+  esExtra: boolean;
+  idActividadExtra: number | null;
+  /** El lugar y el responsable de una actividad extra son texto libre, no un salón con sede ni un docente. */
+  lugar: string | null;
+  responsable: string | null;
 }
 
 export interface DiaConClases {
@@ -99,12 +105,28 @@ export interface ClasePorAgregar {
   docente?: DocenteDeClase;
 }
 
+/**
+ * Lo que se manda al añadir una actividad extra (SCRUM-266): una clase de baile, un semillero. Con varios
+ * `dias` el servidor guarda una por día. El lugar y el responsable son opcionales.
+ */
+export interface ActividadExtraPorAnadir {
+  nombre: string;
+  dias: string[];
+  horaInicio: string;
+  horaFin: string;
+  lugar?: string;
+  responsable?: string;
+}
+
 /** Puerto del frontend hacia el horario del estudiante (RF04). */
 @Injectable()
 export abstract class HorarioRepository {
   abstract miHorario(consulta?: ConsultaDelHorario): Observable<Horario>;
   abstract agregar(idMatricula: number, clase: ClasePorAgregar): Observable<ClaseDelHorario>;
   abstract quitar(idMatricula: number, consecutivo: number): Observable<void>;
+  /** Devuelve una clase por cada día elegido. */
+  abstract anadirActividadExtra(actividad: ActividadExtraPorAnadir): Observable<ClaseDelHorario[]>;
+  abstract quitarActividadExtra(idActividadExtra: number): Observable<void>;
   abstract miPreferencia(): Observable<PreferenciaDeHorario>;
   abstract guardarPreferencia(preferencia: PreferenciaDeHorario): Observable<PreferenciaDeHorario>;
 }

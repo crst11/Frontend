@@ -150,7 +150,8 @@ export class ImportSchedule {
             `${resultado.nuevas} asignaturas nuevas, ${resultado.actualizadas} actualizadas y ${resultado.clases} clases.`,
             'Ver mi horario',
           );
-          void this.router.navigate(['/horario']);
+          // replaceUrl: la importación terminada no queda en el historial, así que el botón atrás del teléfono no vuelve a ella (SCRUM-271).
+          void this.router.navigate(['/horario'], { replaceUrl: true });
         },
         error: (err: HttpErrorResponse) => {
           this.guardando.set(false);

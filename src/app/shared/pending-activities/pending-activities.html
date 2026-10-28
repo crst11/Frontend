@@ -1,6 +1,6 @@
 <div class="pendientes">
   @if (cargando()) {
-    <p class="field__hint">Buscando actividades…</p>
+    <app-cargando mensaje="Buscando actividades…" />
   } @else if (fallo()) {
     <p class="field__hint">No pudimos traer las actividades. Cierra y vuelve a abrir para intentar de nuevo.</p>
   } @else if (sinActividades()) {

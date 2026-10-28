@@ -14,6 +14,7 @@ import {
 } from '../../../data-access/evaluacion.repository';
 import { origenGuardado } from '../../importing/origen-de-la-importacion';
 import { ActivityGrades, NotasCambiadas } from '../activity-grades/activity-grades';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 /** Los cortes con los que arranca una asignatura, sin actividades: lo que queda al quitar lo subido. */
 const CORTES_DE_LA_PLANTILLA: CategoriaPorGuardar[] = [
@@ -59,7 +60,7 @@ interface CategoriaEnEdicion {
  */
 @Component({
   selector: 'app-evaluation-structure',
-  imports: [RouterLink, ActivityGrades],
+  imports: [Cargando, RouterLink, ActivityGrades],
   templateUrl: './evaluation-structure.html',
   styleUrl: './evaluation-structure.css',
 })

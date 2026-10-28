@@ -94,7 +94,8 @@ export const appConfig: ApplicationConfig = {
     }),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000',
+      // Al arrancar y no «cuando la app se estabilice» (hasta 30 s): así la versión nueva se detecta y se avisa de inmediato (SCRUM-267).
+      registrationStrategy: 'registerImmediately',
     }),
   ],
 };

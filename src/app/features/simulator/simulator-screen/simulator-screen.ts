@@ -19,6 +19,7 @@ import {
   ProyeccionRepository,
 } from '../../../data-access/proyeccion.repository';
 import { leerNumero } from '../../../shared/leer-numero';
+import { Cargando } from '../../../shared/cargando/cargando';
 
 /** Pausa tras la última tecla antes de preguntarle al servidor: el resultado se siente inmediato sin una petición por letra. */
 const PAUSA_AL_ESCRIBIR_EN_MS = 300;
@@ -36,7 +37,7 @@ const SIN_CONEXION =
  */
 @Component({
   selector: 'app-simulator-screen',
-  imports: [DecimalPipe, RouterLink],
+  imports: [Cargando, DecimalPipe, RouterLink],
   templateUrl: './simulator-screen.html',
   styleUrl: './simulator-screen.css',
 })

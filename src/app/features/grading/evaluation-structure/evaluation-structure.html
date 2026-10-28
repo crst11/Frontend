@@ -56,15 +56,18 @@
             Estos son los cortes con los que trabaja la universidad por defecto. Ajústalos a lo que te dijo
             tu docente y guarda; mientras no guardes, no hay nada registrado.
           </p>
-          <a
-            class="button button--soft"
-            routerLink="/calificaciones/importar-cmad"
-            [queryParams]="{ matricula: seleccionada()?.idMatricula }"
-            [state]="{ origen: '/calificaciones/mis-notas' }"
-          >
-            Importar mis actividades del CMAD
-          </a>
+        } @else {
+          <p class="field__hint">¿Tienes tus actividades en el CMAD? Puedes traerlas aquí cuando quieras.</p>
         }
+        <!-- Siempre disponible: una estructura guardada solo con los cortes de la plantilla también puede recibir las actividades. -->
+        <a
+          class="button button--soft"
+          routerLink="/calificaciones/importar-cmad"
+          [queryParams]="{ matricula: seleccionada()?.idMatricula }"
+          [state]="{ origen: '/calificaciones/mis-notas' }"
+        >
+          Importar mis actividades del CMAD
+        </a>
       </div>
 
       <p class="evaluacion__suma" [class.evaluacion__suma--mal]="!cuadra()" aria-live="polite">
@@ -221,7 +224,7 @@
       </p>
 
       @if (cargando()) {
-        <p class="subtitle">Buscando tus asignaturas…</p>
+        <app-cargando mensaje="Buscando tus asignaturas…" />
       } @else if (asignaturas().length === 0) {
         <p class="notice">
           No tienes asignaturas en curso en CundiApp. Importa tu Reporte de Horario y las del semestre
