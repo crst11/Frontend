@@ -10,8 +10,20 @@ import estilosArmarCrudos from './app/features/schedule/plan-schedule/plan-sched
 // @ts-expect-error Mismo atributo de importación que arriba.
 import estilosCuentaCrudos from './app/features/account/my-account/my-account.css' with { loader: 'text' };
 
+// @ts-expect-error Mismo atributo de importación que arriba.
+import estilosGuiaCrudos from './app/features/guide/institutional-guide/institutional-guide.css' with { loader: 'text' };
+
+// @ts-expect-error Mismo atributo de importación que arriba.
+import manifiestoCrudo from '../public/manifest.webmanifest' with { loader: 'text' };
+
+// @ts-expect-error Mismo atributo de importación que arriba.
+import indiceCrudo from './index.html' with { loader: 'text' };
+
 const estilos = estilosCrudos as string;
 const estilosCorreo = estilosCorreoCrudos as string;
+const estilosGuia = estilosGuiaCrudos as string;
+const manifiesto = manifiestoCrudo as string;
+const indice = indiceCrudo as string;
 const estilosArmar = estilosArmarCrudos as string;
 const estilosCuenta = estilosCuentaCrudos as string;
 
@@ -189,5 +201,39 @@ describe('Encabezados con título y subtítulo separados (SCRUM-265)', () => {
 
   it('Mi cuenta separa el saludo de su subtítulo', () => {
     expect(estilosCuenta).toMatch(/\.my-account__saludo\s*\{[^}]*display:\s*flex[^}]*flex-direction:\s*column[^}]*gap:\s*4px/);
+  });
+});
+
+describe('Accesibilidad y marca: foco, avisos, Guía y PWA (SCRUM-274)', () => {
+  /** Las declaraciones de la regla de ese selector exacto, o '' si no existe. */
+  function regla(selector: string): string {
+    const sinComentarios = estilos.replace(/\/\*[\s\S]*?\*\//g, '');
+    const cuerpos = sinComentarios.split('}').filter((texto) => texto.split('{')[0].trim() === selector);
+    return cuerpos.map((texto) => texto.split('{')[1]).join(' ');
+  }
+
+  it('el anillo de foco llega a 3:1 contra el fondo y contra las tarjetas', () => {
+    expect(contraste(color('--color-focus'), color('--color-background'))).toBeGreaterThanOrEqual(3);
+    expect(contraste(color('--color-focus'), color('--color-surface'))).toBeGreaterThanOrEqual(3);
+  });
+
+  it('el foco global usa el anillo con contraste, no el verde claro decorativo', () => {
+    expect(regla(':focus-visible')).toMatch(/outline:\s*3px solid var\(--color-focus\)/);
+  });
+
+  it('el foco de los botones de los avisos emergentes es un anillo doble visible', () => {
+    const foco = regla('.swal2-popup.app-popup .swal2-styled:focus');
+    expect(foco).toContain('var(--color-focus)');
+    expect(foco).not.toContain('--color-primary-soft');
+  });
+
+  it('la acción de la Guía mide 50 px como el resto de los botones', () => {
+    expect(estilosGuia).toMatch(/\.guide__action\s*\{[^}]*height:\s*50px/);
+  });
+
+  it('la PWA usa el verde y el fondo nuevos en el manifiesto y en la barra del navegador', () => {
+    expect(manifiesto).toContain('"theme_color": "#047857"');
+    expect(manifiesto).toContain('"background_color": "#f9fafb"');
+    expect(indice).toContain('<meta name="theme-color" content="#047857" />');
   });
 });

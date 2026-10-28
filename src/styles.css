@@ -49,6 +49,8 @@
   --color-primary-strong: #065f46;
   --color-primary-soft: #ecfdf5;
   --color-primary-ring: #a7f3d0;
+  /* Anillo de foco (SCRUM-274): el verde claro de arriba no llega a 3:1 contra el fondo; este sí (WCAG 2.2, 1.4.11). */
+  --color-focus: #047857;
   --color-primary-line: #10b981;
   --color-ink: #111827;
   --color-text: #4b5563;
@@ -109,7 +111,7 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-primary-ring);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -576,7 +578,10 @@ a {
 }
 
 .swal2-popup.app-popup .swal2-styled:focus {
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  /* Anillo doble: el blanco separa el verde del botón verde y el exterior llega a 3:1 contra el fondo del aviso. */
+  box-shadow:
+    0 0 0 2px var(--color-surface),
+    0 0 0 5px var(--color-focus);
 }
 
 .swal2-popup.app-popup .swal2-icon.swal2-success,
