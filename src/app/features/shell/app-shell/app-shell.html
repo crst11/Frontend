@@ -50,6 +50,9 @@
       }
     </ul>
     <button class="shell__cerrar" type="button" (click)="cerrarTodo()">Cerrar el menú</button>
+    @if (version(); as versionPublicada) {
+      <p class="shell__version">Versión {{ versionPublicada }}</p>
+    }
   </nav>
 }
 
