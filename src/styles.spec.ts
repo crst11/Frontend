@@ -154,3 +154,22 @@ describe('Sistema visual: piezas de la fase 3 (SCRUM-263)', () => {
     expect(reducido).toContain('.steps__segment');
   });
 });
+
+describe('Sistema visual: tarjetas de estado vacío (SCRUM-265)', () => {
+  /** Las declaraciones de la regla de ese selector exacto, o '' si no existe. */
+  function regla(selector: string): string {
+    const sinComentarios = estilos.replace(/\/\*[\s\S]*?\*\//g, '');
+    const cuerpos = sinComentarios.split('}').filter((texto) => texto.split('{')[0].trim() === selector);
+    return cuerpos.map((texto) => texto.split('{')[1]).join(' ');
+  }
+
+  it('la tarjeta vacía separa título, texto y botón con un espacio entre ellos', () => {
+    expect(regla('.card--vacio')).toMatch(/display:\s*flex/);
+    expect(regla('.card--vacio')).toMatch(/flex-direction:\s*column/);
+    expect(regla('.card--vacio')).toMatch(/gap:\s*12px/);
+  });
+
+  it('el título y el texto de la tarjeta vacía no traen margen que pise la separación', () => {
+    expect(regla('.card--vacio > *')).toMatch(/margin:\s*0/);
+  });
+});
