@@ -5,7 +5,7 @@
     <p class="alert" role="alert">No se pudo cargar tu cuenta. Intenta de nuevo más tarde.</p>
   } @else if (cuenta(); as datos) {
     <header class="my-account__header">
-      <div>
+      <div class="my-account__saludo">
         <h1 class="my-account__greeting">Hola, {{ primerNombre(datos.nombres) }}</h1>
         <p class="subtitle">Mi cuenta</p>
       </div>

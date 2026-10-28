@@ -2,9 +2,15 @@
   gap: 1rem;
 }
 
+.armar__encabezado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .armar__volver {
   display: inline-block;
-  margin-top: 0.5rem;
   font-weight: 600;
   color: var(--color-primary);
 }

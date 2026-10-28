@@ -4,8 +4,16 @@ import estilosCrudos from './styles.css' with { loader: 'text' };
 // @ts-expect-error Mismo atributo de importación que arriba.
 import estilosCorreoCrudos from './app/shared/institutional-email-input/institutional-email-input.css' with { loader: 'text' };
 
+// @ts-expect-error Mismo atributo de importación que arriba.
+import estilosArmarCrudos from './app/features/schedule/plan-schedule/plan-schedule.css' with { loader: 'text' };
+
+// @ts-expect-error Mismo atributo de importación que arriba.
+import estilosCuentaCrudos from './app/features/account/my-account/my-account.css' with { loader: 'text' };
+
 const estilos = estilosCrudos as string;
 const estilosCorreo = estilosCorreoCrudos as string;
+const estilosArmar = estilosArmarCrudos as string;
+const estilosCuenta = estilosCuentaCrudos as string;
 
 /** Los tokens de `:root` como mapa nombre → valor. */
 function tokens(): Map<string, string> {
@@ -152,5 +160,34 @@ describe('Sistema visual: piezas de la fase 3 (SCRUM-263)', () => {
   it('los segmentos no dependen del movimiento: el relleno no se anima con movimiento reducido', () => {
     const reducido = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(estilos)?.[1] ?? '';
     expect(reducido).toContain('.steps__segment');
+  });
+});
+
+describe('Sistema visual: tarjetas de estado vacío (SCRUM-265)', () => {
+  /** Las declaraciones de la regla de ese selector exacto, o '' si no existe. */
+  function regla(selector: string): string {
+    const sinComentarios = estilos.replace(/\/\*[\s\S]*?\*\//g, '');
+    const cuerpos = sinComentarios.split('}').filter((texto) => texto.split('{')[0].trim() === selector);
+    return cuerpos.map((texto) => texto.split('{')[1]).join(' ');
+  }
+
+  it('la tarjeta vacía separa título, texto y botón con un espacio entre ellos', () => {
+    expect(regla('.card--vacio')).toMatch(/display:\s*flex/);
+    expect(regla('.card--vacio')).toMatch(/flex-direction:\s*column/);
+    expect(regla('.card--vacio')).toMatch(/gap:\s*12px/);
+  });
+
+  it('el título y el texto de la tarjeta vacía no traen margen que pise la separación', () => {
+    expect(regla('.card--vacio > *')).toMatch(/margin:\s*0/);
+  });
+});
+
+describe('Encabezados con título y subtítulo separados (SCRUM-265)', () => {
+  it('Armar mi horario separa el título, la explicación y el enlace de volver', () => {
+    expect(estilosArmar).toMatch(/\.armar__encabezado\s*\{[^}]*display:\s*flex[^}]*flex-direction:\s*column[^}]*gap:\s*8px/);
+  });
+
+  it('Mi cuenta separa el saludo de su subtítulo', () => {
+    expect(estilosCuenta).toMatch(/\.my-account__saludo\s*\{[^}]*display:\s*flex[^}]*flex-direction:\s*column[^}]*gap:\s*4px/);
   });
 });
