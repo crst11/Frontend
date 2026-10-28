@@ -236,7 +236,7 @@ describe('ImportSchedule', () => {
       expect.stringContaining('1 asignaturas nuevas, 1 actualizadas y 3 clases'),
       'Ver mi horario',
     );
-    expect(navegar).toHaveBeenCalledWith(['/horario']);
+    expect(navegar).toHaveBeenCalledWith(['/horario'], { replaceUrl: true });
   });
 
   it('si no se puede guardar lo dice con el motivo del servidor y no navega', () => {
@@ -277,5 +277,14 @@ describe('ImportSchedule', () => {
     const volver = html.querySelector<HTMLAnchorElement>('.top-bar a.icon-button')!;
     expect(volver.getAttribute('href')).toBe('/horario');
     expect(volver.getAttribute('aria-label')).toBe('Volver a mi horario');
+  });
+
+  it('la flecha de volver no deja la importación en el historial del teléfono', () => {
+    const { html } = crear();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    html.querySelector<HTMLAnchorElement>('.top-bar a.icon-button')!.click();
+
+    expect(navegar).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ replaceUrl: true }));
   });
 });

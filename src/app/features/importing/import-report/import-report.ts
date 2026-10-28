@@ -229,7 +229,8 @@ export class ImportReport {
             `${resultado.guardadas} asignaturas nuevas y ${resultado.actualizadas} actualizadas.`,
             'Ver mi historial',
           );
-          void this.router.navigate(['/cuenta/historial']);
+          // replaceUrl: la importación terminada no queda en el historial, así que el botón atrás del teléfono no vuelve a ella (SCRUM-271).
+          void this.router.navigate(['/cuenta/historial'], { replaceUrl: true });
         },
         error: (err: HttpErrorResponse) => {
           this.guardando.set(false);
