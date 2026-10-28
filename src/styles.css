@@ -412,6 +412,18 @@ a {
   padding: 16px 20px;
 }
 
+/* Tarjeta de estado vacío (SCRUM-265): título, explicación y botón con aire entre ellos. Los márgenes propios de
+   cada pieza se anulan para que mande solo la separación de la tarjeta. */
+.card--vacio {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card--vacio > * {
+  margin: 0;
+}
+
 /* Chips (sugerencias y filtros) y etiquetas pequeñas */
 .chips {
   display: flex;

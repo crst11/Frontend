@@ -5,7 +5,7 @@
     <p class="alert" role="alert">{{ mensaje }}</p>
     <button class="button button--soft" type="button" (click)="reintentar()">Intentar de nuevo</button>
   } @else if (asignaturas().length === 0) {
-    <section class="card simulador__vacio" aria-label="Todavía no hay con qué simular">
+    <section class="card card--vacio simulador__vacio" aria-label="Todavía no hay con qué simular">
       <h2 class="simulador__titulo">Primero cuéntanos cómo te evalúan</h2>
       <p class="subtitle">
         Para saber qué nota necesitas hace falta conocer el peso de cada actividad. Defínelo en una de tus asignaturas de este semestre y vuelve.
