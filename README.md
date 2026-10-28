@@ -57,6 +57,8 @@ Las pantallas siguen el diseño móvil del equipo; las piezas visuales y sus reg
 
 Los componentes nunca usan `HttpClient` directamente: piden los datos a un servicio de `data-access`, que es el único que conoce las URLs (salen de `src/environments/environment.production.ts` y, al arrancar, de `/config.json`).
 
+**Con qué versión corre la app (SCRUM-272).** El menú «Más» muestra al pie «Versión» y el commit con el que quedó desplegada la app. No se compila (una sola compilación sirve a todos los ambientes): el despliegue a preproducción y producción escribe `/version.json` junto a `/config.json`, y la imagen de Docker de desarrollo lo escribe con el commit del Frontend (SCRUM-270). Si el sitio no lo publica (por ejemplo con `ng serve`) o no hay red, la línea no aparece.
+
 ## Requisitos previos
 
 - Node.js (versión LTS) y npm
