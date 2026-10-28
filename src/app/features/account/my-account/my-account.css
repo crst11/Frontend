@@ -6,6 +6,12 @@
   padding-top: 8px;
 }
 
+.my-account__saludo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .my-account__greeting {
   font-size: 28px;
   font-weight: 700;
