@@ -37,6 +37,6 @@ describe('estilos de Mi horario (SCRUM-264)', () => {
   });
 
   it('el foco de teclado se ve sobre toda la tarjeta', () => {
-    expect(regla('.horario__clase-boton:focus-visible::after')).toMatch(/outline:\s*3px solid var\(--color-primary-ring\)/);
+    expect(regla('.horario__clase-boton:focus-visible::after')).toMatch(/outline:\s*3px solid var\(--color-focus\)/);
   });
 });

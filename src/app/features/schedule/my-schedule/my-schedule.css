@@ -92,7 +92,7 @@
 
 /* El foco se ve sobre toda la tarjeta, no solo sobre el nombre. */
 .horario__clase-boton:focus-visible::after {
-  outline: 3px solid var(--color-primary-ring);
+  outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
 
