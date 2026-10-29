@@ -237,3 +237,18 @@ describe('Accesibilidad y marca: foco, avisos, Guía y PWA (SCRUM-274)', () => {
     expect(indice).toContain('<meta name="theme-color" content="#047857" />');
   });
 });
+
+describe('Formularios de recuperación con campos separados (SCRUM-276)', () => {
+  /** Las declaraciones de la regla de ese selector exacto, o '' si no existe. */
+  function regla(selector: string): string {
+    const sinComentarios = estilos.replace(/\/\*[\s\S]*?\*\//g, '');
+    const cuerpos = sinComentarios.split('}').filter((texto) => texto.split('{')[0].trim() === selector);
+    return cuerpos.map((texto) => texto.split('{')[1]).join(' ');
+  }
+
+  it('el formulario apila sus campos y el botón con 16 px entre ellos, igual que el cuerpo de la pantalla', () => {
+    expect(regla('.form')).toMatch(/display:\s*flex/);
+    expect(regla('.form')).toMatch(/flex-direction:\s*column/);
+    expect(regla('.form')).toMatch(/gap:\s*16px/);
+  });
+});

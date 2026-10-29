@@ -133,6 +133,14 @@ a {
   gap: 16px;
 }
 
+/* Formulario de las pantallas de recuperación (SCRUM-276): sin esta regla el campo quedaba pegado al botón. Misma separación que
+   `.screen__body`. */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .screen__footer {
   margin-top: auto;
   display: flex;
