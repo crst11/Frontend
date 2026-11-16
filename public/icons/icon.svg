@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="CundiApp">
+  <rect x="0" y="0" width="512" height="512" rx="144" fill="#047857"/>
+  <g transform="translate(100.00 100.00) scale(13.0)" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>
+  </g>
+</svg>
