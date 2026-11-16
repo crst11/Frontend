@@ -236,6 +236,20 @@ describe('Accesibilidad y marca: foco, avisos, Guía y PWA (SCRUM-274)', () => {
     expect(manifiesto).toContain('"background_color": "#f9fafb"');
     expect(indice).toContain('<meta name="theme-color" content="#047857" />');
   });
+
+  it('el icono de la app declara versiones any y maskable de 192 y 512 px, sin mezclar los dos propósitos (SCRUM-278)', () => {
+    const iconos = (JSON.parse(manifiesto) as { icons: { src: string; sizes: string; purpose: string }[] }).icons;
+    for (const lado of ['192x192', '512x512']) {
+      expect(iconos.some((i) => i.sizes === lado && i.purpose === 'any')).toBe(true);
+      expect(iconos.some((i) => i.sizes === lado && i.purpose === 'maskable' && i.src.includes('maskable'))).toBe(true);
+    }
+    expect(iconos.some((i) => i.purpose.includes(' '))).toBe(false);
+  });
+
+  it('el favicon vectorial y el icono de iOS salen del mismo diseño (SCRUM-278)', () => {
+    expect(indice).toContain('<link rel="icon" type="image/svg+xml" href="icons/icon.svg" />');
+    expect(indice).toContain('<link rel="apple-touch-icon" href="icons/icon-maskable-192x192.png" />');
+  });
 });
 
 describe('Formularios de recuperación con campos separados (SCRUM-276)', () => {
