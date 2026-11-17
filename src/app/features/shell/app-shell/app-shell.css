@@ -215,7 +215,7 @@
   overflow-wrap: anywhere;
 }
 
-/* La barra inferior: las cuatro secciones de uso diario y «Más», siempre a un toque del pulgar. */
+/* La barra inferior: las cuatro secciones de uso diario, siempre a un toque del pulgar. */
 .shell__inferior {
   position: fixed;
   bottom: 0;
