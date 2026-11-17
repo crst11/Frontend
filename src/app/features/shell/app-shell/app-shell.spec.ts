@@ -38,6 +38,7 @@ describe('AppShell', () => {
             children: [
               { path: 'inicio', component: Hija, data: { titulo: 'Hoy' } },
               { path: 'horario', component: Hija, data: { titulo: 'Mi horario' } },
+              { path: 'simulador', component: Hija, data: { titulo: 'Simulador' } },
             ],
           },
         ]),
@@ -167,14 +168,9 @@ describe('AppShell', () => {
 
       const enlaces = Array.from(menu(html)!.querySelectorAll('a')).map((a) => a.textContent?.trim());
       expect(enlaces).toEqual([
-        'Hoy',
-        'Mi horario',
         'Armar mi horario',
-        'Mis notas',
         'Simulador',
         'Brújula Académica',
-        'Avisos',
-        'Mis pendientes',
         'Mi historial y promedios',
         'Mi plan de estudios',
         'Importar mis archivos',
@@ -184,13 +180,15 @@ describe('AppShell', () => {
     it('marca la sección en la que estás', async () => {
       const { arnes, html } = await crear();
 
+      // Navegar cierra lo desplegado, así que primero se llega a la pantalla y después se abre el menú.
+      await arnes.navigateByUrl('/simulador');
       botonDelMenu(html).click();
       arnes.detectChanges();
       // routerLinkActive se actualiza en un microtask después de dibujar los enlaces.
       await arnes.fixture.whenStable();
       arnes.detectChanges();
 
-      expect(menu(html)!.querySelector('.shell__enlace--activo')?.textContent).toContain('Hoy');
+      expect(menu(html)!.querySelector('.shell__enlace--activo')?.textContent).toContain('Simulador');
       expect(menu(html)!.querySelector('[aria-current="page"]')).not.toBeNull();
     });
 
@@ -292,9 +290,8 @@ describe('AppShell', () => {
 
   describe('la barra inferior (SCRUM-263)', () => {
     const barra = (html: HTMLElement) => html.querySelector<HTMLElement>('nav[aria-label="Navegación principal"]');
-    const botonMas = (html: HTMLElement) => barra(html)!.querySelector<HTMLButtonElement>('button')!;
 
-    it('lleva a las cuatro secciones de uso diario y tiene un botón Más', async () => {
+    it('lleva a las cuatro secciones de uso diario y nada más', async () => {
       const { html } = await crear();
 
       const enlaces = Array.from(barra(html)!.querySelectorAll('a'));
@@ -305,7 +302,7 @@ describe('AppShell', () => {
         '/calificaciones/mis-notas',
         '/pendientes',
       ]);
-      expect(botonMas(html).textContent?.trim()).toBe('Más');
+      expect(barra(html)!.querySelectorAll('button')).toHaveLength(0);
     });
 
     it('marca la sección en la que estás', async () => {
@@ -319,28 +316,14 @@ describe('AppShell', () => {
       expect(barra(html)!.querySelector('a[aria-current="page"]')?.textContent?.trim()).toBe('Horario');
     });
 
-    it('Más abre el mismo menú de secciones y lo anuncia abierto', async () => {
+    it('el menú no repite lo que ya está en la barra inferior ni la campana', async () => {
       const { arnes, html } = await crear();
-      expect(botonMas(html).getAttribute('aria-expanded')).toBe('false');
-      expect(botonMas(html).getAttribute('aria-controls')).toBe('menu-lateral');
-
-      botonMas(html).click();
+      botonDelMenu(html).click();
       arnes.detectChanges();
 
-      expect(menu(html)).not.toBeNull();
-      expect(botonMas(html).getAttribute('aria-expanded')).toBe('true');
-    });
-
-    it('al cerrar con Escape el foco vuelve a Más cuando el menú se abrió desde ahí', async () => {
-      const { arnes, html } = await crear();
-      botonMas(html).click();
-      arnes.detectChanges();
-
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-      arnes.detectChanges();
-
-      expect(menu(html)).toBeNull();
-      expect(document.activeElement).toBe(botonMas(html));
+      const enMenu = Array.from(menu(html)!.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+      const enBarra = Array.from(barra(html)!.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+      expect(enMenu.filter((ruta) => enBarra.includes(ruta) || ruta === '/avisos')).toEqual([]);
     });
   });
 });
