@@ -38,25 +38,21 @@ export class AppShell {
   private readonly documento = inject(DOCUMENT);
   private readonly botonDelMenu = viewChild<ElementRef<HTMLButtonElement>>('botonDelMenu');
   private readonly botonDelAvatar = viewChild<ElementRef<HTMLButtonElement>>('botonDelAvatar');
-  private readonly botonMas = viewChild<ElementRef<HTMLButtonElement>>('botonMas');
 
+  /**
+   * Lo que el menú suma a la barra inferior y a la campana: esas cinco pantallas ya están a un toque, así que
+   * aquí no se repiten (SCRUM-279).
+   */
   protected readonly secciones: Seccion[] = [
-    { ruta: '/inicio', texto: 'Hoy' },
-    { ruta: '/horario', texto: 'Mi horario' },
     { ruta: '/horario/armar', texto: 'Armar mi horario' },
-    { ruta: '/calificaciones/mis-notas', texto: 'Mis notas' },
     { ruta: '/simulador', texto: 'Simulador' },
     { ruta: '/brujula', texto: 'Brújula Académica' },
-    { ruta: '/avisos', texto: 'Avisos' },
-    { ruta: '/pendientes', texto: 'Mis pendientes' },
     { ruta: '/cuenta/historial', texto: 'Mi historial y promedios' },
     { ruta: '/cuenta/plan-de-estudios', texto: 'Mi plan de estudios' },
     { ruta: '/importar', texto: 'Importar mis archivos' },
   ];
 
   protected readonly menuAbierto = signal(false);
-  /** Desde dónde se abrió el menú, para devolver el foco al mismo botón al cerrarlo. */
-  private origenDelMenu: 'barra' | 'inferior' = 'barra';
   protected readonly perfilAbierto = signal(false);
 
   protected readonly titulo = toSignal(
@@ -118,8 +114,7 @@ export class AppShell {
     return titulo;
   }
 
-  protected alternarMenu(origen: 'barra' | 'inferior' = 'barra'): void {
-    this.origenDelMenu = origen;
+  protected alternarMenu(): void {
     this.perfilAbierto.set(false);
     this.menuAbierto.update((abierto) => !abierto);
     if (this.menuAbierto()) {
@@ -145,7 +140,7 @@ export class AppShell {
     this.menuAbierto.set(false);
     this.perfilAbierto.set(false);
     if (eraMenu) {
-      (this.origenDelMenu === 'inferior' ? this.botonMas() : this.botonDelMenu())?.nativeElement.focus();
+      this.botonDelMenu()?.nativeElement.focus();
     } else if (eraPerfil) {
       this.botonDelAvatar()?.nativeElement.focus();
     }
